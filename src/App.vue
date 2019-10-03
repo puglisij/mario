@@ -2,10 +2,10 @@
   <div id="app">
     <!-- This is the root of your panel -->
     <!-- Content should go inside #app -->
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue CLI panel" />
+    <!--  <img alt="Vue logo" src="./assets/logo.png" /> -->
+    <HelloWorld msg="Image Processor" />
 
-    <button>Test</button>
+    <button v-on:click="importDoc">Test</button>
 
     <!-- Utility component to handle context and flyout menus -->
     <menus />
@@ -31,10 +31,14 @@ export default {
         menus
     },
     data: () => ({
-        csInterface: null
+        csInterface: null,
+        extensionDirectory: null
     }),
     mounted() {
         this.csInterface = new CSInterface();
+        this.extensionDirectory = this.csInterface.getSystemPath("extension");
+        // Open the server extension
+        this.csInterface.requestOpenExtension("com.a-new-hope.server", "");
 
         console.log("App mounted.");
         starlette.init();
@@ -47,6 +51,29 @@ export default {
         },
         loadScript(path) {
             this.csInterface.evalScript(`$.evalFile('${path}')`);
+        },
+        importDoc() {
+            console.log("Importing image...");
+            /* Make sure to include the full URL */
+            var url = "http://localhost:3200/import";
+
+            /* Use fetch to communicate with your server */
+            // TODO: use fetch()
+            fetch(new Request(url, {
+                method: 'get',
+                headers: new Headers({
+                    'directory': this.extensionDirectory
+                })
+            }))
+            .then(function(response) {
+                return response.blob();
+            })
+            .then(function(data) {
+                csInterface.evalScript(`openDocument("${data}")`);
+            })
+            .catch(function(err) {
+
+            });
         }
     }
 };
