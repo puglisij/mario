@@ -2,7 +2,6 @@
 <ExtensionManifest ExtensionBundleId="com.a-new-hope" ExtensionBundleVersion="1.0.0" ExtensionBundleName="a-new-hope" Version="8.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
     <Extension Id="com.a-new-hope.panel" Version="1.0.0" />
-    <Extension Id="com.a-new-hope.server" Version="1.0.0" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
@@ -35,40 +34,21 @@
           <Menu>A New Hope</Menu>
           <Geometry>
             <Size>
-              <Height>400</Height>
-              <Width>280</Width>
+              <Height>600</Height>
+              <Width>400</Width>
             </Size>
             <MaxSize>
-              <Height>500</Height>
-              <Width>598</Width>
+              <Height>1080</Height>
+              <Width>1920</Width>
             </MaxSize>
             <MinSize>
-              <Height>300</Height>
-              <Width>260</Width>
+              <Height>400</Height>
+              <Width>400</Width>
             </MinSize>
           </Geometry>
           <Icons />
         </UI>
       </DispatchInfo>
-    </Extension>
-    <Extension Id="com.a-new-hope.server">
-        <DispatchInfo>
-        <Resources>
-            <MainPath>./public/localServer.html</MainPath>
-            <!-- <MainPath>./dist/localServer.html</MainPath> -->
-            <CEFCommandLine>
-            <Parameter>--enable-nodejs</Parameter>
-            <Parameter>--mixed-context</Parameter>
-            </CEFCommandLine>
-        </Resources>
-        <Lifecycle>
-            <AutoVisible>false</AutoVisible>
-        </Lifecycle>
-        <UI>
-            <Type>Custom</Type>
-            <Icons />
-        </UI>
-        </DispatchInfo>
     </Extension>
   </DispatchInfoList>
 </ExtensionManifest>

@@ -90,6 +90,7 @@ export default {
     }
   },
   mounted() {
+    console.log("Menus mounted.");
     this.init();
   },
   methods: {

@@ -1,0 +1,44 @@
+{
+    "root": "C:/image-processing",
+    "watchers": [
+        {
+            "target": "/Process",
+            "extensions": ["psd", "tif", "jpg", "jpeg", "png"],
+            "classifiers": ["Product", "Ad"]
+        },
+        {
+            "target": "/ProcessWeb",
+            "extensions": ["tif", "png"],
+            "classifiers": ["Product"]
+        }
+    ],
+    "pipelines": {
+        "Product": {
+            "actions": [
+                {
+                    "name": "SetColorSpace",
+                    "value": "CMYK"
+                }
+            ],
+            "destinations": [
+                {
+                    "target": "/ProcessedImages/PSD",
+                    "name": "",
+                    "saveAction": "SavePSD_Basic"
+                },
+                {
+                    "target": "/ProcessedImages/JPGHI",
+                    "saveAction": "SaveJPG_1200x1200"
+                }
+            ]
+        },
+        "Ad": {
+            "actions": [
+
+            ],
+            "destinations": [
+                
+            ]
+        }
+    }
+}

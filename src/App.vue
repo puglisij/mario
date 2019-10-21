@@ -3,77 +3,70 @@
     <!-- This is the root of your panel -->
     <!-- Content should go inside #app -->
     <!--  <img alt="Vue logo" src="./assets/logo.png" /> -->
-    <HelloWorld msg="Image Processor" />
+    <h1>Image Processor</h1>
+    <notifications group="mario" 
+                   position="top left"
+                   :max="1" /> 
 
-    <button v-on:click="importDoc">Test</button>
+
 
     <!-- Utility component to handle context and flyout menus -->
     <menus />
+    <server />
+    <jsx />
   </div>
 </template>
 
 <script>
-// You can access this App.vue file from any other component via `this.$root.$children[0]`
-// See `./components/HelloWorld.vue` for example of CSInterface and this.app
-
-// Create your own components and import them here
-import HelloWorld from "./components/HelloWorld.vue";
-import menus from "./components/menus.vue";
-
-// Dynamic CSS variables that automatically handle all app themes and changes:
-// https://github.com/Inventsable/starlette
+/* npm modules  (Alternatively use cep_node.require) */ 
+import upath from 'upath';
 import starlette from "starlette";
+import { mapState, mapGetters } from 'vuex';
 
+/* local modules */
+import menus from "./components/menus.vue";
+import server from "./components/server.vue";
+import jsx from "./components/jsx.vue";
+
+
+// BEST PRACTICE: Props down, Events Up
 export default {
     name: "app",
     components: {
-        HelloWorld,
-        menus
+        menus,
+        server,
+        jsx
     },
-    data: () => ({
-        csInterface: null,
-        extensionDirectory: null
-    }),
-    mounted() {
-        this.csInterface = new CSInterface();
-        this.extensionDirectory = this.csInterface.getSystemPath("extension");
-        // Open the server extension
-        this.csInterface.requestOpenExtension("com.a-new-hope.server", "");
+    data: () => {
+        return {
 
-        console.log("App mounted.");
+        }
+    },
+    created() {
+        // Jsx imports
+        this.importJSX("utils.jsx");
+
+        console.log(`App mounted.\n
+            Extension Path: ${this.extensionPath}\n
+            Host Path: ${this.hostPath}`);
+    },
+    mounted() {
+        // Dynamic CSS variables that automatically handle all app themes and changes:
+        // https://github.com/Inventsable/starlette
         starlette.init();
     },
+    computed: {
+        ...mapState(['cs', 'extensionPath', 'hostPath'])
+    },
     methods: {
+        importJSX(fileName) {
+            let importPath = upath.join(this.hostPath, fileName);
+            this.cs.evalScript('try{ var file = File("' + importPath + '").fsName; $.evalFile(file); }catch(e){ alert("File: " + file + " Import Exception: " + e); }');
+        },
         dispatchEvent(name, data) {
             var event = new CSEvent(name, "APPLICATION");
                 event.data = data;
-            this.csInterface.dispatchEvent(event);
-        },
-        loadScript(path) {
-            this.csInterface.evalScript(`$.evalFile('${path}')`);
-        },
-        importDoc() {
-            console.log("Importing image...");
-            /* Make sure to include the full URL */
-            var url = "http://localhost:3200/import";
-
-            /* Use fetch to communicate with your server */
-            // TODO: use fetch()
-            fetch(new Request(url, {
-                method: 'get',
-                headers: new Headers({
-                    'directory': this.extensionDirectory
-                })
-            }))
-            .then(function(response) {
-                return response.blob();
-            })
-            .then(function(data) {
-                csInterface.evalScript(`openDocument("${data}")`);
-            })
-            .catch(function(err) {
-
-            });
+            this.cs.dispatchEvent(event);
         }
     }
 };
