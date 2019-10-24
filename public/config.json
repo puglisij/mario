@@ -1,5 +1,5 @@
 {
-    "root": "C:/image-processing",
+    "watchRoot": "C:/image-processing",
     "watchers": [
         {
             "target": "/Process",
@@ -12,33 +12,79 @@
             "classifiers": ["Product"]
         }
     ],
-    "pipelines": {
-        "Product": {
-            "actions": [
+    "pipelines": [
+        {
+            "for": "Product",
+            "externalActions": [
                 {
-                    "name": "SetColorSpace",
-                    "value": "CMYK"
-                }
-            ],
-            "destinations": [
-                {
-                    "target": "/ProcessedImages/PSD",
-                    "name": "",
-                    "saveAction": "SavePSD_Basic"
+                    "action": "Autotemplate",
+                    "parameters": ""
                 },
                 {
-                    "target": "/ProcessedImages/JPGHI",
-                    "saveAction": "SaveJPG_1200x1200"
+                    "action": "SetColorSpace",
+                    "parameters": "RGB"
+                },
+                {
+                    "action": "MaskOrPath",
+                    "parameters": {
+                        "border": 50
+                    }
+                },
+                {
+                    "action": "SaveToArchive",
+                    "parameters": "RGB"
+                },
+                {
+                    "action": "Revert"
+                },
+                {
+                    "action": "SetColorSpace",
+                    "parameters": "CMYK"
+                },
+                {
+                    "action": "MaskOrPath",
+                    "parameters": {
+                        "border": 50
+                    }
+                },
+                {
+                    "action": "SaveToArchive",
+                    "parameters": "CMYK"
+                },
+                {
+                    "action": "Scale", 
+                    "parameters": ""
+                },
+                {
+                    "action": "Revert"
+                },
+                {
+                    "action": "SaveToArchive",
+                    "parameters": "PSD"
+                }
+            ],
+            "localActions": [
+                {
+                    "action": "ConvertFilenameToKeywords"
                 }
             ]
         },
-        "Ad": {
-            "actions": [
-
-            ],
-            "destinations": [
-                
+        {
+            "for": "Ad",
+            "externalActions": [
+                {
+                    "action": "SavePSD_Basic",
+                    "parameters": {
+                        "target": "/ProcessedImages/PSD"
+                    }
+                },
+                {
+                    "action": "SaveJPG_1200x1200",
+                    "parameters": {
+                        "target": "/ProcessedImages/JPGHI"
+                    }
+                }
             ]
         }
-    }
+    ]
 }

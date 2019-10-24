@@ -4,6 +4,7 @@ import fs from 'fs';
 import chokidar from 'chokidar';
 import debounce from 'debounce'; 
 import express from 'express';
+import promisify from 'es6-promisify';
 
 /* local modules */
 import Image from './image';
@@ -21,13 +22,17 @@ const app = express();
  */
 export default class Server
 {
-    constructor(serverPath) 
+    constructor(serverPath, actionPath) 
     {
         this.server = null;
+        this.actionPath = actionPath;
         this.configPath = upath.join(serverPath, "config.json");
         this.config = {};
         this.watchers = [];
         this.pipelines = {};
+        this.cs = new CSInterface();
+        this.pipelineQueue = [];
+        this.isPipelineRunning = false;
     }
     close() 
     {
@@ -42,8 +47,8 @@ export default class Server
         let rawconfig = fs.readFileSync(this.configPath);
         this.config = JSON.parse(rawconfig);
 
-        if(!this.config.root) {
-            throw new Error("Server config missing 'root' watch path.");
+        if(!this.config.watchRoot) {
+            throw new Error("Server config missing 'watchRoot' watch path.");
         }
         if(!this.config.watchers) {
             throw new Error("Server config missing 'watchers'.");
@@ -64,23 +69,23 @@ export default class Server
         //-----------------
         // Load Pipelines 
         //-----------------
-        this.pipelines = this.config.pipelines;
-
-        // TODO: Communicate (IPC?) with CEP to setup pipelines
-        // On new image to process, serialize Image instance to be processed by pipeline 
+        for(const pipelineConfig of this.config.pipelines)
+        {
+            this.pipelines[pipelineConfig.for] = pipelineConfig;
+        }
 
         //-----------------
         // Setup watchers 
         //-----------------
         for(const watcherConfig of this.config.watchers) 
         {
-            const watchPathRoot = upath.join(this.config.root, watcherConfig.target);
+            const watchPathRoot = upath.join(this.config.watchRoot, watcherConfig.target);
             const watchPaths = watcherConfig.extensions.map(ext => upath.join(watchPathRoot, "**", "*." + ext));
             const watcher = chokidar.watch(watchPaths, {
                 ignored: /^\./
             })
-            .on("add", this.processImage)
-            .on("addDir", this.processImage);
+            .on("add", this.processImage.bind(this))
+            .on("addDir", this.processImage.bind(this));
 
             console.log(`Watcher set for ${watchPaths.toString()}`);
             this.watchers.push(watcher);
@@ -90,7 +95,7 @@ export default class Server
         // Setup routes
         //-----------------
         app.get('/activedocument', (req, res) => {
-            new CSInterface().evalScript("_.getActiveDocumentPath()", function(activeDocumentPath) {
+            this.cs.evalScript("_.getDocumentPath()", function(activeDocumentPath) {
                 res.send("Success! Active Document: " + activeDocumentPath);
             });
         });
@@ -121,30 +126,80 @@ export default class Server
     /**
      * Run classifiers, read metadata, and notify CEP pipeline image is ready for processing 
      */
-    processImage(imagePath)
+    async processImage(imagePath)
     {
         imagePath = upath.normalize(imagePath);
-        const basename = upath.basename(imagePath);
-        const reader = new Image.Reader(imagePath, basename);
-        Promise.all([
+        const imageName = upath.basename(imagePath);
+        const reader = new Image.Reader(imagePath, imageName);
+        console.log("Processing: " + imageName + " Full Path: " + imagePath);
+
+        await Promise.all([
             reader.readMetadata(),
             reader.readWithClassifiers(classifiers)
-        ])
-        .then(() => {
-            const image = reader.getImage();
-            console.log("Image ready for pipeline: ");
-            console.dir(image);
-            // find pipeline 
-            const pipeline = this.pipelines[image.type];
-            // run pipeline actions 
-            this.notifyPipeline(image);
-        });
-
-        console.log("Processing: " + basename + " Full Path: " + imagePath);
-    }
-    notifyPipeline(image)
-    {
-        // Communicate with CEP side to run image through pipeline
+        ]);
         
+        // TODO: Allow Server to run independent of CEP Panel? Communicate via IPC?
+        //      Node code would run in Server process and JSX would run in CEP Panel process.
+        const image = reader.getImage();
+        this.pushToPipeline(image);
+    }
+    pushToPipeline(image)
+    {
+        this.pipelineQueue.push(image);
+        if(!this.isPipelineRunning) {
+            this.runPipeline();
+        }
+    }
+    /**
+     * Run images through pipeline per its configuration
+     * Only one image may run through the Photoshop at one time
+     */
+    async runPipeline()
+    {
+        this.isPipelineRunning = true; // mutex
+        let image = null;
+        while(image = this.pipelineQueue.pop())
+        {
+            const pipeline = this.pipelines[image.type];
+            if(!pipeline) {
+                console.error("Pipeline not found for image: " + image.path + " type: " + image.type);
+            }
+            // Open document 
+            await this.runAction(`IMAGE=${JSON.stringify(image)};`);
+            await this.runAction(`closeAll(); openAsActive('${image.path}');`);
+            // Run Actions
+            for(const photoshopActionConfig of pipeline.externalActions) 
+            {
+                const psAction = photoshopActionConfig.action;
+                const psActionPath = upath.join(this.actionPath, psAction + ".jsx");
+                const psActionParameters = JSON.stringify(photoshopActionConfig.parameters);
+                const jsxString = `runAction('${psActionPath}','${psAction}', ${psActionParameters})`;
+                
+                // call jsx file by action name with config parameters 
+                await this.runAction(jsxString)
+            }
+            // Run Server Actions
+            // move/delete/rename files... ?
+
+            console.log("Pipeline completed for image: " + image.fileName);
+        }
+        this.isPipelineRunning = false;
+        console.log("Pipeline queue finished.");
+    }
+    /**
+     * Note that evalScript runs asynchronously, but Photoshop runs the code synchronously
+     * @param {string} actionString the jsx code string
+     */
+    runAction(actionString)
+    {
+        return new Promise((resolve, reject) => 
+        {
+            this.cs.evalScript(actionString, function(result) {
+                if(result.includes("error")) {
+                    reject(`Action: \n\t${actionString}\n\tResulted in Error.`);
+                }
+                resolve(`Action: \n\t${actionString}\n\tResult: ${result}`)
+            });
+        })
     }
 }

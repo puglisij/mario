@@ -114,7 +114,7 @@ export default {
                 if(result.includes("error")) {
                     return;
                 }
-                this.stringId = result;
+                this.stringId = "// " + result;
                 this.$nextTick(() => {
                     this.$refs.stringId.focus();
                     this.$refs.stringId.select();

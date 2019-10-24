@@ -38,7 +38,7 @@ export default {
         serverState: ServerState.STOPPED
     }),
     computed: {
-        ...mapState(['cs', 'hostPath']),
+        ...mapState(['cs', 'hostPath', 'hostActionPath']),
         isServerRunning() {
             return this.serverState == ServerState.RUNNING;
         }
@@ -93,8 +93,9 @@ export default {
             //const forked = fork('server.js');
             //forked.kill();
 
-            this.server = new Server(this.hostPath);
+            this.server = new Server(this.hostPath, this.hostActionPath);
             this.server.init();
+            
             
             this.$notify({
                 group: "foo",

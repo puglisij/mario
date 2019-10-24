@@ -43,12 +43,13 @@ export default {
         }
     },
     created() {
-        // Jsx imports
+        // Jsx Environment Setup
         this.importJSX("utils.jsx");
 
         console.log(`App mounted.\n
             Extension Path: ${this.extensionPath}\n
-            Host Path: ${this.hostPath}`);
+            Host Path: ${this.hostPath}\n
+            Host Action Path: ${this.hostActionPath}`);
     },
     mounted() {
         // Dynamic CSS variables that automatically handle all app themes and changes:
@@ -56,12 +57,14 @@ export default {
         starlette.init();
     },
     computed: {
-        ...mapState(['cs', 'extensionPath', 'hostPath'])
+        ...mapState(['cs', 'extensionPath', 'hostPath', 'hostActionPath'])
     },
     methods: {
         importJSX(fileName) {
             let importPath = upath.join(this.hostPath, fileName);
-            this.cs.evalScript('try{ var file = File("' + importPath + '").fsName; $.evalFile(file); }catch(e){ alert("File: " + file + " Import Exception: " + e); }');
+            this.cs.evalScript('try{ var file = File("' + importPath + '").fsName; $.evalFile(file); }catch(e){ alert("File: " + file + " Import Exception: " + e); }', result => {
+                console.log("Jsx File Imported: " + importPath + " Result: " + result);
+            });
         },
         dispatchEvent(name, data) {
             var event = new CSEvent(name, "APPLICATION");

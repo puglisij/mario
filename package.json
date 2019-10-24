@@ -17,6 +17,7 @@
     "chokidar": "^3.2.1",
     "core-js": "^2.6.5",
     "debounce": "^1.2.0",
+    "es6-promisify": "^6.0.2",
     "express": "^4.16.3",
     "node-exiftool": "^2.3.0",
     "request": "^2.85.0",
@@ -27,6 +28,7 @@
     "vuex": "^3.1.1"
   },
   "devDependencies": {
+    "@babel/preset-flow": "^7.0.0",
     "@vue/cli-plugin-babel": "^3.9.0",
     "@vue/cli-service": "^3.9.0",
     "boxen": "^4.1.0",

@@ -6,6 +6,8 @@ export default class Image
     constructor() 
     {
         this.type = "";     // e.g. Product
+        this.fileName = "";
+        this.path = "";
         this.metadata = null;
         this.keywords = [];
     }
@@ -15,18 +17,18 @@ export default class Image
         class Reader
         {
             constructor(path, fileName) {
-                this.path = path;
-                this.basename = fileName;
                 this.image = new Image();
+                this.image.fileName = fileName;
+                this.image.path = path;
             }
-            readWithClassifiers(classifiers) 
+            async readWithClassifiers(classifiers) 
             {
                 return new Promise((resolve, reject) => 
                 {
                     for(const classifier of classifiers) 
                     {
                         try {
-                            let result = classifier(this.basename);
+                            let result = classifier(this.image.fileName);
                             if(result) {
                                 this.image.type = result.type;
                                 this.image.namemetadata = result;
@@ -39,7 +41,7 @@ export default class Image
                     reject("Image name could not be identified by classifier.");
                 });
             }
-            readMetadata()
+            async readMetadata()
             {
                 let ep = new exiftool.ExiftoolProcess();
                 let processid = 0;
@@ -49,7 +51,7 @@ export default class Image
                     processid = pid;
                     console.log("Started exiftool process %s", pid);
                 })
-                .then(() => ep.readMetadata(this.path, ['-File:all']))
+                .then(() => ep.readMetadata(this.image.path, ['-File:all']))
                 .then(metadata => {
                     let fileMetadata = metadata.data[0];
                     this.image.metadata = fileMetadata;
