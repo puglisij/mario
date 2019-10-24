@@ -1,3 +1,4 @@
+
 /* npm modules */
 import upath from 'upath';
 import fs from 'fs';
@@ -33,6 +34,7 @@ export default class Server
         this.cs = new CSInterface();
         this.pipelineQueue = [];
         this.isPipelineRunning = false;
+        this.isPipelineRunning = "";
     }
     close() 
     {

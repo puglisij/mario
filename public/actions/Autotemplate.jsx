@@ -1,18 +1,32 @@
 
 /**
-* Make web image TIF
-    Autotemplate:
-        remove all alpha channels 
-        duplicates the image as new document (same name without extension)
-        creates a new placed layer with document name (becomes active layer - i think this effectively just renames the topmost layer in the doc)
-        Resizes the canvas to 300x300
-        Trims the image based on transparency (this may result in an even smaller canvas size?)
-        Scales current layer based on a keyword (1to1 [58%], 4to1 [17%]) if no keyword its scaled by 29%
-        Adds a drop shadow to current layer
-        Adds unsharp mask to current layer
-        Adds an empty Note and moves it to 20, 20
-        loads the TIF by the sku name from the appropriate folder in /Working/Work/Web/  - Removes the layer matching the document name. Places the TIF as a new layer in the duplicated document from above
-        if TIF doesnt exist then it creates it and adds a white background
+* Make web image TIF:
+    - remove all alpha channels 
+    - duplicates the image as new document (same name without extension) - ill refer to this as "clone" below
+    - creates a new placed layer with clone name (becomes active layer - i think this effectively just renames the topmost layer in the doc)
+    - Resizes the canvas to 300x300px
+    - Trims the image based on transparency (this may result in an even smaller canvas size?)
+    - Scales current layer based on a keyword (1to1 [58%], 4to1 [17%]) if no keyword its scaled by 29%
+    - Adds a drop shadow to current layer
+    - Adds unsharp mask to current layer
+    - Adds an empty Note and moves it to 20, 20
+    - loads a TIF by the sku name from the appropriate folder in /Working/Work/Web/  - Removes the layer matching the clone name. Places clone as a new layer into TIF . Closes clone without saving.
+    - if TIF doesnt exist then it creates it and adds a white background
+    - if TIF doesnt contain a path named "WEB" then document is trimmed to top left and canvas is resized to 300x300px.
+    - Calls AdditionalViews()
+        • Loops through illustrated use shots found (using mdfind) in /Volumes/photostore/RGB_Archive/
+            ▫ Places shot as new player in TIF  
+            ▫ Scales new layer to 29% ? 
+            ▫ Converts new layer to Smart object
+            ▫ Scales new layer based on keyword (4to1 [50%], or 1to1 [200%])
+            ▫ Adds drop shadow and Unsharp Mask to new layer
+            ▫ Sets new layer icon to purple
+        • Loops through product shots found (using mdfind) in /Volumes/photowork/
+            ▫ If layer already exists with shot name then it does nothing
+            ▫ Creates a new layer with shot name and makes layer icon red 
+            ▫ Fills the layer with purple, sets opacity to 100% and blend mode to multiply
+    - if TIF doesnt have keyword "DONOTPCDUPE" and has child skus, then adds keyword "PackDupe"
+    - Saves and closes TIF
 */
 function Autotemplate()
 {
@@ -58,7 +72,7 @@ function Autotemplate()
             }
         } catch (err) {}
 
-        // duplicate active layer from the existing tif file into the duplicated document
+        // place duplicated document as new layer into tif and closes duplicated document
         activeDocument = duplicateDocument;
         duplicateDocument.activeLayer.duplicate(newTifDocument);
         duplicateDocument.close(SaveOptions.DONOTSAVECHANGES);
@@ -85,11 +99,11 @@ function Autotemplate()
 
     if(!_.hasKeyword("DONOTPCDUPE") && IMAGE.hasChildSkus()) {
         _.addKeyword("PackDupe");
-        addPackDupeKeyword()
     }
     newTifDocument.save();
+    newTifDocument.close()
 
-
+    _.refresh();
     _.restoreUnits();
 }
 

@@ -21,6 +21,18 @@ this.AdditionalViews = function AdditionalViews()
         
                 placeImage(file);
                 
+                if(_.hasKeyword("4to1"))
+                {
+                    ScaleLayerByPercent(50);
+                }
+                if(_.hasKeyword("1to1"))
+                {
+                    ScaleLayerByPercent(200);
+                }
+
+                DropShadow_Product();
+                UnsharpMask(40, 1, 0);
+
                 // make layer icon purple 
                 var idsetd = charIDToTypeID( "setd" ); // set
                 var desc91 = new ActionDescriptor();
@@ -74,7 +86,7 @@ this.AdditionalViews = function AdditionalViews()
             executeAction( idMk, desc62, DialogModes.NO );
 
             // =======================================================
-            // fill layer with color and set opacity 100% and blend mode to normal
+            // fill layer with color purple and set opacity 100% and blend mode to normal
             var idFl = charIDToTypeID( "Fl  " ); // fill
             var desc64 = new ActionDescriptor();
             var idUsng = charIDToTypeID( "Usng" ); // using
@@ -178,17 +190,5 @@ this.AdditionalViews = function AdditionalViews()
 		// ======================================================= Close Smart object
 		var idCls = charIDToTypeID( "Cls " ); // close
 		executeAction( idCls, undefined, DialogModes.NO );
-
-        if(_.hasKeyword("4to1"))
-        {
-            ScaleLayerByPercent(50);
-		}
-        if(_.hasKeyword("1to1"))
-        {
-            ScaleLayerByPercent(200);
-		}
-
-		DropShadow_Product();
-		UnsharpMask(40, 1, 0);
 	}
 }

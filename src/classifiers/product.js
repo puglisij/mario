@@ -101,6 +101,7 @@ function productLookup()
     // GET http://g1ppwebapp01/product_lookup/Default.asp?ITEM_NUMBER=" + SKU
 }
 
+// TODO Create DataCollector pattern instead with different types of data collectors (file name parser, metadata reader, image order flat file reader, etc)
 function classify(fileName)
 {
     let match = regex.exec(fileName);
