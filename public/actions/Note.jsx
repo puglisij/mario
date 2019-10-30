@@ -3,7 +3,7 @@
 * @param {Number} posX x axis position in pixels 
 * @param {Number} posY y axis position in pixels
 */
-this.MakeNote = function MakeNote(posX, posY, sizeX, sizeY) 
+action.makeNote = function makeNote(posX, posY, sizeX, sizeY) 
 {
     var idMk = charIDToTypeID( "Mk  " );
     var desc251 = new ActionDescriptor();
@@ -46,7 +46,7 @@ this.MakeNote = function MakeNote(posX, posY, sizeX, sizeY)
 /**
 * Set the text of the note at the given index
 */
-this.SetNote = function SetNote(noteIndex, text)
+action.setNote = function setNote(noteIndex, text)
 {
     var idsetd = charIDToTypeID( "setd" ); // set
     var desc235 = new ActionDescriptor();
@@ -71,7 +71,7 @@ this.SetNote = function SetNote(noteIndex, text)
 * @param {Number} posX x axis position in pixels 
 * @param {Number} posY y axis position in pixels
 */
-this.MoveNote = function MoveNote(noteIndex, posX, posY) 
+action.moveNote = function moveNote(noteIndex, posX, posY) 
 {
     try {
         var idsetd = charIDToTypeID("setd"); // set

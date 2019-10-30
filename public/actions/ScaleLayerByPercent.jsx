@@ -1,13 +1,16 @@
 /**
 * Scale the active layer by the given percentage
 * Layer is not moved.
-* @param {Number} percentage 
+* @param {Number} percentageX 
+* @param {Number} percentageY
 */
-this.ScaleLayerByPercent = function ScaleLayerByPercent(percentage)
+action.scaleLayerByPercent = function scaleLayerByPercent(percentageX, percentageY)
 {
     $.writeln("ScaleLayerByPercent()");
 
-    var scalePercent = UnitValue(percentage, "%");
+    var scaleX = UnitValue(percentageX, "%");
+    var scaleY = UnitValue(percentageY || percentageX, "%");
+
     try {
         var idTrnf = charIDToTypeID( "Trnf" ); // transform
         var desc3 = new ActionDescriptor();
@@ -27,10 +30,10 @@ this.ScaleLayerByPercent = function ScaleLayerByPercent(percentage)
         desc3.putObject( idOfst, idOfst, desc4 );
         var idWdth = charIDToTypeID( "Wdth" ); // width
         var idPrc = charIDToTypeID( "#Prc" ); // percentUnit
-        desc3.putUnitDouble( idWdth, idPrc, scalePercent );
+        desc3.putUnitDouble( idWdth, idPrc, scaleX );
         var idHght = charIDToTypeID( "Hght" ); // height
         var idPrc = charIDToTypeID( "#Prc" ); // percentUnit
-        desc3.putUnitDouble( idHght, idPrc, scalePercent );
+        desc3.putUnitDouble( idHght, idPrc, scaleY );
         var idLnkd = charIDToTypeID( "Lnkd" ); // linked
         desc3.putBoolean( idLnkd, true );
         executeAction( idTrnf, desc3, DialogModes.NO );

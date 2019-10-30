@@ -1,7 +1,7 @@
 /**
 * Set the document to either "CMYK" or "RGB" color space. 
 */
-this.SetColorSpace = function SetColorSpace(spaceType) 
+action.setColorSpace = function setColorSpace(spaceType) 
 {
     if(spaceType == "RGB") {
         assignRGBColorProfile();

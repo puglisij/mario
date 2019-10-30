@@ -1,4 +1,7 @@
 {
+    "pauseAfterEveryAction": false, 
+    "pauseAfterEveryImage": false,
+    "pauseOnExceptions": true,
     "watchRoot": "C:/image-processing",
     "watchers": [
         {
@@ -10,81 +13,6 @@
             "target": "/ProcessWeb",
             "extensions": ["tif", "png"],
             "classifiers": ["Product"]
-        }
-    ],
-    "pipelines": [
-        {
-            "for": "Product",
-            "externalActions": [
-                {
-                    "action": "Autotemplate",
-                    "parameters": ""
-                },
-                {
-                    "action": "SetColorSpace",
-                    "parameters": "RGB"
-                },
-                {
-                    "action": "MaskOrPath",
-                    "parameters": {
-                        "border": 50
-                    }
-                },
-                {
-                    "action": "SaveToArchive",
-                    "parameters": "RGB"
-                },
-                {
-                    "action": "Revert"
-                },
-                {
-                    "action": "SetColorSpace",
-                    "parameters": "CMYK"
-                },
-                {
-                    "action": "MaskOrPath",
-                    "parameters": {
-                        "border": 50
-                    }
-                },
-                {
-                    "action": "SaveToArchive",
-                    "parameters": "CMYK"
-                },
-                {
-                    "action": "Scale", 
-                    "parameters": ""
-                },
-                {
-                    "action": "Revert"
-                },
-                {
-                    "action": "SaveToArchive",
-                    "parameters": "PSD"
-                }
-            ],
-            "localActions": [
-                {
-                    "action": "ConvertFilenameToKeywords"
-                }
-            ]
-        },
-        {
-            "for": "Ad",
-            "externalActions": [
-                {
-                    "action": "SavePSD_Basic",
-                    "parameters": {
-                        "target": "/ProcessedImages/PSD"
-                    }
-                },
-                {
-                    "action": "SaveJPG_1200x1200",
-                    "parameters": {
-                        "target": "/ProcessedImages/JPGHI"
-                    }
-                }
-            ]
         }
     ]
 }

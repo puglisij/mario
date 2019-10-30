@@ -2,7 +2,7 @@
 * The created TIF becomes the active document
 * @param {string|File} file full path or File instance
 */
-this.SaveTIF_Product = function SaveTIF_Product(file)
+this.saveAsTIF = function saveAsTIF(file)
 {
     // layer compression | string id | jsx
     // RLE | "RLE" | s2t("RLE")

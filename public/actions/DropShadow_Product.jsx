@@ -1,5 +1,7 @@
-// TODO Add options for all settings 
-this.DropShadow_Product = function DropShadow_Product() 
+/**
+* Apply shadow for web tif layers
+*/
+action.setDropShadow_Product = function setDropShadow_Product() 
 {
     var idsetd = s2t("set");
     var desc217 = new ActionDescriptor();
@@ -89,3 +91,4 @@ this.DropShadow_Product = function DropShadow_Product()
     desc217.putObject(idT, idLefx, desc218);
     executeAction(idsetd, desc217, DialogModes.NO);
 }
+

@@ -1,7 +1,7 @@
 /**
 * Revert file back to original
 */
-this.Revert = function Revert()
+action.revert = function revert()
 {
     try{
         var idRvrt = charIDToTypeID( "Rvrt" );

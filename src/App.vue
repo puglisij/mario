@@ -3,7 +3,7 @@
     <!-- This is the root of your panel -->
     <!-- Content should go inside #app -->
     <!--  <img alt="Vue logo" src="./assets/logo.png" /> -->
-    <h1>Image Processor</h1>
+    <h1>Mario</h1>
     <notifications group="mario" 
                    position="top left"
                    :max="1" /> 
@@ -20,10 +20,10 @@
 <script>
 /* npm modules  (Alternatively use cep_node.require) */ 
 import upath from 'upath';
-import starlette from "starlette";
 import { mapState, mapGetters } from 'vuex';
 
 /* local modules */
+import themeManager from "./themeManager";
 import menus from "./components/menus.vue";
 import server from "./components/server.vue";
 import jsx from "./components/jsx.vue";
@@ -42,20 +42,50 @@ export default {
 
         }
     },
+    /**  
+     * about to be initialized. data is not yet reactive 
+     */
+    beforeCreate() {},
+    /**  
+     * events and data observation setup. not yet in native DOM. access data here, not in mounting hooks 
+     */
     created() {
         // Jsx Environment Setup
         this.importJSX("utils.jsx");
+        this.importJSX("polyfil.jsx");
+        this.importJSX("image.jsx"); // import this here?
 
         console.log(`App mounted.\n
             Extension Path: ${this.extensionPath}\n
             Host Path: ${this.hostPath}\n
             Host Action Path: ${this.hostActionPath}`);
     },
+    /**  
+     * right before render happens. template compiled and virtual DOM update by vue.  
+     */
+    beforeMount() {},
+    /**  
+     * $el added and native DOM updated. do modify DOM for integration of non-Vue libraries here.
+     */
     mounted() {
-        // Dynamic CSS variables that automatically handle all app themes and changes:
-        // https://github.com/Inventsable/starlette
-        starlette.init();
+        themeManager.init();
     },
+    /**  
+     * data has changed and update cycle starting. do get data before actually is rendered. 
+     */
+    beforeUpdate() {},
+    /**  
+     * data changed and native DOM updated. do access DOM after property changes here. 
+     */
+    updated() {},
+    /**  
+     * about to teardown. still fully present and functional. do cleanup events, and subscriptions 
+     */
+    beforeDestroy() {},
+    /**  
+     * nothing left on your component. do last minute cleanups, etc. 
+     */
+    destroyed() {},
     computed: {
         ...mapState(['cs', 'extensionPath', 'hostPath', 'hostActionPath'])
     },
@@ -75,18 +105,46 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 /* Various helper styles to match application theme */
-@import url("https://fonts.googleapis.com/css?family=Open+Sans&display=swap");
-:root {
-  --quad: cubic-bezier(0.48, 0.04, 0.52, 0.96);
-  --quart: cubic-bezier(0.76, 0, 0.24, 1);
-  --quint: cubic-bezier(0.84, 0, 0.16, 1);
+@import url("http://fonts.googleapis.com/css?family=Source+Sans+Pro:300");
+@import url("http://fonts.googleapis.com/css?family=Source+Code+Pro");
 
-  background-color: var(--color-bg);
-  color: var(--color-default);
-  font-family: "Open Sans", sans-serif;
-  font-size: 10px;
+html,body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+body {
+    font-family: source-sans-pro, sans-serif;
+    padding: .5em;
+
+    &.light {
+        background: #F4F4F4;
+        color: #181919;
+    }
+    &.dark {
+        color: #F0F1F1;
+        background: #4A4D4E;
+    }
+}
+
+h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 1em 0;
+}
+h2 {
+    font-size: 16px;
+    font-weight: 300;
+}
+h3 {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+section {
+    margin: 10px 0;
 }
 
 #app::-webkit-scrollbar {
@@ -95,8 +153,7 @@ export default {
 body::-webkit-scrollbar {
   width: 0px;
 }
-
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
   background-color: var(--color-scrollbar);
   width: var(--width-scrollbar-track);
 }
@@ -107,7 +164,7 @@ body::-webkit-scrollbar {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-scrollbar-thumb-hover);
-}
+} */
 ::-webkit-scrollbar-resizer {
   display: none;
   width: 0px;
@@ -118,10 +175,5 @@ body::-webkit-scrollbar {
 }
 ::-webkit-scrollbar-corner {
   display: none;
-}
-
-button {
-    background: var(--color-bg);
-    color: var(--color-default);
 }
 </style>

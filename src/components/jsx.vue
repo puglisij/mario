@@ -1,26 +1,31 @@
 <template>
     <div class="jsx">
         <h2>ExtendScript</h2>
-
-        <button v-on:click="toggleScriptListener" v-bind:style="{ color: isScriptListening ? '#0f0' : '#f00'}">Toggle ScriptListener</button>
-        <button v-on:click="clearScriptListener">Clear ScriptListener</button>
-
-        <div style="margin: 10px 0;">
+        <section>
+            <div class="topcoat-button-bar">
+                <div class="topcoat-button-bar__item">
+                    <button class="topcoat-button-bar__button--large" v-on:click="toggleScriptListener" v-bind:style="{ color: isScriptListening ? '#0f0' : '#f00'}">Toggle ScriptListener</button>
+                </div>
+                <div class="topcoat-button-bar__item">
+                    <button class="topcoat-button-bar__button--large" v-on:click="clearScriptListener">Clear ScriptListener</button>
+                </div>
+            </div>
+        </section>
+        <section>
             <label style="display: inline-block">
-                CharID <br>
-                <input type="text" ref="charId" v-model="charId" v-on:change="calculateStringId" v-on:focus="$event.target.select()"/> 
+                <input class="topcoat-text-input--large" type="text" ref="charId" placeholder="CharID" v-model="charId" v-on:change="calculateStringId" v-on:focus="$event.target.select()"/> 
             </label>
             <span style="margin: 0 10px"></span>
             <label style="display: inline-block">
-                StringID <br>
-                <input type="text" ref="stringId" v-model="stringId" v-on:change="calculateCharId" v-on:focus="$event.target.select()"/>
+                <input class="topcoat-text-input--large" type="text" ref="stringId" placeholder="StringID" v-model="stringId" v-on:change="calculateCharId" v-on:focus="$event.target.select()"/>
             </label>
-        </div>
-        <div style="margin: 10px 0;">
-            <textarea v-model="jsxText" rows="16" cols="60"></textarea>
-            <br/>
-            <button v-show="jsxText.length > 0" v-on:click="runJsxText">Run</button>
-        </div>
+        </section>
+        <section>
+            <textarea class="topcoat-textarea" v-model="jsxText" rows="14" cols="45"></textarea>
+            <br/><br/>
+            <button class="topcoat-button--large" v-show="jsxText.length > 0" v-on:click="runJsxText">Run</button>
+            <button class="topcoat-button--large" v-show="jsxText.length > 0" v-on:click="clearJsxText">Clear</button>
+        </section>
     </div>
 </template>
 
@@ -47,6 +52,9 @@ export default {
         scriptWatcher: null 
     }),
     methods: {
+        clearJsxText() {
+            this.jsxText = "";
+        },
         runJsxText() {
             this.cs.evalScript(``+this.jsxText, function(result) {
                 console.log(`JSX Result: ${result}`)

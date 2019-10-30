@@ -95,13 +95,31 @@ function createSearchTag(parentName)
         finderComment = parentName.match(/[0-9]{2}\.[0-9]{2}\.[0-9]{2}_[0-9]{5}_[IRPGCCQ_]+/).toString()
     }
 }
+function getSKU()
+{
+    try {
+        var SKU = newDocument.name.match(/[0-9]{4}SBL|[A-Z]?[0-9]{4}[A-Z]{2}|COH[0-9]{4}|/).toString();
+    } catch (err) {
+
+        if (newDocument.name.match(/^DB_/)) {
+            //alert("newDocument name Matched DB!")
+            var SKU = "DB" + newDocument.name.match(/[0-9]{4}SBL|[A-Z]?[0-9]{4}[A-Z]+/).toString();
+        } else {
+            //alert("newDocument name matched silly one off stuff!")
+            var SKU = "JK" + newDocument.name.match(/[1-9][0-9]{3}[A-HJ-NP-Z]{1}/).toString();
+        }
+    }
+}
 
 function productLookup()
 {
     // GET http://g1ppwebapp01/product_lookup/Default.asp?ITEM_NUMBER=" + SKU
 }
 
+
 // TODO Create DataCollector pattern instead with different types of data collectors (file name parser, metadata reader, image order flat file reader, etc)
+//      DataCollectors will be run by Image Reader to aggregate data.
+//      Classifier should only be used for indicating Pipeline or may not be needed at all
 function classify(fileName)
 {
     let match = regex.exec(fileName);

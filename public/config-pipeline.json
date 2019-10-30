@@ -1,0 +1,56 @@
+{
+    "pipelines": [
+        {
+            "for": "Product",
+            "name": "Default",
+            "externalActions": [
+                {
+                    "action": "action.setColorSpace",
+                    "parameters": "RGB"
+                },{
+                    "action": "product.maskOrPath",
+                    "parameters": {
+                        "border": 50
+                    }
+                },{
+                    "action": "product.makeWebTIF"
+                },{
+                    "action": "product.trimAndResizeCanvas"
+                },{
+                    "action": "product.addAdditionalShots"
+                },{
+                    "action": "product.addKeyword_PackDupe"
+                },{
+                    "action": "action.saveDocument"
+                },{
+                    "action": "action.closeDocument"
+                },{
+                    "action": "action.revert"
+                }
+            ],
+            "localActions": [
+                {
+                    "action": "ConvertFilenameToKeywords"
+                }
+            ]
+        },
+        {
+            "for": "Ad",
+            "name": "Default",
+            "externalActions": [
+                {
+                    "action": "SavePSD_Basic",
+                    "parameters": {
+                        "target": "/ProcessedImages/PSD"
+                    }
+                },
+                {
+                    "action": "SaveJPG_1200x1200",
+                    "parameters": {
+                        "target": "/ProcessedImages/JPGHI"
+                    }
+                }
+            ]
+        }
+    ]
+}

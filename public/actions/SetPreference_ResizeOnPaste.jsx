@@ -2,7 +2,7 @@
 * Set General Preferences option to "Resize image during place"
 * @param {bool} isChecked true to toggle on
 */
-this.SetPreference_ResizeOnPaste = function SetPreference_ResizeOnPaste(isChecked)
+action.setPreference_ResizeOnPaste = function setPreference_ResizeOnPaste(isChecked)
 {
     var idsetd = charIDToTypeID( "setd" ); // set
 	var desc249 = new ActionDescriptor();

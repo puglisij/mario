@@ -1,19 +1,18 @@
-
-this.MaskOrPath = function MaskOrPath(options)
+/**
+* If Image has keyword "masked" then masking actions are applied. Otherwise path actions are applied.
+* @param {object} options 
+* @param {Number} options.border the border size for pathing
+*/
+product.maskOrPath = function maskOrPath(options)
 {
-    _.saveUnits();
+    var restoreUnits = _.saveUnits();
     if(_.hasKeyword("masked")) 
     {
-        if (IMAGE.type != "employee" && IMAGE.type != "cover") {
-            try {
-                activeDocument.backgroundLayer.remove()
-            } catch(err) {}
-        }
         _maskActions();
     } else {
         _pathActions(options.border);
     }
-    _.restoreUnits();
+    restoreUnits();
 
     
     /*
@@ -23,7 +22,7 @@ this.MaskOrPath = function MaskOrPath(options)
     {
         activeDocument.flatten();
 
-        SetChannel_8Bit();
+        action.setColorChannel_8Bit();
 
         layerRef = activeDocument.artLayers.getByName("Background")
         // Set background to layer
@@ -75,7 +74,7 @@ this.MaskOrPath = function MaskOrPath(options)
         }
         catch(err) {}
 
-        SetChannel_8Bit()
+        action.setColorChannel_8Bit()
         
         try {
             // ======================================================= Select Layer    

@@ -1,15 +1,35 @@
 <template>
   <div>
       <h2>Server</h2>
-
+      <!-- TODO: rename as server-controls and move options -->
       <server-start-stop 
-        v-bind:isRunning="isServerRunning" 
+        v-bind:isPaused="isServerPaused" 
+        v-bind:isStopped="isServerStopped"
         v-on:start="start" 
         v-on:pause="pause" 
         v-on:stop="stop"></server-start-stop>
         <notifications group="foo" 
                        position="bottom left"
                        :max="1" /> 
+
+        <section id="server-options">
+            
+            <label class="topcoat-checkbox">
+                <input type="checkbox" name="pauseAfterEveryAction" v-on:change="onConfigurationCheckbox">
+                <div class="topcoat-checkbox__checkmark"></div>
+                Pause after every action
+            </label>
+            <label class="topcoat-checkbox">
+                <input type="checkbox" name="pauseAfterEveryImage" v-on:change="onConfigurationCheckbox">
+                <div class="topcoat-checkbox__checkmark"></div>
+                Pause after each image
+            </label>
+            <checkbox name="pauseOnExceptions">
+                Pause on Exceptions
+            </checkbox>
+        </section>
+
+        <!-- Add server-configurator component here -->
   </div>
 </template>
 
@@ -21,12 +41,7 @@ import { mapState, mapGetters } from 'vuex';
 import serverStartStop from "./server-start-stop.vue";
 import Server from "../server";
 
-
-const ServerState = {
-    STOPPED: 0, 
-    PAUSED: 1,
-    RUNNING: 2
-};
+let serverConfiguration = {};
 
 export default {
     name: "server",
@@ -35,90 +50,74 @@ export default {
     },
     data: () => ({
         server: null,
-        serverState: ServerState.STOPPED
+        isServerPaused: false, 
+        isServerStopped: true
     }),
     computed: {
-        ...mapState(['cs', 'hostPath', 'hostActionPath']),
-        isServerRunning() {
-            return this.serverState == ServerState.RUNNING;
-        }
+        ...mapState(['cs', 'hostPath', 'hostActionPath'])
     },
-    /**  
-     * about to be initialized. data is not yet reactive 
-     */
-    beforeCreate() {},
-    /**  
-     * events and data observation setup. not yet in native DOM. access data here, not in mounting hooks 
-     */
     created() 
     {
+        this.server = new Server(this.hostPath, this.hostActionPath);
+        this.server.init();
+        this.server.on("state", this.onStateChange);
+
         window.addEventListener("beforeunload", event => {
             this.stop();
         });
         console.log("Server component created.");
     },
-    /**  
-     * right before render happens. template compiled and virtual DOM update by vue.  
-     */
-    beforeMount() {},
-    /**  
-     * $el added and native DOM updated. do modify DOM for integration of non-Vue libraries here.
-     */
-    mounted() {},
-    /**  
-     * data has changed and update cycle starting. do get data before actually is rendered. 
-     */
-    beforeUpdate() {},
-    /**  
-     * data changed and native DOM updated. do access DOM after property changes here. 
-     */
-    updated() {},
-    /**  
-     * about to teardown. still fully present and functional. do cleanup events, and subscriptions 
-     */
+    mounted() 
+    {
+        // Update basic settings ui
+
+    },
     beforeDestroy() 
     {
+        // Cleanup server instance
         this.stop();
         console.log("Server component destroyed.");
     },
-    /**  
-     * nothing left on your component. do last minute cleanups, etc. 
-     */
-    destroyed() {},
     methods: 
     {
         start() 
         {
             console.log("Server start received");
+            this.server.start();
             //const forked = fork('server.js');
             //forked.kill();
-
-            this.server = new Server(this.hostPath, this.hostActionPath);
-            this.server.init();
-            
             
             this.$notify({
                 group: "foo",
                 title: "Look!",
                 text: "We're Started."
             })
-            this.serverState = ServerState.RUNNING;
         },
         pause() 
         {
             console.log("Server pause received");
-            this.serverState = ServerState.PAUSED;
+            this.server.pause();
         },
         stop() 
         {
             console.log("Server stop received");
             this.server && this.server.close();
-            this.serverState = ServerState.STOPPED;
+        }, 
+        onStateChange() {
+            this.isServerPaused = this.server.isPaused();
+            this.isServerStopped = this.server.isStopped();
+        },
+        onConfigurationCheckbox(event)
+        {
+            this.server.setConfiguration(event.target.name, event.target.checked);
         }
     }
 };
 </script>
 
-<style>
-/* No need for CSS in this component */
+<style scoped>
+    label {
+        display: block;
+        margin: 10px 0;
+    }
 </style>

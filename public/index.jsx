@@ -20,13 +20,22 @@ function closeAll()
     }
 }
 
-function runAction(actionFilePath, actionName, parameters)
+var action = {};
+function importAction(actionFilePath)
 {
     try { 
         var file = new File(actionFilePath).fsName; 
         $.evalFile(file); 
-        $.writeln("worked");
-        return this[actionName].call(null, parameters)
+    } catch(e) { 
+        alert("File: " + file + " Action Import Exception: " + e); 
+    }
+}
+function runAction(actionName, parameters)
+{
+    try { 
+        var result = this[actionName]; //.call(IMAGE, parameters);
+        $.writeln(actionName + " action successful");
+        return result;
     } catch(e) { 
         alert("Cannot run action: " + actionName + " Exception: " + e); 
     }

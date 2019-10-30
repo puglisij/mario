@@ -1,7 +1,7 @@
 <template>
     <div class="start-stop-buttons">
-        <button v-on:click="startPause">{{ isRunning ? 'Pause' : 'Start' }}</button>
-        <button v-on:click="stop">Stop</button>
+        <button class="topcoat-button--large" v-on:click="startPause">{{ isPaused || isStopped ? 'Start' : 'Pause' }}</button>
+        <button class="topcoat-button--large" v-on:click="stop">Stop</button>
     </div>
 </template>
 
@@ -9,11 +9,12 @@
 export default {
     name: 'server-start-stop',
     props: {
-        isRunning: Boolean
+        isPaused: Boolean,
+        isStopped: Boolean
     },
     methods: {
         startPause() {
-            this.$emit(this.isRunning ? 'pause' : 'start');
+            this.$emit(this.isPaused || this.isStopped ? 'start' : 'pause');
         },
         stop() {
             this.$emit('stop');

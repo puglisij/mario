@@ -1,7 +1,7 @@
 /**
 * Set the color mode to 8 bits per channel
 */
-this.SetChannel_8Bit = function SetChannel_8Bit()
+action.setColorChannel_8Bit = function setColorChannel_8Bit()
 {
     var idCnvM = charIDToTypeID("CnvM"); // convertMode
     var desc207 = new ActionDescriptor();

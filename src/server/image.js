@@ -8,7 +8,11 @@ export default class Image
         this.type = "";     // e.g. Product
         this.fileName = "";
         this.path = "";
-        this.metadata = null;
+        // External (stored outside file) metadata necessary for processing
+        this.data = {};     
+        // Metadata stored in the file
+        this.metadata = null; 
+        // Metadata keywords stored in the file
         this.keywords = [];
     }
     
@@ -21,6 +25,10 @@ export default class Image
                 this.image.fileName = fileName;
                 this.image.path = path;
             }
+            async readProcessingData()
+            {
+                await Promise.resolve(1);
+            }
             async readWithClassifiers(classifiers) 
             {
                 return new Promise((resolve, reject) => 
@@ -31,7 +39,7 @@ export default class Image
                             let result = classifier(this.image.fileName);
                             if(result) {
                                 this.image.type = result.type;
-                                this.image.namemetadata = result;
+                                Object.assign(this.image.data, result);
                                 resolve();
                             }
                         } catch(e) {
@@ -54,8 +62,8 @@ export default class Image
                 .then(() => ep.readMetadata(this.image.path, ['-File:all']))
                 .then(metadata => {
                     let fileMetadata = metadata.data[0];
-                    this.image.metadata = fileMetadata;
                     this.image.keywords = fileMetadata.Keywords;
+                    //this.image.metadata = fileMetadata;
                 })
                 .finally(() => {
                     ep.close();

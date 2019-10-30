@@ -1,4 +1,7 @@
-this.MakeWhiteBackground = function MakeWhiteBackground() 
+/**
+* Create a background layer filled with white
+*/
+action.makeWhiteBackground = function makeWhiteBackground() 
 {
     var idMk = charIDToTypeID("Mk  ");
     var desc18 = new ActionDescriptor();
