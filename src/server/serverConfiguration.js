@@ -50,10 +50,11 @@ class ServerConfiguration
      */
     load(configPath) 
     {
-        const configJson = fs.readFileSync(configPath);     
+        this.configPath = configPath;
+        const configJson = fs.readFileSync(configPath);   
         const config = JSON.parse(configJson);
         this.config = config;
-
+        
         return config;
     }
     clone()
@@ -77,15 +78,18 @@ class ServerConfiguration
         NestedObject.set(key, value, this.config);
 
         if(this.configPath) {
-            this._saveConfiguration(name);
+            this._saveConfiguration();
         }
     }
     // TODO make async. avoid multiple writes at same time
     // TODO debounce
-    async _saveConfiguration(name)
+    _saveConfiguration()
     {
         const data = JSON.stringify(this.config);
-        fs.writeFile(this.configPath, data);
+        fs.writeFile(this.configPath, data, err => {
+            if(err)
+                console.error("Error saving server configuration.\n" + err);
+        });
     }
 }
 

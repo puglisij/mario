@@ -1,8 +1,10 @@
 {
     "pipelines": [
         {
+            "id": 0,
             "for": "Product",
             "name": "Default",
+            "doImagesRequireMetadataFile": true,
             "externalActions": [
                 {
                     "action": "action.setColorSpace",
@@ -26,29 +28,6 @@
                     "action": "action.closeDocument"
                 },{
                     "action": "action.revert"
-                }
-            ],
-            "localActions": [
-                {
-                    "action": "ConvertFilenameToKeywords"
-                }
-            ]
-        },
-        {
-            "for": "Ad",
-            "name": "Default",
-            "externalActions": [
-                {
-                    "action": "SavePSD_Basic",
-                    "parameters": {
-                        "target": "/ProcessedImages/PSD"
-                    }
-                },
-                {
-                    "action": "SaveJPG_1200x1200",
-                    "parameters": {
-                        "target": "/ProcessedImages/JPGHI"
-                    }
                 }
             ]
         }

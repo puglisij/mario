@@ -1,18 +1,1 @@
-{
-    "pauseAfterEveryAction": false, 
-    "pauseAfterEveryImage": false,
-    "pauseOnExceptions": true,
-    "watchRoot": "C:/image-processing",
-    "watchers": [
-        {
-            "target": "/Process",
-            "extensions": ["psd", "tif", "jpg", "jpeg", "png"],
-            "classifiers": ["Product", "Ad"]
-        },
-        {
-            "target": "/ProcessWeb",
-            "extensions": ["tif", "png"],
-            "classifiers": ["Product"]
-        }
-    ]
-}
+{"pauseAfterEveryAction":true,"pauseAfterEveryImage":false,"pauseOnExceptions":true,"watchers":[{"id":0,"path":"C:/image-processing/Process","extensions":["psd","tif","jpg","jpeg","png"],"classifiers":["Product","Ad"]},{"id":1,"path":"C:/image-processing/ProcessWeb","extensions":"tif,png, jpg, jpeg","classifiers":["Product"]}]}

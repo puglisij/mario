@@ -21,46 +21,54 @@ product.addAdditionalShots= function addAdditionalShots()
 
     // Loop through other illustrated use shots that match this DocID in RGBArchive
 	var fileNames = IMAGE.get("illustratedUseShots");
-    for (var i = 0; i < results.length; ++i)
+    if (fileNames)
     {
-        var file = new File(fileNames[i]);
-        var fileNameNoExtension = _.getDocumentNameWithoutExtension(fileNames[i]);
-        if(file.exists)
+        for (var i = 0; i < fileNames.length; ++i)
         {
-            if(!_.getLayerByName(fileNameNoExtension)) 
+            var file = new File(fileNames[i]);
+            var fileNameNoExtension = _.getDocumentNameWithoutExtension(fileNames[i]);
+            if(file.exists)
             {
-                _placeImage(file);
-                
-                if(_.hasKeyword("4to1")) {
-                    action.scaleLayerByPercent(50);
-                }
-                if(_.hasKeyword("1to1")) {
-                    action.scaleLayerByPercent(200);
-                }
+                if(!_.getLayerByName(fileNameNoExtension)) 
+                {
+                    _placeImage(file);
+                    
+                    if(_.hasKeyword("4to1")) {
+                        action.scaleLayerByPercent(50);
+                    }
+                    if(_.hasKeyword("1to1")) {
+                        action.scaleLayerByPercent(200);
+                    }
 
-                action.setDropShadow_Product();
-                action.unsharpMask({
-                    amountPercent: 40,
-                    radiusPixels: 1,
-                    thresholdLevels: 0
-                });
-                action.setLayerIconColor(LayerIconColor.Violet);
+                    action.setDropShadow_Product();
+                    action.unsharpMask({
+                        amountPercent: 40,
+                        radiusPixels: 1,
+                        thresholdLevels: 0
+                    });
+                    action.setLayerIconColor(LayerIconColor.Violet);
+                }
             }
         }
     }
+
 	
     // Loop through other product use shots that match this SKU in RGBArchive
     var suffixes = IMAGE.get("productShots");
-    for(var i = 0; i < suffixes.length; ++i)
+    if(suffixes)
     {
-        if(!_.getLayerByName(suffixes[i]))
+        for(var i = 0; i < suffixes.length; ++i)
         {
-            action.makeLayer(suffixes[i]);
-            action.setLayerIconColor(LayerIconColor.Red)
-            action.fillLayer(255, 0, 255);
-            action.setLayerBlendMode(BlendMode.MULTIPLY);
+            if(!_.getLayerByName(suffixes[i]))
+            {
+                action.makeLayer(suffixes[i]);
+                action.setLayerIconColor(LayerIconColor.Red)
+                action.fillLayer(255, 0, 255);
+                action.setLayerBlendMode(BlendMode.MULTIPLY);
+            }
         }
     }
+
 
 	function _placeImage(image)
     {

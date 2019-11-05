@@ -37,7 +37,7 @@ export default class Server extends EventEmitter
         super();
         this.server = null;
         this.actionPath = actionPath;
-
+        
         this.config = {};
         this.configPath = upath.join(serverPath, "config.json");
         this.configurator = null;
@@ -60,9 +60,6 @@ export default class Server extends EventEmitter
     {
         this.configurator = new ServerConfiguration();
         this.config = this.configurator.load(this.configPath);
-        if(!this.config.watchRoot) {
-            throw new Error("Server config missing 'watchRoot' watch path.");
-        }
         if(!this.config.watchers) {
             throw new Error("Server config missing 'watchers'.");
         }
@@ -76,10 +73,10 @@ export default class Server extends EventEmitter
         }
     }
     getConfiguration() {
-        return this.config.clone();
+        return this.configurator.clone();
     }
     getPipelineConfiguration() {
-        return this.pipelineConfig.clone();
+        return this.pipelineConfigurator.clone();
     }
     setConfiguration(key, value)
     {
@@ -114,21 +111,23 @@ export default class Server extends EventEmitter
         console.dir(this.config);
 
         //-----------------
-        // Load Actions 
-        //-----------------
-        let actionScript = "action={};";
-            actionScript += this.loadActionPath(this.actionPath, "");
-        let loadActionsResult = await this.runAction(actionScript);
-        console.log("Loaded actions: " + loadActionsResult);
-
-        //-----------------
         // Load Pipelines 
         //-----------------
         this._loadPipelineConfiguration();
         for(const pipeline of this.pipelineConfig.pipelines)
         {
-            this.pipelines[pipeline.for] = pipeline;
+            this.pipelines[pipeline.for.toLowerCase()] = pipeline;
         }
+
+        //-----------------
+        // Load Actions 
+        //-----------------
+        let actionScript = "action={};";
+            actionScript += this.loadActionPath(this.actionPath, "");
+        let loadActionsResult = await this.runAction(actionScript);
+        console.log("Loaded actions.");
+
+        this.emit("init");
     }
     async start()
     {
@@ -139,10 +138,10 @@ export default class Server extends EventEmitter
             //-----------------
             for(const watcherConfig of this.config.watchers) 
             {
-                const watchPathRoot = upath.join(this.config.watchRoot, watcherConfig.target);
+                const watchPathRoot = upath.normalize(watcherConfig.path);
                 const watchPaths = watcherConfig.extensions.map(ext => upath.join(watchPathRoot, "**", "*." + ext));
                 const watcher = chokidar.watch(watchPaths, {
-                    ignored: /^\.|Output\//
+                    ignored: /^\.|Output|Error/
                 })
                 .on("add", this.processImage.bind(this))
                 .on("addDir", this.processImage.bind(this));
@@ -224,12 +223,17 @@ export default class Server extends EventEmitter
         const reader = new Image.Reader(imagePath, imageName);
         console.log("Processing: " + imageName + " Full Path: " + imagePath);
 
-        await Promise.all([
-            reader.readProcessingData(),
-            reader.readMetadata(),
-            reader.readWithClassifiers(classifiers)
-        ]);
-        
+        try {
+            await Promise.all([
+                reader.readProcessingData(),
+                reader.readMetadata()
+            ]);    
+        } catch(e) {
+            const image = reader.getImage();
+            this.moveToErrored(image, e.toString());
+            return;
+        }
+
         // TODO: Allow Server to run independent of CEP Panel? Communicate via IPC?
         //      Node code would run in Server process and JSX would run in CEP Panel process.
         const image = reader.getImage();
@@ -241,6 +245,44 @@ export default class Server extends EventEmitter
         if(!this._isPipelineRunningMutex) {
             this.runPipeline();
         }
+    }
+    async moveToErrored(image, message)
+    {
+        const sourceDir = upath.dirname(image.path);
+        const destDir = upath.join(sourceDir, "Error_" + image.type);
+        const destLogsPath = upath.join(destDir, image.fileName + ".log");
+        const destImagePath = upath.join(destDir, image.fileName);
+        await new Promise(resolve => {
+            fs.mkdir(destDir, {
+                recursive: false
+            }, err => {
+                if(err) throw err;
+                resolve();
+            });
+        });
+        fs.writeFile(destLogsPath, message, err => {
+            if(err) 
+                console.error(err + "\nErrored image logs could not be written to " + destLogsPath);
+        });
+        fs.rename(image.path, destImagePath, err => {
+            if(err) {
+                console.error(err + "\nErrored image could not be moved to " + destImagePath);
+                return;
+            }
+            console.log("Errored image moved to: " + destImagePath);
+        });
+        if(!image.dataPath || !image.dataFileName) {
+            return;
+        }
+        const destDataPath = upath.join(destDir, image.dataFileName);
+        fs.rename(image.dataPath, destDataPath, err => {
+            if(err) 
+                console.error(err + "\nErrored image data could not be moved to " + destDataPath);
+        });
+    }
+    async moveTo(image, toDirectory)
+    {
+
     }
     /**
      * Run images through pipeline per its configuration
@@ -281,8 +323,8 @@ export default class Server extends EventEmitter
                         return result;
                     } catch(e) {
                         alert("Cannot run action: ${psAction} Exception: " + e); 
+                        return "Exception: " + e.toString();
                     }
-                    return "error";
                     }());`;
                     // Call jsx action by name with config parameters 
                     await this.runAction(jsxString)
@@ -295,6 +337,7 @@ export default class Server extends EventEmitter
             catch(e) 
             {
                 await this.pauseCheck(this.config.pauseOnExceptions);
+                this.moveToErrored(image, e.toString());
             }
             finally 
             {
@@ -330,7 +373,7 @@ export default class Server extends EventEmitter
             {
                 let nextPath = upath.join(pathToActions, name);
                 let nextScript;
-                if(fs.lstatSync(nextPath).isDirectory()) {
+                if(fs.statSync(nextPath).isDirectory()) {
                     nextScript = this.loadActionPath(nextPath, `${namespacePrefix}${name}`);
                 } else {
                     nextScript = `importAction("${nextPath}");`
@@ -347,12 +390,14 @@ export default class Server extends EventEmitter
     {
         return new Promise((resolve, reject) => 
         {
-            this.cs.evalScript(actionString, function(result) {
-                if(result.includes("error")) {
-                    console.error(`Action: \n\t${actionString}\n\tResulted in Error.`);
-                    reject();
+            this.cs.evalScript(actionString, function(result) 
+            {
+                if(result.toLowerCase().includes("error") || result.toLowerCase().includes("exception")) {
+                    const errorMessage = `Action: \n\t${actionString}\nResult:\n${result}`;
+                    console.error(errorMessage);
+                    reject(errorMessage);
                 } else {
-                    console.log(`Action: \n\t${actionString}\n\tResult: ${result}`);
+                    console.log(`Action: \n\t${actionString}\nResult: ${result}`);
                     resolve()
                 }
             });

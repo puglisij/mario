@@ -1,11 +1,9 @@
 <template>
-    <div>
-        <label class="topcoat-checkbox">
-            <input type="checkbox" v-bind:name="name" v-bind:checked="checked">
-            <div class="topcoat-checkbox__checkmark"></div>
-            <slot/>
-        </label>
-    </div>
+    <label class="topcoat-checkbox">
+        <input type="checkbox" :name="name" :value="value" :checked="checked" @change="onChange">
+        <div class="topcoat-checkbox__checkmark"></div>
+        <slot/>
+    </label>
 </template>
 
 <script>
@@ -17,11 +15,21 @@ export default {
     },
     props: {
         checked: Boolean,
+        value: String,
         name: String
+    }, 
+    methods: {
+        onChange(event) {
+            console.log(`checkbox ${event.target.name} changed to ${event.target.checked}`);
+            this.$emit("change", event.target.name, event.target.checked);
+        }
     }
 }
 </script>
 
 <style scoped>
-
+    label {
+        display: block;
+        margin: 10px 0;
+    }
 </style>

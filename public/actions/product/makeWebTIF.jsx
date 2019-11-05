@@ -52,7 +52,13 @@ product.makeWebTIF = function makeWebTIF()
 
     // TODO: Should we be building up a TIF by reopening it and adding new layers?
     //       It probably shouldnt be the image processors job to go out and find files.
-    var newTifFile = new File("./Output/" + IMAGE.get("sku") + ".tif");
+    var sku = IMAGE.get("sku");
+    if(!sku) {
+        throw new Error("Image data missing sku.");
+    }
+    var outputDirectory = action.createOutputDirectory(outputDirectory);
+    var newTifFilePath = outputDirectory + "/" + sku + ".tif";
+    var newTifFile = new File(newTifFilePath);
     if (newTifFile.exists) 
     {
         // The opened TIF becomes active document
@@ -68,7 +74,7 @@ product.makeWebTIF = function makeWebTIF()
     else 
     {
         // The created TIF becomes the active document
-        saveAsTIF(newTifFile);
+        action.saveAsTIF(newTifFile);
         action.makeWhiteBackground();
     }
 

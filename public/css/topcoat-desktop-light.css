@@ -2889,7 +2889,6 @@ input[type="search"]::-webkit-search-cancel-button {
 .topcoat-tab-bar__button:focus,
 .topcoat-tab-bar__button--large:focus {
   z-index: 1;
-  box-shadow: inset 0 1px rgba(255,255,255,0.36), 0 0 0 2px #6fb5f1;
   outline: 0;
 }
 

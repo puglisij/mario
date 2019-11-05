@@ -1,3 +1,6 @@
+/**
+* Shortcuts for work on the document
+*/
 var _ = {
     refresh: function()
     {
@@ -11,6 +14,13 @@ var _ = {
     getDocumentNameWithoutExtension: function(fullName)
     {
         return (fullName || app.activeDocument.name).match(/^[^.]+/).toString();
+    },
+    getDefaultOutputPath: function() {
+        if(!IMAGE) {
+            throw new Error("No active IMAGE in process.");
+        }
+        var currentPath = activeDocument.path;
+        return new Folder(currentPath + "/Output_" + IMAGE.type).fsName;
     },
     saveUnits: function() 
     {
@@ -76,6 +86,8 @@ var _ = {
         return null;
     }
 }
+
+
 
 function c2s(c) { return typeIDToStringID(charIDToTypeID(c)) }
 function s2t(s) { return app.stringIDToTypeID(s) }

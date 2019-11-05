@@ -1,19 +1,15 @@
 <template>
   <div id="app">
-    <!-- This is the root of your panel -->
-    <!-- Content should go inside #app -->
-    <!--  <img alt="Vue logo" src="./assets/logo.png" /> -->
-    <h1>Mario</h1>
     <notifications group="mario" 
-                   position="top left"
-                   :max="1" /> 
-
-
+                position="top left"
+                :max="1" /> 
+    <div class="app-title">
+        <h1>Mario</h1>
+    </div>
 
     <!-- Utility component to handle context and flyout menus -->
     <menus />
     <server />
-    <jsx />
   </div>
 </template>
 
@@ -26,16 +22,12 @@ import { mapState, mapGetters } from 'vuex';
 import themeManager from "./themeManager";
 import menus from "./components/menus.vue";
 import server from "./components/server.vue";
-import jsx from "./components/jsx.vue";
 
-
-// BEST PRACTICE: Props down, Events Up
 export default {
     name: "app",
     components: {
         menus,
-        server,
-        jsx
+        server
     },
     data: () => {
         return {
@@ -110,14 +102,14 @@ export default {
 @import url("http://fonts.googleapis.com/css?family=Source+Sans+Pro:300");
 @import url("http://fonts.googleapis.com/css?family=Source+Code+Pro");
 
-html,body {
+/* NOTE: Import global variables in webpack config */
+html, body {
     margin: 0;
     padding: 0;
     height: 100%;
 }
 body {
     font-family: source-sans-pro, sans-serif;
-    padding: .5em;
 
     &.light {
         background: #F4F4F4;
@@ -129,10 +121,13 @@ body {
     }
 }
 
+h1, h2, h3 {
+    margin: 0 0 0.5em 0;
+}
 h1 {
     font-size: 20px;
     font-weight: 600;
-    margin: 1em 0;
+    margin: 0.5em;
 }
 h2 {
     font-size: 16px;
@@ -143,28 +138,12 @@ h3 {
     font-weight: 400;
 }
 
-section {
-    margin: 10px 0;
-}
-
 #app::-webkit-scrollbar {
   display: block;
 }
 body::-webkit-scrollbar {
   width: 0px;
 }
-/* ::-webkit-scrollbar {
-  background-color: var(--color-scrollbar);
-  width: var(--width-scrollbar-track);
-}
-::-webkit-scrollbar-thumb {
-  width: var(--width-scrollbar-track);
-  background: var(--color-scrollbar-thumb);
-  border-radius: var(--radius-scrollbar-thumb);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-scrollbar-thumb-hover);
-} */
 ::-webkit-scrollbar-resizer {
   display: none;
   width: 0px;
