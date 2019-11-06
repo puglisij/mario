@@ -271,11 +271,11 @@ export default class Server extends EventEmitter
             }
             console.log("Errored image moved to: " + destImagePath);
         });
-        if(!image.dataPath || !image.dataFileName) {
+        if(!image.dataFilePath || !image.dataFileName) {
             return;
         }
         const destDataPath = upath.join(destDir, image.dataFileName);
-        fs.rename(image.dataPath, destDataPath, err => {
+        fs.rename(image.dataFilePath, destDataPath, err => {
             if(err) 
                 console.error(err + "\nErrored image data could not be moved to " + destDataPath);
         });
@@ -305,6 +305,8 @@ export default class Server extends EventEmitter
 
             try 
             {
+                this.emit("pipelinestart", image.type);
+
                 // Open document 
                 await this.runAction(`IMAGE=new ImageForProcessing(${JSON.stringify(image)});`);
                 await this.runAction(`
@@ -326,6 +328,8 @@ export default class Server extends EventEmitter
                         return "Exception: " + e.toString();
                     }
                     }());`;
+
+                    this.emit("action", psAction);
                     // Call jsx action by name with config parameters 
                     await this.runAction(jsxString)
                     await this.pauseCheck(this.config.pauseAfterEveryAction);
@@ -341,6 +345,7 @@ export default class Server extends EventEmitter
             }
             finally 
             {
+                this.emit("pipelineend", image.type);
                 await this.runAction(`__PIPELINE.restoreUnits && __PIPELINE.restoreUnits();`);
                 await this.pauseCheck(this.config.pauseAfterEveryImage);
                 if(this._state == ServerState.STOPPED) {

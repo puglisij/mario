@@ -1,9 +1,5 @@
 <template>
   <div>
-      <notifications group="foo" 
-                       position="bottom left"
-                       :max="1" /> 
-
         <section class="content">
             <h2>Server</h2>
 
@@ -23,6 +19,10 @@
             <checkbox name="pauseOnExceptions" v-model="configuration.pauseOnExceptions" v-on:change="onConfigurationCheckbox">
                 Pause on Exceptions
             </checkbox>
+
+            <p class="current-action" v-if="isPipelineActive">
+                Action: {{ currentPipelineAction }}
+            </p>
         </section>
         
         <div class="topcoat-tab-bar tabs">
@@ -89,7 +89,9 @@ export default {
         configuration: {},
         pipelineConfiguration: {},
         isServerPaused: false, 
-        isServerStopped: true
+        isServerStopped: true,
+        currentPipelineAction: "",
+        isPipelineActive: false
     }),
     computed: {
         ...mapState(['cs', 'extensionPath', 'hostPath', 'hostActionPath']),
@@ -111,16 +113,14 @@ export default {
         this.server.init();
         this.server.on("init", this.onInitComplete);
         this.server.on("state", this.onStateChange);
+        this.server.on("pipelinestart", this.onPipelineStart);
+        this.server.on("action", this.onAction);
+        this.server.on("pipelineend", this.onPipelineEnd);
 
         window.addEventListener("beforeunload", event => {
             this.stop();
         });
         console.log("Server component created.");
-    },
-    mounted() 
-    {
-        // Update basic settings ui
-
     },
     beforeDestroy() 
     {
@@ -136,12 +136,6 @@ export default {
             this.server.start();
             //const forked = fork('server.js');
             //forked.kill();
-            
-            // this.$notify({
-            //     group: "foo",
-            //     title: "Look!",
-            //     text: "We're Started."
-            // })
         },
         pause() 
         {
@@ -163,7 +157,17 @@ export default {
             this.isServerPaused = this.server.isPaused();
             this.isServerStopped = this.server.isStopped();
         },
-        onConfigurationCheckbox(name, isChecked)
+        onPipelineStart() {
+            this.isPipelineActive = true;
+        },
+        onAction(action) {
+            this.currentPipelineAction = action;
+        },
+        onPipelineEnd() {
+            this.currentPipelineAction = "";
+            this.isPipelineActive = false;
+        },
+        onConfigurationCheckbox(isChecked, name)
         {
             this.server.setConfiguration(name, isChecked);
         },
@@ -205,5 +209,8 @@ export default {
     }
     .content {
         padding: .5em;
+    }
+    .current-action {
+        font-size: .8em;
     }
 </style>

@@ -1,6 +1,6 @@
 <template>
     <label class="topcoat-checkbox">
-        <input type="checkbox" :name="name" :value="value" :checked="checked" @change="onChange">
+        <input type="checkbox" :name="name" :value="value" :checked="checked" @change="onCheckbox">
         <div class="topcoat-checkbox__checkmark"></div>
         <slot/>
     </label>
@@ -19,9 +19,9 @@ export default {
         name: String
     }, 
     methods: {
-        onChange(event) {
+        onCheckbox(event) {
             console.log(`checkbox ${event.target.name} changed to ${event.target.checked}`);
-            this.$emit("change", event.target.name, event.target.checked);
+            this.$emit("change", event.target.checked, event.target.name);
         }
     }
 }

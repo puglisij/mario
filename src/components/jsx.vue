@@ -22,6 +22,7 @@
         <div class="row">
             <textarea class="topcoat-textarea" v-model="jsxText" rows="14" cols="45"></textarea>
             <br/><br/>
+            <button class="topcoat-button--large" v-show="jsxText.length > 0" >Save as Action</button>
             <button class="topcoat-button--large" v-show="jsxText.length > 0" v-on:click="runJsxText">Run</button>
             <button class="topcoat-button--large" v-show="jsxText.length > 0" v-on:click="clearJsxText">Clear</button>
         </div>

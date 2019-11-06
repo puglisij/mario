@@ -3,7 +3,7 @@
         {
             "id": 0,
             "for": "Product",
-            "name": "Default",
+            "name": "Default-Name",
             "doImagesRequireMetadataFile": true,
             "externalActions": [
                 {

@@ -3,7 +3,7 @@
         <button class="topcoat-button--large" v-on:click="startPause">
             {{ primaryButtonLabel }}
         </button>
-        <button class="topcoat-button--large" v-on:click="stop">Stop</button>
+        <button class="topcoat-button--large" v-show="!isStopped" v-on:click="stop">Stop</button>
     </div>
 </template>
 

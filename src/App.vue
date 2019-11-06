@@ -1,12 +1,10 @@
 <template>
   <div id="app">
-    <notifications group="mario" 
-                position="top left"
-                :max="1" /> 
     <div class="app-title">
         <h1>Mario</h1>
     </div>
 
+    <a-dialog name="confirm"></a-dialog>
     <!-- Utility component to handle context and flyout menus -->
     <menus />
     <server />
@@ -92,6 +90,12 @@ export default {
             var event = new CSEvent(name, "APPLICATION");
                 event.data = data;
             this.cs.dispatchEvent(event);
+        },
+        onYes() {
+            console.log("modal yes");
+        },
+        onCancel() {
+            console.log("modal cancel");
         }
     }
 };
@@ -154,5 +158,16 @@ body::-webkit-scrollbar {
 }
 ::-webkit-scrollbar-corner {
   display: none;
+}
+
+@mixin clearfix() {
+  &::after {
+    display: block;
+    content: "";
+    clear: both;
+  }
+}
+.clearfix {
+    @include clearfix();
 }
 </style>

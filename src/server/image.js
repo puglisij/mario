@@ -12,7 +12,9 @@ export default class Image
         this.path = "";
         // Path of the accompanying data file
         this.dataFileName = "";
-        this.dataPath = ""; 
+        this.dataFilePath = ""; 
+        // Path of the acompanying data folder (containing images needed for processing)
+        this.dataFolderPath = "";
         // External (stored outside file) metadata necessary for processing
         this.data = {};     
         // Metadata stored in the file
@@ -39,22 +41,27 @@ export default class Image
                     const name = this.image.fileName.split('.')[0];
                     const jsonFileName = name + '.json';
                     const binaryFileName = name + '.dat';
+                    const pathFolder = upath.join(directory, name);
                     const pathJson = upath.join(directory, jsonFileName);
                     const pathBinary = upath.join(directory, binaryFileName); // Use MessagePack standard for serialization?
 
+                    // read data file
                     let rawJson, data;
                     try {
                         rawJson = await promisify(fs.readFile)(pathJson, {
                             encoding: 'utf8'
                         });
+                        // read data folder 
+                        //stat = await promisify(fs.stat)(pathFolder);
+
                         this.image.dataFileName = jsonFileName;
-                        this.image.dataPath = pathJson;
+                        this.image.dataFilePath = pathJson;
                         data = JSON.parse(rawJson);
                     } catch(e) {
                         reject(e);
                         return;
                     }
-
+                    
                     if (!data.type) {
                         reject("Image data file missing type.");
                         return;
