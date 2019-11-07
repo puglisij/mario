@@ -84,7 +84,7 @@ export default {
     data: () => ({
         tabs: ["jsx", "the-console", "configurator", "pipelines"],
         tabNames: ["Jsx", "Console", "Configuration", "Pipelines"],
-        currentTab: "configurator",
+        currentTab: "pipelines",
         server: null,
         configuration: {},
         pipelineConfiguration: {},

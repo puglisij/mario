@@ -23,7 +23,7 @@
                 />
 
                 <button class="topcoat-icon-button--quiet" type="button"
-                    @click="onOpenEditor($event, pipeline.id);" disabled="true"
+                    @click="onOpenEditor($event, pipeline.id);"
                 >Open Editor</button>
                 <button class="pipeline-delete topcoat-icon-button--quiet" type="button"
                     @click="onDeletePipeline($event, pipeline.id);"
@@ -35,35 +35,44 @@
         <div class="pipeline-editor" v-if="isEditorOpen">
             <h3>Editor</h3>
             <div class="pipeline-editor-board">
-
+                <draggable v-model="pipelineBeingEdited.externalActions" draggable=".pipeline-action">
+                    <div class="pipeline-action" 
+                        v-for="action in pipelineBeingEdited.externalActions" 
+                        :key="action.action"
+                    >
+                        <input class="topcoat-text-input" type="text" placeholder="the action string (e.g. 'action.saveDocument')"
+                            v-model="action.action"
+                        />
+                    </div>
+                </draggable>
             </div>
-            <button>Click</button>
         </div>
     </div>
 </template>
 
 <script>
 /* npm modules */
-
+import draggable from 'vuedraggable'
 
 /* local modules */
 import checkbox from "./checkbox.vue";
 import _ from "../utils";
-import Vector2 from "../Vector2";
 
 // TODO move editor into its own lib (non Vue) and import
 
 export default {
     name: "configurator",
     components: {
-        checkbox
+        checkbox,
+        draggable
     },
     props: {
         configuration: Object
     }, 
     data: () => ({
         needSaved: false,
-        isEditorOpen: true
+        isEditorOpen: true,
+        pipelineBeingEdited: {}
     }),
     methods: {
         getPipeline: function(id) {
@@ -82,11 +91,19 @@ export default {
         onDeletePipeline(event, id)
         {
 
+            // remove from editor if being edited
         },
         onOpenEditor(event, id)
         {
             const pipeline = this.getPipeline(id);
+            this.pipelineBeingEdited = pipeline;
             this.isEditorOpen = true;
+        },
+        onPipelineSortUpdate(event) 
+        {
+            // move action to new position
+            let actionBeingMoved = this.pipeline.externalActions.splice(event.oldIndex, 1)[0];
+            this.pipeline.externalActions.splice(event.newIndex, 0, actionBeingMoved);
         },
         onConfigurationSubmit(event) 
         {
