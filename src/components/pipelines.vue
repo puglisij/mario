@@ -30,22 +30,37 @@
                 >X</button>
             </div>
             <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
-            <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add</button>
+            <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Pipline</button>
         </form>
         <div class="pipeline-editor" v-if="isEditorOpen">
             <h3>Editor</h3>
             <div class="pipeline-editor-board">
-                <draggable v-model="pipelineBeingEdited.externalActions" draggable=".pipeline-action">
-                    <div class="pipeline-action" 
-                        v-for="action in pipelineBeingEdited.externalActions" 
+                <draggable 
+                    :list="pipelineBeingEdited.externalActions" 
+                    :move="onActionSort"
+                    draggable=".action"
+                    handle=".action-handle"
+                    group="actions"
+                >
+
+                    <div class="action" 
+                        v-for="(action, index) in pipelineBeingEdited.externalActions" 
                         :key="action.action"
                     >
-                        <input class="topcoat-text-input" type="text" placeholder="the action string (e.g. 'action.saveDocument')"
-                            v-model="action.action"
-                        />
+                        <span class="action-handle">&#9776;</span>
+                        <div class="action-data">
+                            <input class="topcoat-text-input" type="text" placeholder="the action string (e.g. 'action.saveDocument')"
+                                v-model="action.action"
+                            />
+                            <div>
+                                Parameters
+                            </div>
+                        </div>
+                        <button class="action-delete topcoat-icon-button--quiet" type="button" @click="onActionDelete(index)">X</button>
                     </div>
                 </draggable>
             </div>
+            <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Action</button>
         </div>
     </div>
 </template>
@@ -56,6 +71,7 @@ import draggable from 'vuedraggable'
 
 /* local modules */
 import checkbox from "./checkbox.vue";
+import pipelineAction from "./pipeline-action.vue";
 import _ from "../utils";
 
 // TODO move editor into its own lib (non Vue) and import
@@ -64,14 +80,15 @@ export default {
     name: "configurator",
     components: {
         checkbox,
-        draggable
+        draggable,
+        pipelineAction
     },
     props: {
         configuration: Object
     }, 
     data: () => ({
         needSaved: false,
-        isEditorOpen: true,
+        isEditorOpen: false,
         pipelineBeingEdited: {}
     }),
     methods: {
@@ -99,11 +116,18 @@ export default {
             this.pipelineBeingEdited = pipeline;
             this.isEditorOpen = true;
         },
-        onPipelineSortUpdate(event) 
+        onActionDelete(index)
         {
-            // move action to new position
-            let actionBeingMoved = this.pipeline.externalActions.splice(event.oldIndex, 1)[0];
-            this.pipeline.externalActions.splice(event.newIndex, 0, actionBeingMoved);
+            this.$dialog.open({
+                name: "confirm",
+                onYes: () => {
+                    this.pipelineBeingEdited.externalActions.splice(index, 1);
+                }
+            });
+        },
+        onActionSort(event, originalEvent) 
+        {
+            console.log(`Action position changed: ${event.draggedContext.index} to ${event.relatedContext.index}`)
         },
         onConfigurationSubmit(event) 
         {
@@ -116,34 +140,41 @@ export default {
 </script>
 
 <style scoped lang="scss">
+
     .pipeline {
         border: none;
         border-bottom: 1px solid #333;
         padding: .5em;
+
+        input[type=text] {
+            margin: .5em 0;
+        }
+        &:last-of-type {
+            margin-bottom: .5em;
+        }
+        &-delete {
+            float: right;
+        }
     }
-    .pipeline:last-of-type {
-        margin-bottom: .5em;
-    }
-    .pipeline-delete {
-        float: right;
-    }
+
     h3 {
         margin: .5em;
     }
     input[type=text] {
         display: inline-block;
-        margin: .5em 0;
-        width: 85%;
+        width: 90%;
     }
 
     .pipeline-editor {
         border-top: 1px solid #333;
         margin-top: .5em;
 
-        .spot { fill: blue; }
-        .spot2 { fill: red; }
+        h3 {
+            font-weight: bold;
+        }
     }
     .pipeline-editor-board {
         position: relative;
     }
+
 </style>
