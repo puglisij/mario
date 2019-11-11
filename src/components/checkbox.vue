@@ -1,6 +1,6 @@
 <template>
     <label class="topcoat-checkbox">
-        <input type="checkbox" :name="name" :value="value" :checked="checked" @change="onCheckbox">
+        <input type="checkbox" :name="name" :value="value" :checked="localChecked" @change="onCheckbox">
         <div class="topcoat-checkbox__checkmark"></div>
         <slot/>
     </label>
@@ -14,10 +14,15 @@ export default {
         event: "change"
     },
     props: {
-        checked: Boolean,
+        checked: null,
         value: String,
         name: String
     }, 
+    computed: {
+        localChecked() {
+            return !!this.checked;
+        }
+    },
     methods: {
         onCheckbox(event) {
             console.log(`checkbox ${event.target.name} changed to ${event.target.checked}`);

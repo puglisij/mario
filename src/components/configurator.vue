@@ -27,7 +27,7 @@
             >X</button>
         </div>
         <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
-        <button class="topcoat-button--large" type="button" @click="onAddNewWatcher">Add</button>
+        <button class="topcoat-button--large" type="button" @click="onAddNewWatcher">Add Watcher</button>
     </form>
 </template>
 

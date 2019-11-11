@@ -12,12 +12,14 @@
                 <checkbox v-model="pipeline.doImagesRequireMetadataFile" @change="onPipeline">
                     Require meta data file
                 </checkbox>
-                <input class="topcoat-text-input" type="text" placeholder="my-pipeline-name"
+                <input class="topcoat-text-input" type="text" 
+                    placeholder="my-pipeline-name"
                     v-model="pipeline.name"
                     @change="onPipeline"
                 />
                 <br/>
-                <input class="topcoat-text-input" type="text" placeholder="my-type-1, my-type-2"
+                <input class="topcoat-text-input" type="text" 
+                    placeholder="my-type-1, my-type-2"
                     v-model="pipeline.for"
                     @change="onPipeline"
                 />
@@ -42,22 +44,15 @@
                     handle=".action-handle"
                     group="actions"
                 >
-
-                    <div class="action" 
+                <!-- TODO: Use v-bind:action.sync="action" instead? -->
+                    <pipeline-action 
                         v-for="(action, index) in pipelineBeingEdited.externalActions" 
-                        :key="action.action"
-                    >
-                        <span class="action-handle">&#9776;</span>
-                        <div class="action-data">
-                            <input class="topcoat-text-input" type="text" placeholder="the action string (e.g. 'action.saveDocument')"
-                                v-model="action.action"
-                            />
-                            <div>
-                                Parameters
-                            </div>
-                        </div>
-                        <button class="action-delete topcoat-icon-button--quiet" type="button" @click="onActionDelete(index)">X</button>
-                    </div>
+                        v-model="pipelineBeingEdited.externalActions[index]"
+                        :key="index"
+                        @select-new="onActionSelectNew"
+                        @changed="onActionChange"
+                        @delete="onActionDelete"
+                    />
                 </draggable>
             </div>
             <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Action</button>
@@ -116,6 +111,14 @@ export default {
             this.pipelineBeingEdited = pipeline;
             this.isEditorOpen = true;
         },
+        onActionSelectNew(event)
+        {
+            console.log(`Action select new: `); console.dir(event);
+        },
+        onActionChange(action) 
+        {
+            console.log(`Action changed: `); console.dir(action);
+        },
         onActionDelete(index)
         {
             this.$dialog.open({
@@ -168,10 +171,6 @@ export default {
     .pipeline-editor {
         border-top: 1px solid #333;
         margin-top: .5em;
-
-        h3 {
-            font-weight: bold;
-        }
     }
     .pipeline-editor-board {
         position: relative;

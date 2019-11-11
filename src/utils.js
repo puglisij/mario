@@ -19,7 +19,45 @@ function guid()
     return _p8() + _p8(true) + _p8(true) + _p8();
 }
 
+function first(obj) 
+{
+    if(Array.isArray(obj)) {
+        return obj[0];
+    } 
+    return obj[Object.keys(obj)[0]];
+}
+function isBool(val) {
+    return typeof val === "boolean";
+}
+function isNumber(val) {
+    return typeof val === "number" && val === val;
+}
+function isObject(val) {
+    return val !== null && typeof(val) === "object";
+}
+function isString(val) {
+    return typeof val === "string";
+}
+function isUndefined(val) {
+    return typeof val === "undefined";
+}
+function isNull(val) {
+    return val === null;
+}
+function isArray(val) 
+{
+    return Array.isArray(val)
+}
+
 export default {
     simpleDeepClone,
-    guid
+    guid, 
+    first,
+    isBool, 
+    isNumber,
+    isObject,
+    isString,
+    isUndefined, 
+    isNull,
+    isArray
 }

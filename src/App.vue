@@ -123,6 +123,9 @@ body {
         color: #F0F1F1;
         background: #4A4D4E;
     }
+    * {
+        box-sizing: border-box;
+    }
 }
 
 h1, h2, h3 {
@@ -139,6 +142,10 @@ h2 {
 }
 h3 {
     font-size: 14px;
+    font-weight: 400;
+}
+h4 {
+    font-size: 12px; 
     font-weight: 400;
 }
 
