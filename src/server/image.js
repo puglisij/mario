@@ -19,8 +19,6 @@ export default class Image
         this.data = {};     
         // Metadata stored in the file
         this.metadata = null; 
-        // Metadata keywords stored in the file
-        this.keywords = [];
     }
     
     static get Reader() 
@@ -71,26 +69,6 @@ export default class Image
                     resolve();
                 });
             }
-            async readWithClassifiers(classifiers) 
-            {
-                return new Promise((resolve, reject) => 
-                {
-                    for(const classifier of classifiers) 
-                    {
-                        try {
-                            let result = classifier(this.image.fileName);
-                            if(result) {
-                                this.image.type = result.type;
-                                Object.assign(this.image.data, result);
-                                resolve();
-                            }
-                        } catch(e) {
-                            reject("Image classifier threw an exception: " + e);
-                        }
-                    }
-                    reject("Image name could not be identified by classifier.");
-                });
-            }
             async readMetadata()
             {
                 let ep = new exiftool.ExiftoolProcess();
@@ -103,7 +81,7 @@ export default class Image
                 .then(() => ep.readMetadata(this.image.path, ['-File:all']))
                 .then(metadata => {
                     let fileMetadata = metadata.data[0];
-                    this.image.keywords = fileMetadata.Keywords;
+                    this.image.metadata = fileMetadata;
                 })
                 .finally(() => {
                     ep.close();

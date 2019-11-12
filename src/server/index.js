@@ -63,6 +63,7 @@ export default class Server extends EventEmitter
         if(!this.config.watchers) {
             throw new Error("Server config missing 'watchers'.");
         }
+        // TODO Add .json to watcher paths
     }
     _loadPipelineConfiguration()
     {
@@ -302,6 +303,10 @@ export default class Server extends EventEmitter
                 console.error("Pipeline not found for image: " + image.path + " type: " + image.type);
                 continue;
             }
+            if(pipeline.disabled) {
+                console.log(`Pipeline ${pipeline.name} is disabled. Skipping.`);
+                continue;
+            }
 
             try 
             {
@@ -331,7 +336,10 @@ export default class Server extends EventEmitter
 
                     this.emit("action", psAction);
                     // Call jsx action by name with config parameters 
-                    await this.runAction(jsxString)
+                    let result = await this.runAction(jsxString);
+                    if (result === "EXIT") {
+                        break;
+                    }
                     await this.pauseCheck(this.config.pauseAfterEveryAction);
                     if(this._state == ServerState.STOPPED) {
                         break;
@@ -403,7 +411,7 @@ export default class Server extends EventEmitter
                     reject(errorMessage);
                 } else {
                     console.log(`Action: \n\t${actionString}\nResult: ${result}`);
-                    resolve()
+                    resolve(result)
                 }
             });
         })

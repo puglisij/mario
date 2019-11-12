@@ -31,7 +31,8 @@ product.addAdditionalShots= function addAdditionalShots()
             {
                 if(!_.getLayerByName(fileNameNoExtension)) 
                 {
-                    _placeImage(file);
+                    action.placeImageAsSmartObject(image);
+                    _transformPlacedImage(file);
                     
                     if(_.hasKeyword("4to1")) {
                         action.scaleLayerByPercent(50);
@@ -40,7 +41,7 @@ product.addAdditionalShots= function addAdditionalShots()
                         action.scaleLayerByPercent(200);
                     }
 
-                    action.setDropShadow_Product();
+                    product.dropShadow();
                     action.unsharpMask({
                         amountPercent: 40,
                         radiusPixels: 1,
@@ -70,10 +71,8 @@ product.addAdditionalShots= function addAdditionalShots()
     }
 
 
-	function _placeImage(image)
+	function _transformPlacedImage(image)
     {
-		action.placeImageAsSmartObject(image);
-
 		var idTrnf = charIDToTypeID( "Trnf" ); // transform
 		var desc178 = new ActionDescriptor();
 		var idFTcs = charIDToTypeID( "FTcs" ); // freeTransformCenterState

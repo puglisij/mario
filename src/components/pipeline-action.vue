@@ -53,7 +53,7 @@
     </div>
 </template>
 
-<script>
+<script> 
 import pipelineActionParameter from "./pipeline-action-parameter.vue";
 import _ from "../utils";
 
@@ -71,14 +71,13 @@ export default {
     props: {
         action: Object
     },
-    data: () => ({
-        showParameters: false
-        //localAction: this.toLocalAction(this.action)
-    }),
+    data() {
+        return {
+            localAction: this.toLocalAction(this.action),
+            showParameters: false
+        }
+    },
     computed: {
-        localAction() {
-            return this.toLocalAction(this.action);
-        },
         hasParameters() {
             return Object.keys(this.localAction.parameters).length;
         }, 
@@ -87,11 +86,14 @@ export default {
                     && _.first(this.localAction.parameters).name === SINGLE_NONAME_PARAMETER;
         }
     },
+    created() {
+        console.log("Action created()");
+    },
     methods: {
         /** 
             Raw Action Example:
             {
-                "action": "action.setColorSpace",
+                "action": "action.setColorMode",
                 "parameters": "RGB"
             }
             Action parameters may be a single value or an object with key, value pairs. 
@@ -114,24 +116,14 @@ export default {
                     }
                 }
             }
-            return rawAction;
+            return Object.assign({}, this.action, rawAction);
         },
         /** 
             Local Action Example: 
             {
                 "id-0": {
-                    "SINGLE": "RGB"
-                }
-            }
-            or 
-            {
-                "id-0": {
                     "name": "colorSpace"
                     "value": "RGB"
-                }, 
-                "id-1": {
-                    "name": "border",
-                    "value": 50
                 }
             }
         */
@@ -144,7 +136,7 @@ export default {
             let rawParameters = {};
             if(_.isObject(rawAction.parameters)) {
                 rawParameters = rawAction.parameters;
-            } else if (_.isBool(rawAction.parameters) 
+            } else if (_.isBoolean(rawAction.parameters) 
                     || _.isNumber(rawAction.parameters) 
                     || _.isString(rawAction.parameters)
                     || _.isNull(rawAction.parameters)) {
@@ -155,21 +147,22 @@ export default {
             for(const [parameterName, parameterValue] of Object.entries(rawParameters)) {
                 const parameterId = _.guid();
                 localAction.parameters[parameterId] = {
-                    "name": parameterName, 
-                    "value": parameterValue
+                    name: parameterName, 
+                    value: parameterValue
                 };
             }
             console.log("Converted to local action: "); console.dir(localAction);
             return localAction;
         },
-        // emit the local clone 
-        // https://simonkollross.de/posts/vuejs-using-v-model-with-objects-for-custom-components
+        emitChange()
+        {
+            const rawAction = this.toRawAction(this.localAction);
+            this.$emit("changed", rawAction);
+        },
         onActionName(event)
         {
-            const localAction = this.localAction;
-                  localAction.action = event.target.value;
-            const rawAction = this.toRawAction(localAction);
-            this.$emit("changed", rawAction);
+            this.localAction.action = event.target.value;
+            this.emitChange();
         },
         onActionSelectNew(event) {
             this.$emit("select-new");
@@ -182,21 +175,37 @@ export default {
         }, 
         onParameterAddSingle(event)
         {
+            const parameterId = _.guid();
+            this.$set(this.localAction.parameters, parameterId, {
+                name: SINGLE_NONAME_PARAMETER, 
+                value: ""
+            });
             console.log("add single parameter");
+            this.emitChange();
         },
         onParameterAddMultiple(event) 
         {
+            const parameterId = _.guid();
+            this.$set(this.localAction.parameters, parameterId, {
+                name: "name", 
+                value: ""
+            });
             console.log("add multiple parameters");
+            this.emitChange();
         },
-        onParameterChanged(id, name, value) {
-            const localAction = this.localAction;
-                localAction.parameters[id].name = name;
-                localAction.parameters[id].value = value;
-            const rawAction = this.toRawAction(localAction);
-            this.$emit("changed", rawAction);
+        onParameterChanged(id, name, value) 
+        {
+            this.localAction.parameters[id].name = name;
+            this.localAction.parameters[id].value = value;
+
+            console.log(`onParameterChanged()`);
+            this.emitChange();
         }, 
         onParameterDelete(id) {
-            delete this.localAction.parameters[id];
+            this.$delete(this.localAction.parameters, id);
+
+            console.log(`onParameterDelete() ${id}`)
+            this.emitChange();
         } 
     }
 }
@@ -270,6 +279,7 @@ export default {
         .action-parameter {
             display: block;
             letter-spacing: -1em;
+            margin: 0 0 .25em 0;
 
             select,
             input, 

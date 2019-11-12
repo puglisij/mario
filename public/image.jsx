@@ -7,17 +7,22 @@ function ImageForProcessing(json)
     this.type       = json.type;     // e.g. Product
     this.fileName   = json.fileName;
     this.path       = json.path;
-    // External (stored outside file) metadata necessary for processing
-    this.data       = json.data;     
     // Metadata stored in the file (i.e. XMP/EXIF)
-    this.metadata   = json.metadata;
-    // Metadata keywords stored in the file
-    this.keywords   = json.keywords;
+    this._metadata   = json.metadata;
+    // External (stored outside file) metadata necessary for processing
+    this._data       = json.data;     
 }
 /**
 * Return property in data which matches the given key
 */
 ImageForProcessing.prototype.get = function(key) 
 {
-    return this.data[key];
+    return this._data[key];
+}
+/**
+* Return the image type string. Also see utils _.hasKeyword()
+*/
+ImageForProcessing.prototype.hasKeyword = function(keyword) 
+{
+    return this._metadata.Keywords.includes(keyword);
 }

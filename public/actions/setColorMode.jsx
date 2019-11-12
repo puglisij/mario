@@ -1,7 +1,7 @@
 /**
 * Set the document to either "CMYK" or "RGB" color space. 
 */
-action.setColorSpace = function setColorSpace(spaceType) 
+action.setColorMode = function setColorMode(spaceType) 
 {
     if(spaceType == "RGB") {
         assignRGBColorProfile();

@@ -35,6 +35,6 @@ export default {
 <style scoped>
     label {
         display: block;
-        margin: 10px 0;
+        margin: 5px 0;
     }
 </style>

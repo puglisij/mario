@@ -26,7 +26,7 @@ function first(obj)
     } 
     return obj[Object.keys(obj)[0]];
 }
-function isBool(val) {
+function isBoolean(val) {
     return typeof val === "boolean";
 }
 function isNumber(val) {
@@ -35,8 +35,19 @@ function isNumber(val) {
 function isObject(val) {
     return val !== null && typeof(val) === "object";
 }
+function isEmptyObject(obj) 
+{
+    return Object.keys(obj || {}).length === 0;
+}
 function isString(val) {
     return typeof val === "string";
+}
+function isEmptyString(val) {
+    return val === "";
+}
+function isArray(val) 
+{
+    return Array.isArray(val)
 }
 function isUndefined(val) {
     return typeof val === "undefined";
@@ -44,20 +55,19 @@ function isUndefined(val) {
 function isNull(val) {
     return val === null;
 }
-function isArray(val) 
-{
-    return Array.isArray(val)
-}
+
 
 export default {
     simpleDeepClone,
     guid, 
     first,
-    isBool, 
+    isBoolean, 
     isNumber,
     isObject,
+    isEmptyObject,
     isString,
+    isEmptyString,
+    isArray,
     isUndefined, 
-    isNull,
-    isArray
+    isNull
 }

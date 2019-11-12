@@ -1,25 +1,24 @@
 <template>
     <div class="action-parameter">
-        <select 
-            v-model="type"
-            @change="onType">
-            <option v-for="(type, typeName) in types" :key="typeName" :value="typeName">{{ typeName }}</option>
+        <select v-model="type" @change="onType">
+            <option v-for="typeName in types" :key="typeName" :value="typeName">{{ typeName }}</option>
         </select> 
-        <input class="action-parameter__input topcoat-text-input" type="text" placeholder="value"
+        <input class="action-parameter__input topcoat-text-input" type="text" 
+            placeholder="name"
             v-model="localName"
             @change="onName"
             :disabled="disableName"
         />
         <checkbox class="action-parameter__input" name="check" 
             v-show="isBoolean"
-            v-model="localValue" 
-            @change="onValue"
-            />
+            :checked="localValue"
+            @change="onCheckboxValue" 
+        />
         <input class="action-parameter__input topcoat-text-input" type="text" name="text" 
             placeholder="value"
             v-show="!isBoolean"
-            v-model="localValue"
-            @change="onValue"
+            :value="localValue"
+            @change="onTextValue"
         />
         <button class="topcoat-icon-button--quiet" 
             type="button" 
@@ -35,34 +34,33 @@ import checkbox from "./checkbox.vue";
 const TYPE_STRING = "String";
 const TYPE_NUMBER = "Number";
 const TYPE_BOOLEAN = "Boolean";
-const TYPE_AUTO = "Auto";
+const TYPE_NOT_SUPPORTED = "Unknown";
+const TYPES = [
+    TYPE_STRING, 
+    TYPE_NUMBER,
+    TYPE_BOOLEAN
+];
 
-const TYPES_ = {
-    [typeof("")]: TYPE_STRING, 
-    [typeof(0)]: TYPE_NUMBER, 
-    [typeof(true)]: TYPE_BOOLEAN, 
-    [typeof(null)]: TYPE_AUTO
-};
-const TYPES = {
-    [TYPE_STRING]: typeof(""),
-    [TYPE_NUMBER]: typeof(0),
-    [TYPE_BOOLEAN]: typeof(true),
-    [TYPE_AUTO]: typeof(null)
-}
-
-// parent will bind model to value only, all other data is used locally
-export default {
+/*
+    Auto - type will not be forced but will be autodetected
+    Number - force the input value to be a Number
+    Boolean - force the input value to be a Boolean 
+    String - force the input value to be a string (e.g. String 'true' will not be forced to a Boolean true)
+*/
+export default { 
     name: 'pipeline-action-parameter',
     components: {
         checkbox
     },
     data() {
-        const conversion = this.convertTypeAuto(this.value);
+        const type = this.getType(this.value);
+        console.log(`parameter data() type: ${type} rawValue: ${this.value}`);
+
         return {
-            type: conversion.type, 
-            typeSetByUser: conversion.value !== null,
-            localValue: conversion.value,
-            localName: this.name
+            type: type, 
+            lockType: !_.isUndefined(this.value) && !_.isNull(this.value) && !_.isEmptyString(this.value),
+            localValue: type === TYPE_NOT_SUPPORTED ? null : this.value,
+            localName: this.name,
         }
     },
     props: {
@@ -78,63 +76,99 @@ export default {
         types() {
             return TYPES;
         },
-        isBoolean: function() { return this.type === TYPE_BOOLEAN; }, 
-        isNumber: function() { return this.type === TYPE_NUMBER; },
-        isString: function() { return this.type === TYPE_STRING; },
-        isAuto: function() { return this.type === TYPE_AUTO; }
+        isBoolean() { return this.type === TYPE_BOOLEAN; }, 
+        isNumber() { return this.type === TYPE_NUMBER; },
+        isString() { return this.type === TYPE_STRING; }
+    },
+    created() {
+        console.log(`parameter created()`)
+    },
+    mounted() {
+        console.log(`parameter mounted()`)
     },
     methods: {
-        convertTypeAuto(value, forceType)
+        /**
+         * Keep the original type
+         */
+        getType(value)
         {
-            if(_.isNumber(value) || (value !== null && !isNaN(value))) {
+            if(_.isBoolean(value)) {
+                return TYPE_BOOLEAN;
+            }
+            if(_.isNumber(value)) {
+                return TYPE_NUMBER;                   
+            }
+            if(_.isString(value)) {
+                return TYPE_STRING;          
+            }
+            return TYPE_STRING;
+        },
+        /**
+         * Auto detect and convert the type
+         */
+        autoType(value)
+        {
+            if (_.isBoolean(value) || (_.isString(value) && (value.toLowerCase() === "true" || value.toLowerCase() === "false"))) {
+                console.log("autoType() Boolean");
+                return {
+                    type: TYPE_BOOLEAN,
+                    value: _.isString(value) ? JSON.parse(value.toLowerCase()) : value
+                };
+            } else if(_.isNumber(value) || !(value === "" || value === null || isNaN(value))) {
+                console.log("autoType() Number");
                 return {
                     type: TYPE_NUMBER,
                     value: Number(value)
                 };
-            } else if(_.isBool(value)
-                || (_.isString(value) && (value.toLowerCase() === "true" || value.toLowerCase() === "false"))) {
-                return {
-                    type: TYPE_BOOLEAN,
-                    value: JSON.parse(value.toLowerCase())
-                };
-            } else if(_.isString(value)) {
+            } else {
+                console.log("autoType() String");
                 return {
                     type: TYPE_STRING,
-                    value
+                    value: _.isString(value) ? value : "" + value
                 };
             }
-
-            return {
-                type: TYPE_AUTO,
-                value: null
-            };
         },  
-        onValue()
+        forceType(value) 
         {
-            let conversion = this.convertTypeAuto(this.localValue);
-            if(this.typeSetByUser) {
-                this.localValue = conversion.type === this.type ? conversion.value : null;
-            } else {
-                this.type = conversion.type;
-                this.localValue = conversion.value;
+            if(this.isBoolean) {
+                return Boolean(value);
             }
-            console.log("parameter onValue");
-            this.$emit('changed', this.id, this.localName, this.localValue);
+            if(this.isNumber) {
+                return isNaN(value) ? 0 : Number(value);
+            }
+            if(this.isString) {
+                return "" + value;
+            }
         },
-        onName(event) 
+        emitChange()
         {
-            console.log("parameter onName");
             this.$emit('changed', this.id, this.localName, this.localValue);
         },
         onType(event)
         {
-            // TODO Convert value as appropriate
-            if(this.isBoolean) {
-                this.localValue = this.$el.querySelector("input[name=check]").checked;
-            } else {
-                this.localValue = this.$el.querySelector("input[name=text]").value;
-            }
-            this.onValue();
+            this.localValue = this.forceType(this.localValue);
+            this.emitChange();
+        },
+        onCheckboxValue(isChecked) 
+        {
+            this.localValue = isChecked;
+            this.emitChange();
+        },
+        onTextValue(event)
+        {
+            // const conversion = this.autoType(event.target.value);
+            // this.type = conversion.type;
+            // this.localValue = conversion.value;
+
+            this.localValue = this.forceType(event.target.value);
+
+            console.log(`paramter onValue forced ${this.type}`);
+            this.emitChange();
+        },
+        onName(event) 
+        {
+            console.log("parameter onName");
+            this.emitChange();
         },
         onDelete(event) {
             this.$emit('delete', this.id);
@@ -143,6 +177,6 @@ export default {
 }
 </script>
 
-<style scoped lang="scss">
+<style>
 
 </style>

@@ -40,18 +40,14 @@ product.makeWebTIF = function makeWebTIF()
         scale = 17;
     }
     action.scaleLayerByPercent(scale);
-    action.setDropShadow_Product();
+    product.dropShadow();
     action.unsharpMask({
         amountPercent: 40,
         radiusPixels: 0.4,
         thresholdLevels: 2
     });
 
-    action.makeNote(activeDocument.width - 20, activeDocument.height - 20);
-    action.moveNote(0, 20, 20);
-
     // TODO: Should we be building up a TIF by reopening it and adding new layers?
-    //       It probably shouldnt be the image processors job to go out and find files.
     var sku = IMAGE.get("sku");
     if(!sku) {
         throw new Error("Image data missing sku.");

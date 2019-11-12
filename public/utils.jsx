@@ -19,8 +19,7 @@ var _ = {
         if(!IMAGE) {
             throw new Error("No active IMAGE in process.");
         }
-        var currentPath = activeDocument.path;
-        return new Folder(currentPath + "/Output_" + IMAGE.type).fsName;
+        return new Folder("../Output_" + IMAGE.type).fsName;
     },
     saveUnits: function() 
     {

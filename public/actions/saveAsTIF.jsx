@@ -1,9 +1,11 @@
 /**
-* The created TIF becomes the active document
+* Saves the active document as a TIF. The created TIF becomes the active document
 * @param {string|File} file full path or File instance
 */
 action.saveAsTIF = function saveAsTIF(file)
 {
+    // TODO: Add boolean flag to make active document instead of active by default
+
     // layer compression | string id | jsx
     // RLE | "RLE" | s2t("RLE")
     // Zip | "zip" | s2t("zip")

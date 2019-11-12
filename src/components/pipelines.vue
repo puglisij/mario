@@ -6,56 +6,60 @@
         >
             <h2>Pipelines</h2>
             <div class="pipeline clearfix"
-                v-for="pipeline in configuration.pipelines"
+                v-for="pipeline in local.pipelines"
+                v-show="!isEditorOpen || (isEditorOpen && pipelineBeingEdited.id === pipeline.id)"
                 :key="pipeline.id"
             >
-                <checkbox v-model="pipeline.doImagesRequireMetadataFile" @change="onPipeline">
-                    Require meta data file
-                </checkbox>
                 <input class="topcoat-text-input" type="text" 
                     placeholder="my-pipeline-name"
                     v-model="pipeline.name"
-                    @change="onPipeline"
+                    @change="onPipeline(pipeline.id)"
                 />
                 <br/>
                 <input class="topcoat-text-input" type="text" 
                     placeholder="my-type-1, my-type-2"
                     v-model="pipeline.for"
-                    @change="onPipeline"
+                    @change="onPipeline(pipeline.id)"
                 />
+                <checkbox 
+                    v-model="pipeline.disabled" 
+                    @change="onPipeline(pipeline.id)">
+                    Disabled 
+                </checkbox>
 
                 <button class="topcoat-icon-button--quiet" type="button"
-                    @click="onOpenEditor($event, pipeline.id);"
-                >Open Editor</button>
+                    @click="onToggleEditor(pipeline.id);"
+                >{{ isEditorOpen ? "Close" : "Open" }} Editor</button>
                 <button class="pipeline-delete topcoat-icon-button--quiet" type="button"
-                    @click="onDeletePipeline($event, pipeline.id);"
+                    @click="onDeletePipeline(pipeline.id);"
                 >X</button>
             </div>
-            <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
+            <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
             <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Pipline</button>
+
+            <button class="topcoat-button--large" type="button" @click="onPrint">Print</button>
         </form>
         <div class="pipeline-editor" v-if="isEditorOpen">
-            <h3>Editor</h3>
+            <h3>Editing: {{ pipelineBeingEdited.name }}</h3>
             <div class="pipeline-editor-board">
                 <draggable 
-                    :list="pipelineBeingEdited.externalActions" 
-                    :move="onActionSort"
+                    v-model="pipelineBeingEdited.externalActions"
                     draggable=".action"
                     handle=".action-handle"
                     group="actions"
+                    @change="onActionPositionChange"
                 >
-                <!-- TODO: Use v-bind:action.sync="action" instead? -->
                     <pipeline-action 
                         v-for="(action, index) in pipelineBeingEdited.externalActions" 
                         v-model="pipelineBeingEdited.externalActions[index]"
-                        :key="index"
-                        @select-new="onActionSelectNew"
-                        @changed="onActionChange"
-                        @delete="onActionDelete"
+                        :key="action.id"
+                        @select-new="onActionSelectNew(index)"
+                        @changed="onActionChange(index, $event)"
+                        @delete="onActionDelete(index)"
                     />
                 </draggable>
             </div>
-            <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Action</button>
+            <button class="topcoat-button--large" type="button" @click="onActionAdd">Add Action</button>
         </div>
     </div>
 </template>
@@ -69,7 +73,8 @@ import checkbox from "./checkbox.vue";
 import pipelineAction from "./pipeline-action.vue";
 import _ from "../utils";
 
-// TODO move editor into its own lib (non Vue) and import
+// TODO Use Rete.js for visual node based editor. 
+//      At which point it may be necessary to move this into its own lib (non Vue) and import
 
 export default {
     name: "configurator",
@@ -81,62 +86,170 @@ export default {
     props: {
         configuration: Object
     }, 
-    data: () => ({
-        needSaved: false,
-        isEditorOpen: false,
-        pipelineBeingEdited: {}
-    }),
+    data() {
+        return {
+            local: this.toLocalConfiguration(this.configuration),
+            needSaved: false,
+            pipelineBeingEdited: {}
+        };
+    },
+    computed: {
+        isEditorOpen() {
+            return !_.isEmptyObject(this.pipelineBeingEdited); 
+        }
+    },
     methods: {
-        getPipeline: function(id) {
-            return this.configuration.pipelines.find(x => x.id == id);
+        toLocalConfiguration(configuration)
+        {
+            // TODO Shouldn't be modifying prop directly
+            //  Update to use .sync or clone configuration
+            for(const pipeline of configuration.pipelines) 
+            {
+                if(!pipeline.id) {
+                    pipeline.id = _.guid();
+                }
+                if(!pipeline.externalActions) {
+                    this.$set(pipeline, 'externalActions', []);
+                }
+                for(const action of pipeline.externalActions) 
+                {
+                    if(!action.id) {
+                        action.id = _.guid();
+                    }
+                }
+            }
+            return configuration;
         },
-        onPipeline(event)
+        onSave()
+        {
+            if(this.needSaved)
+                this.$emit("changed", this.local.pipelines);
+            this.needSaved = false;
+        },
+        markDirty() 
         {
             this.needSaved = true;
-
         },
-        onAddNewPipeline(event)
+        /*---------------
+            Pipelines
+        ---------------*/
+        getPipeline: function(id) {
+            return this.local.pipelines.find(x => x.id == id);
+        },
+        onPipeline(id)
         {
-            const guid = _.guid();
-            
+            this.markDirty();
         },
-        onDeletePipeline(event, id)
+        onAddNewPipeline()
         {
-
-            // remove from editor if being edited
+            const id = _.guid();
+            this.local.pipelines.push({
+                id,
+                for: "", 
+                name: "Pipeline-Name",
+                externalActions: []
+            });
+            this.markDirty();
         },
-        onOpenEditor(event, id)
+        onDeletePipeline(id)
+        {
+            this.$dialog.open({
+                name: "confirm",
+                onYes: () => 
+                {
+                    if(this.isEditorOpen && this.pipelineBeingEdited.id === id) {
+                        this.closeEditor();
+                    }
+                    const index = this.local.pipelines.findIndex(x => x.id == id);
+                    this.$delete(this.local.pipelines, index);
+                }
+            });
+            this.markDirty();
+        },
+        onToggleEditor(id) 
+        {
+            if(!this.isEditorOpen) 
+                this.openEditor(id);
+            else 
+                this.closeEditor();
+        },
+        openEditor(id)
         {
             const pipeline = this.getPipeline(id);
             this.pipelineBeingEdited = pipeline;
-            this.isEditorOpen = true;
         },
-        onActionSelectNew(event)
+        closeEditor() 
         {
-            console.log(`Action select new: `); console.dir(event);
+            this.pipelineBeingEdited = {};
         },
-        onActionChange(action) 
+        /*---------------
+            Actions  
+        ---------------*/ 
+        onActionAdd(event)
         {
-            console.log(`Action changed: `); console.dir(action);
+            console.log(`Action add.`);
+            this.pipelineBeingEdited.externalActions.push({
+                action: ""
+            });
+        },
+        onActionSelectNew(index)
+        {
+            console.log(`Action ${index} select new.`); 
+        },
+        onActionChange(index, action) 
+        {
+            console.log(`Action ${index} changed: `); console.dir(action);
+            this.markDirty();
         },
         onActionDelete(index)
         {
+            console.log(`Action ${index} delete.`);
             this.$dialog.open({
                 name: "confirm",
                 onYes: () => {
                     this.pipelineBeingEdited.externalActions.splice(index, 1);
+                    this.markDirty();
                 }
             });
         },
-        onActionSort(event, originalEvent) 
+        onActionPositionChange(event) 
         {
-            console.log(`Action position changed: ${event.draggedContext.index} to ${event.relatedContext.index}`)
+            console.log(`Action position change.`);
+            this.markDirty();
         },
         onConfigurationSubmit(event) 
         {
             event.preventDefault();
-            this.$emit('update:pipelines', this.configuration.pipelines);
-            this.needSaved = false;
+        }, 
+        // For debugging only
+        onPrint()
+        {
+            console.log("Pipelines: "); 
+            let json = ``;
+            for(const p of this.local.pipelines) 
+            {
+                json += `
+                    { 
+                        "id": "${p.id}",
+                        "for": "${p.for}",
+                        "name": "${p.name}",
+                        "externalActions": [
+                `;
+                for(const a of p.externalActions) {
+                json += `
+                            {
+                                "id": "${a.id}",
+                                "action": "${a.action}",
+                                "parameters": ${JSON.stringify(a.parameters)}
+                            }
+                `
+                }
+                json += `
+                        ]
+                    }
+                `
+            }
+            console.log(json);
         }
     }
 }
@@ -147,13 +260,11 @@ export default {
     .pipeline {
         border: none;
         border-bottom: 1px solid #333;
+        margin-bottom: .5em;
         padding: .5em;
 
         input[type=text] {
-            margin: .5em 0;
-        }
-        &:last-of-type {
-            margin-bottom: .5em;
+            margin: .25em 0;
         }
         &-delete {
             float: right;

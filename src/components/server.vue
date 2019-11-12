@@ -49,9 +49,9 @@
                 v-on:update:watchers="onWatchersConfiguration"
             ></configurator>
             <pipelines
-                v-else-if="currentTabComponent == 'pipelines'"
+                v-else-if="currentTabComponent == 'pipelines' && areConfigurationsLoaded"
                 v-bind:configuration="pipelineConfiguration"
-                v-on:update:pipelines="onPipelinesConfiguration"
+                v-on:changed="onPipelinesConfiguration"
             ></pipelines>
         </section>
   </div>
@@ -88,6 +88,7 @@ export default {
         server: null,
         configuration: {},
         pipelineConfiguration: {},
+        areConfigurationsLoaded: false,
         isServerPaused: false, 
         isServerStopped: true,
         currentPipelineAction: "",
@@ -152,6 +153,7 @@ export default {
             this.configuration = configClone;
             const pipelineConfigClone = this.server.getPipelineConfiguration();
             this.pipelineConfiguration = pipelineConfigClone;
+            this.areConfigurationsLoaded = true;
         },
         onStateChange() {
             this.isServerPaused = this.server.isPaused();
@@ -179,7 +181,7 @@ export default {
         },
         onPipelinesConfiguration(newPipelines)
         {
-            //this.pipelineConfiguration.pipelines[id] = newPipeline;
+            this.server.setPipelineConfiguration("pipelines", newPipelines);
             console.log("Pipelines updated.");
         }
     }
