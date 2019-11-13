@@ -1,26 +1,13 @@
 /**
-* Save the active document to the archive directory indicated in the IMAGE data. Created PSD does NOT become active document.
-* Directory name will become "{archiveName}_Archive"
-* @param {String} archiveName - Either "RGB", "CMYK" or something else. 
+* Save the active document to the archive directory. Created PSD does NOT become active document.
+* See action.createArchiveDirectory() for details on location.
+* @param {String} archiveName - the name of the archive subdirectory. For example, "RGB", "CMYK" or something else. 
 */
 action.savePSDToArchiveDirectory = function savePSDToArchiveDirectory(archiveName)
 {
-    var currentDir = Folder.current;
-    var archiveRootDirectoryPath = IMAGE.get("archiveDirectory");
-    var archiveRootDirectory = new Folder(archiveRootDirectoryPath);
-    
-    // create Archive directory if doesnt exist
-    Folder.current = archiveRootDirectory;
-    var archiveDirectory = new Folder("./Archive_" + archiveName);
-    if(!archiveDirectory.exists) {
-        archiveDirectory.create();
-    }
-
-    // save psd to Archive directory
-    Folder.current = archiveDirectory;
-    var archivePsd = new File("./" + activeDocument.name);
+    var archiveDirectory = action.createArchiveDirectory(archiveName);
+    var archivePsd = new File(archiveDirectory.fullName + "/" + activeDocument.name);
     action.saveAsPSD(archivePsd);
+};
 
-    // restore 
-    Folder.current = currentDir;
-}
+

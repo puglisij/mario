@@ -26,6 +26,13 @@ function first(obj)
     } 
     return obj[Object.keys(obj)[0]];
 }
+function getOrDefine(obj, key, defaultValue) 
+{
+    if(obj[key] === undefined) {
+        obj[key] = defaultValue;
+    }
+    return obj[key];
+}
 function isBoolean(val) {
     return typeof val === "boolean";
 }
@@ -61,6 +68,7 @@ export default {
     simpleDeepClone,
     guid, 
     first,
+    getOrDefine,
     isBoolean, 
     isNumber,
     isObject,

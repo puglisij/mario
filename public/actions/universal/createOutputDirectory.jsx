@@ -1,10 +1,12 @@
 /**
-* Creates the output directory for the IMAGE in process. 
-* If IMAGE.outputDirectory is undefined, the default is used. 
+* Creates the output directory for the IMAGE in process, if it does not exist already
+* The created directory will be at:
+*   <outputDirectory or ../Output>/<projectId or type>
 */
 action.createOutputDirectory = function createOutputDirectory() 
 {
-    var outputDirectory = IMAGE.get("outputDirectory") || _.getDefaultOutputPath();
-    action.createDirectory(outputDirectory);
-    return outputDirectory;
+    var id = IMAGE.projectId || IMAGE.type;
+    var outputDirectoryRoot = IMAGE.get("outputDirectory") || "../Output";
+    var outputDirectory = new Folder(outputDirectoryRoot + "/" + id);
+    return action.createDirectory(outputDirectory);
 };

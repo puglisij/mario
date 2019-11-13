@@ -8,4 +8,5 @@ action.createDirectory = function createDirectory(folderPath)
     if(!folder.exists) {
         folder.create();
     }
+    return folder;
 }

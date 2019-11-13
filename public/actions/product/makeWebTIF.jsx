@@ -53,7 +53,7 @@ product.makeWebTIF = function makeWebTIF()
         throw new Error("Image data missing sku.");
     }
     var outputDirectory = action.createOutputDirectory(outputDirectory);
-    var newTifFilePath = outputDirectory + "/" + sku + ".tif";
+    var newTifFilePath = outputDirectory.fullName + "/" + sku + ".tif";
     var newTifFile = new File(newTifFilePath);
     if (newTifFile.exists) 
     {

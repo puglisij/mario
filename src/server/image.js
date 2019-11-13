@@ -25,11 +25,12 @@ export default class Image
     {
         class Reader
         {
-            constructor(path, fileName) 
+            constructor(path, fileName, defaultType) 
             {
                 this.image = new Image();
                 this.image.fileName = fileName;
                 this.image.path = path;
+                this.image.type = defaultType;
             }
             async readProcessingData()
             {
@@ -43,29 +44,24 @@ export default class Image
                     const pathJson = upath.join(directory, jsonFileName);
                     const pathBinary = upath.join(directory, binaryFileName); // Use MessagePack standard for serialization?
 
-                    // read data file
-                    let rawJson, data;
+                    // read data file, if available
+                    let rawJson;
                     try {
                         rawJson = await promisify(fs.readFile)(pathJson, {
                             encoding: 'utf8'
                         });
-                        // read data folder 
-                        //stat = await promisify(fs.stat)(pathFolder);
 
                         this.image.dataFileName = jsonFileName;
                         this.image.dataFilePath = pathJson;
-                        data = JSON.parse(rawJson);
-                    } catch(e) {
-                        reject(e);
-                        return;
-                    }
+                        this.image.data = JSON.parse(rawJson);
+                    } 
+                    catch(e) {}
                     
-                    if (!data.type) {
-                        reject("Image data file missing type.");
+                    if (!this.image.data.type) {
+                        resolve("Image data file missing type.");
                         return;
                     }
-                    this.image.type = data.type.toLowerCase();
-                    this.image.data = data;
+                    this.image.type = this.image.data.type;
                     resolve();
                 });
             }
