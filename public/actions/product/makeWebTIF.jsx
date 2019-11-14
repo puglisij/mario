@@ -15,66 +15,82 @@
 */
 product.makeWebTIF = function makeWebTIF()
 {
-    // Remove all alpha channel objects
-    activeDocument.channels.removeAll();
-    app.preferences.rulerUnits = Units.PIXELS;
-    app.preferences.typeUnits = TypeUnits.PIXELS;
-
-    // Duplicate image becomes activeDocument
-    var duplicateDocumentName = _.getDocumentNameWithoutExtension();
-    var duplicateDocument = action.duplicateDocument(duplicateDocumentName);
-    activeDocument = duplicateDocument;
-
-    action.convertActiveLayerToSmartObject();
-    activeDocument.activeLayer.name = duplicateDocumentName.toString();
-    activeDocument.resizeCanvas("300px", "300px", AnchorPosition.MIDDLECENTER)
-  
-    // Trim transparent area around the image
-    activeDocument.trim(TrimType.TRANSPARENT);
-
-    var scale = 29;
-    if (_.hasKeyword("1to1")) {
-        scale = 58;
-    }
-    if (_.hasKeyword("4to1")) {
-        scale = 17;
-    }
-    action.scaleLayerByPercent(scale);
-    product.dropShadow();
-    action.unsharpMask({
-        amountPercent: 40,
-        radiusPixels: 0.4,
-        thresholdLevels: 2
-    });
-
-    // TODO: Should we be building up a TIF by reopening it and adding new layers?
     var sku = IMAGE.get("sku");
     if(!sku) {
         throw new Error("Image data missing sku.");
     }
-    var outputDirectory = action.createOutputDirectory(outputDirectory);
-    var newTifFilePath = outputDirectory.fullName + "/" + sku + ".tif";
-    var newTifFile = new File(newTifFilePath);
-    if (newTifFile.exists) 
-    {
-        // The opened TIF becomes active document
-        var newTifDocument = app.open(newTifFile);
-        _.removeLayerByName(duplicateDocumentName);
 
-        // Place duplicated document as new layer into TIF
-        activeDocument = duplicateDocument;
-        duplicateDocument.activeLayer.duplicate(newTifDocument);
-        duplicateDocument.close(SaveOptions.DONOTSAVECHANGES);
-        activeDocument = newTifDocument;
-    } 
-    else 
-    {
-        // The created TIF becomes the active document
-        action.saveAsTIF(newTifFile);
-        action.makeWhiteBackground();
+    var tif;
+    var viewPaths = IMAGE.get("additionalViews");
+    if(!viewPaths) {
+        throw new Error("Image data missing additionalViews.");
     }
 
-    // From this point activeDocument is the TIF
+    // Add Additional Views as Layers 
+    for(var i = 0; i < viewPaths.length; ++i) 
+    {
+        var viewFile = new File(viewPaths[i]);
+        // var view = app.open(viewFile);
+        
+        // action.setColorMode("RGB");
+        // product.maskOrPath({ border: 50 });
+        // action.saveToArchiveDirectory("RGB");
+
+        // app.preferences.rulerUnits = Units.PIXELS;
+        // app.preferences.typeUnits = TypeUnits.PIXELS;
+
+        // // Remove all alpha channel objects
+        // activeDocument.channels.removeAll();
+
+        // // Duplicate image becomes activeDocument
+        // var duplicateViewName = _.getDocumentNameWithoutExtension();
+        // var duplicateView = action.duplicateView(duplicateViewName);
+        // activeDocument = duplicateView;
+
+        // action.convertActiveLayerToSmartObject();
+        // activeDocument.activeLayer.name = duplicateViewName.toString();
+        // activeDocument.resizeCanvas("300px", "300px", AnchorPosition.MIDDLECENTER);
+
+        // // Trim transparent area around the image
+        // activeDocument.trim(TrimType.TRANSPARENT);
+
+        // var scale = 29;
+        // if (_.hasKeyword("1to1")) {
+        //     scale = 58;
+        // }
+        // if (_.hasKeyword("4to1")) {
+        //     scale = 17;
+        // }
+        // action.scaleLayerByPercent(scale);
+        // product.dropShadow();
+        // action.unsharpMask({
+        //     amountPercent: 40,
+        //     radiusPixels: 0.4,
+        //     thresholdLevels: 2
+        // });
+
+        //  // Create TIF, if not created
+        // if(!tif) {
+        //     // The created TIF becomes the active document
+        //     var outputDirectory = action.createOutputDirectory(outputDirectory);
+        //     var newTifFilePath = outputDirectory.fullName + "/" + sku + ".tif";
+        //     action.saveAsTIF(newTifFile);
+        //     action.makeWhiteBackground();
+
+        //     tif = activeDocument;
+        //     activeDocument = tif;
+        // } else {
+        //     // Place duplicated document as new layer into TIF
+        //     activeDocument = duplicateView;
+        //     duplicateView.activeLayer.duplicate(tif);
+        //     duplicateView.close(SaveOptions.DONOTSAVECHANGES);
+        //     activeDocument = tif;
+        // }
+
+        // product.trimAndResizeCanvas();
+        // product.addAdditionalShots();
+        // product.addKeyword_PackDupe();
+    }
 }
 
 

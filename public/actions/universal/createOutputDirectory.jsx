@@ -5,7 +5,7 @@
 */
 action.createOutputDirectory = function createOutputDirectory() 
 {
-    var id = IMAGE.projectId || IMAGE.type;
+    var id = IMAGE.projectId || IMAGE.getType();
     var outputDirectoryRoot = IMAGE.get("outputDirectory") || "../Output";
     var outputDirectory = new Folder(outputDirectoryRoot + "/" + id);
     return action.createDirectory(outputDirectory);

@@ -4,7 +4,7 @@
 
 <script>
 export default {
-
+    // TODO Rete.js editor
 }
 </script>
 

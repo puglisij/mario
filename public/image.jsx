@@ -4,13 +4,15 @@
 */
 function ImageForProcessing(json)
 {
-    this.type       = json.type;     // e.g. Product
-    this.fileName   = json.fileName;
-    this.path       = json.path;
-    // Metadata stored in the file (i.e. XMP/EXIF)
-    this._metadata   = json.metadata;
+    this._imagePath   = json.imagePath;
+
+    this._type       = json.type;     // e.g. Product
     // External (stored outside file) metadata necessary for processing
     this._data       = json.data;     
+    // Metadata (i.e. XMP/EXIF) stored in the image file, if available
+    this._metadata   = json.metadata;
+    // Context store for temporary values during the current image process 
+    this._context = {};
 }
 /**
 * Return property in data which matches the given key
@@ -19,6 +21,19 @@ ImageForProcessing.prototype.get = function(key)
 {
     return this._data[key];
 }
+ImageForProcessing.prototype.getType = function() {
+    return this._type;
+};
+/**
+* Set or get a context variable for the current image process
+*/
+ImageForProcessing.prototype.context = function(name, value)
+{
+    if(value === undefined) {
+        return this._context[name];
+    }
+    this._context[name] = value;
+};
 /**
 * Return the image type string. Also see utils _.hasKeyword()
 */

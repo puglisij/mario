@@ -7,66 +7,111 @@ export default class Image
 {
     constructor() 
     {
+        // the working/primary input image
+        this.imagePath = "";
+        // the zip or folder location containing other images used in the pipeline
+        this.packagePath = "";
+        // the json data file for the image process
+        this.dataPath = "";
+        
+        // default type or type mapped from data file
         this.type = "unknown";     // e.g. Product
-        this.fileName = "";
-        this.path = "";
-        // Path of the accompanying data file
-        this.dataFileName = "";
-        this.dataFilePath = ""; 
-        // Path of the acompanying data folder (containing images needed for processing)
-        this.dataFolderPath = "";
-        // External (stored outside file) metadata necessary for processing
+        // External data (stored outside file) metadata necessary for processing
         this.data = {};     
-        // Metadata stored in the file
+        // Internal data (Metadata stored in the file)
         this.metadata = null; 
+    }
+    hasImagePath() {
+        return !!this.imagePath;
+    }
+    hasPackagePath() {
+        return !!this.packagePath;
+    }
+    hasDataPath() {
+        return !!this.dataPath;
+    }
+    getErrorDirectory() {
+        return upath.join(this.getSourceDirectory(), "Error_" + this.type);
+    }
+    getSourceDirectory() {
+        return upath.dirname(this.dataPath || this.imagePath);
+    }
+    getAllFilePaths(toPath)
+    {
+        let files = [];
+        if(this.hasImagePath()) {
+            files.push(this.imagePath);
+        }
+        if(this.hasPackagePath()) {
+            files.push(this.packagePath);
+        }
+        if(this.hasDataPath()) {
+            files.push(this.dataPath);
+        }
+        return files;
     }
     
     static get Reader() 
     {
         class Reader
         {
-            constructor(path, fileName, defaultType) 
+            constructor(path, defaultData) 
             {
                 this.image = new Image();
-                this.image.fileName = fileName;
-                this.image.path = path;
-                this.image.type = defaultType;
+                this.image.data = defaultData;
+                this.image.type = defaultData.type;
+
+                // Either an Image or JSON file
+                const dirName = upath.dirname(path);
+                const fileName = upath.basename(path);
+                const fileExtension = upath.extname(path);
+                const name = fileName.split('.')[0];
+
+                // TODO: Also support binary data using MessagePack standard for serialization?
+                if(fileExtension === ".json") {
+                    this.image.dataPath = path;
+                } else {
+                    this.image.dataPath = upath.join(dirName, name + '.json');
+                    this.image.imagePath = path;
+                }
             }
             async readProcessingData()
             {
                 return new Promise(async (resolve, reject) => 
                 {
-                    const directory = upath.dirname(this.image.path);
-                    const name = this.image.fileName.split('.')[0];
-                    const jsonFileName = name + '.json';
-                    const binaryFileName = name + '.dat';
-                    const pathFolder = upath.join(directory, name);
-                    const pathJson = upath.join(directory, jsonFileName);
-                    const pathBinary = upath.join(directory, binaryFileName); // Use MessagePack standard for serialization?
-
                     // read data file, if available
-                    let rawJson;
                     try {
-                        rawJson = await promisify(fs.readFile)(pathJson, {
+                        let rawJson = await promisify(fs.readFile)(this.image.dataPath, {
                             encoding: 'utf8'
                         });
 
-                        this.image.dataFileName = jsonFileName;
-                        this.image.dataFilePath = pathJson;
                         this.image.data = JSON.parse(rawJson);
+                        if (this.image.data.type) {
+                            this.image.type = this.image.data.type;
+                        }
+                        if(this.image.data.image) {
+                            if(this.image.hasImagePath()) {
+                                console.log(`Watched image path ${this.image.imagePath} was overridden by data image path: ${this.image.data.image}`)
+                            }
+                            this.image.imagePath = this.image.data.image;
+                        }
+                        if(this.image.data.package) {
+                            const sourceDir = this.image.getSourceDirectory();
+                            this.image.packagePath = upath.join(sourceDir, this.image.data.package);
+                            // TODO Unpack if zip file
+                        }
                     } 
                     catch(e) {}
                     
-                    if (!this.image.data.type) {
-                        resolve("Image data file missing type.");
-                        return;
-                    }
-                    this.image.type = this.image.data.type;
                     resolve();
                 });
             }
             async readMetadata()
             {
+                if(!this.image.imagePath) {
+                    return;
+                }
+
                 let ep = new exiftool.ExiftoolProcess();
                 let processid = 0;
 

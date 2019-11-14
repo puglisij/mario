@@ -223,18 +223,16 @@ export default class Server extends EventEmitter
     /**
      * Run classifiers, read metadata, and notify CEP pipeline image is ready for processing 
      */
-    async processImage(defaultType, imagePath)
+    async processImage(defaultType, path)
     {
-        imagePath = upath.normalize(imagePath);
-        const imageName = upath.basename(imagePath);
-        const reader = new Image.Reader(imagePath, imageName, defaultType);
-        console.log("Processing: " + imageName + " Full Path: " + imagePath + " Default Type: " + defaultType);
+        path = upath.normalize(path);
+        const imageName = upath.basename(path);
+        const reader = new Image.Reader(path, imageName, { type: defaultType });
+        console.log("Processing: " + imageName + " Full Path: " + path + " Default Type: " + defaultType);
 
         try {
-            await Promise.all([
-                reader.readProcessingData(),
-                reader.readMetadata()
-            ]);    
+            await reader.readProcessingData();
+            await reader.readMetadata();
         } catch(e) {
             const image = reader.getImage();
             this.moveToErrored(image, e.toString());
@@ -255,39 +253,33 @@ export default class Server extends EventEmitter
     }
     async moveToErrored(image, message)
     {
-        const sourceDir = upath.dirname(image.path);
-        const destDir = upath.join(sourceDir, "Error_" + image.type);
-        const destLogsPath = upath.join(destDir, image.fileName + ".log");
-        const destImagePath = upath.join(destDir, image.fileName);
+        const errorDir = image.getErrorDirectory();
+        const errorLogsPath = upath.join(errorDir, "error.log");
         await new Promise(resolve => {
-            fs.mkdir(destDir, {
-                recursive: false
-            }, err => {
+            fs.mkdir(errorDir, { recursive: false }, err => {
                 if(err) throw err;
                 resolve();
             });
         });
-        fs.writeFile(destLogsPath, 
+        fs.writeFile(errorLogsPath, 
             message, 
             err => {
                 if(err) 
-                    console.error(err + "\nErrored image logs could not be written to " + destLogsPath);
+                    console.error(err + "\nErrored image logs could not be written to " + errorLogsPath);
             });
-        fs.rename(image.path, destImagePath, err => {
-            if(err) {
-                console.error(err + "\nErrored image could not be moved to " + destImagePath);
-                return;
-            }
-            console.log("Errored image moved to: " + destImagePath);
-        });
-        if(!image.dataFilePath || !image.dataFileName) {
-            return;
+        const allFilePaths = image.getAllFilePaths();
+        for(const filePath of allFilePaths) 
+        {
+            const fileName = upath.basename(filePath);
+            const toPath = upath.join(errorDir, fileName);
+            fs.rename(filePath, toPath, err => {
+                if(err) {
+                    console.error(err + "\nErrored image could not be moved to " + toPath);
+                    return;
+                }
+                console.log("Errored image moved to: " + toPath);
+            });
         }
-        const destDataPath = upath.join(destDir, image.dataFileName);
-        fs.rename(image.dataFilePath, destDataPath, err => {
-            if(err) 
-                console.error(err + "\nErrored image data could not be moved to " + destDataPath);
-        });
     }
     /**
      * Run images through pipeline per its configuration
@@ -303,7 +295,7 @@ export default class Server extends EventEmitter
         {
             const pipelines = this.pipelines[image.type.toLowerCase()];
             if(!pipelines) {
-                console.error("Pipeline not found for image: " + image.path + " type: " + image.type);
+                console.error("Pipeline not found for image: " + image.imagePath + " type: " + image.type);
                 continue;
             }
 
@@ -319,11 +311,12 @@ export default class Server extends EventEmitter
                     this.emit("pipelinestart", image.type);
     
                     // Open document 
-                    await this.runJsx(`
-                        closeAll();
+                    await this.runJsx(`closeAll();
                         __PIPELINE.restoreUnits = _.saveUnits(); 
-                        IMAGE=new ImageForProcessing(${JSON.stringify(image)});
-                        openAsActive('${image.path}');`);
+                        IMAGE=new ImageForProcessing(${JSON.stringify(image)});`);
+                    if(image.hasImagePath()) {
+                        await this.runJsx(`openAsActive('${image.imagePath}');`);
+                    }
     
                     // Run Actions
                     for(const photoshopActionConfig of pipeline.externalActions) 
@@ -358,7 +351,7 @@ export default class Server extends EventEmitter
                     }
                 }
                 
-                console.log("Pipeline completed for image: " + image.fileName);
+                console.log("Pipeline completed for image: " + image.imageName);
             }
         }
         this._isPipelinesRunningMutex = false;
