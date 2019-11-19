@@ -1,7 +1,7 @@
 <template>
     <div class="jsx">
         <h2>ExtendScript</h2>
-        <div class="row">
+        <!-- <div class="row">
             <div class="topcoat-button-bar">
                 <div class="topcoat-button-bar__item">
                     <button class="topcoat-button-bar__button--large" v-on:click="toggleScriptListener" v-bind:style="{ color: isScriptListening ? '#0f0' : '#f00'}">Toggle ScriptListener</button>
@@ -10,12 +10,12 @@
                     <button class="topcoat-button-bar__button--large" v-on:click="clearScriptListener">Clear ScriptListener</button>
                 </div>
             </div>
-        </div>
+        </div> -->
         <div class="row">
-            <label style="display: inline-block; width: 50%;">
+            <label style="display: inline-block; margin-right: .5em;">
                 <input class="topcoat-text-input--large" type="text" ref="charId" placeholder="CharID" v-model="charId" v-on:change="calculateStringId" v-on:focus="$event.target.select()"/> 
             </label>
-            <label style="display: inline-block; width: 50%;">
+            <label style="display: inline-block;">
                 <input class="topcoat-text-input--large" type="text" ref="stringId" placeholder="StringID" v-model="stringId" v-on:change="calculateCharId" v-on:focus="$event.target.select()"/>
             </label>
         </div>
@@ -32,17 +32,19 @@
 <script>
 /* npm modules */
 import upath from 'upath';
-import { mapState, mapGetters } from 'vuex';
 import fs from 'fs';
 import chokidar from 'chokidar';
 import debounce from 'debounce'; 
+
+/* local modules */
+import global from '../global';
 
 const SCRIPT_LOG_PATH = "C:/Users/puglisij/Desktop/ScriptingListenerJS.log";
 
 export default {
     name: "jsx",
     computed: {
-        ...mapState(['cs'])
+        cs() { return global.cs; }
     },
     data: () => ({
         charId: "",

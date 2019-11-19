@@ -5,6 +5,7 @@
 function ImageForProcessing(json)
 {
     this._imagePath   = json.imagePath;
+    this._packagePath = json.packagePath;
 
     this._type       = json.type;     // e.g. Product
     // External (stored outside file) metadata necessary for processing
@@ -14,16 +15,22 @@ function ImageForProcessing(json)
     // Context store for temporary values during the current image process 
     this._context = {};
 }
-/**
-* Return property in data which matches the given key
-*/
-ImageForProcessing.prototype.get = function(key) 
-{
-    return this._data[key];
-}
 ImageForProcessing.prototype.getType = function() {
     return this._type;
 };
+ImageForProcessing.prototype.getImagePath = function() {
+    return this._imagePath;
+};
+ImageForProcessing.prototype.getPackagePath = function() {
+    return this._packagePath;
+};
+/**
+* Return property in data which matches the given key
+*/
+ImageForProcessing.prototype.data = function(key) 
+{
+    return this._data[key];
+}
 /**
 * Set or get a context variable for the current image process
 */
@@ -41,3 +48,23 @@ ImageForProcessing.prototype.hasKeyword = function(keyword)
 {
     return this._metadata.Keywords.includes(keyword);
 }
+/**
+* Fill in the given templated parameter string with data. Only populates string parameters from IMAGE 'data'
+* @param {string|object} params the parameter string e.g.  "myProductImage_{{sku}}.jpg"
+*/
+ImageForProcessing.prototype.parameters = function(params) 
+{
+    if(typeof params === "string") {
+        return _.mustache(params, this._data);
+    }
+    if(typeof params === "object") {
+        for(var key in params) {
+            var value = params[key];
+            if(typeof value === "string") {
+                params[key] = _.mustache(value, this._data);
+            }
+        }
+    }
+    return params;
+}
+"";

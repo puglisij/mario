@@ -3,7 +3,7 @@
 */
 product.addKeyword_PackDupe = function addKeyword_PackDupe()
 {
-    if(!_.hasKeyword("DONOTPCDUPE") && IMAGE.get("childSkus")) {
+    if(!_.hasKeyword("DONOTPCDUPE") && IMAGE.data("childSkus")) {
         _.addKeyword("PackDupe");
     }
 }

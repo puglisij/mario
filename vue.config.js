@@ -9,16 +9,19 @@ module.exports = {
   configureWebpack: {
     target: "node-webkit", // Set the target to node-webkit (https://webpack.js.org/configuration/target/)
     node: false, // Don't set certain Node globals/modules to empty objects (https://webpack.js.org/configuration/node/)
-    devtool: "eval-source-map",
+    //devtool: "source-map",
     devServer: {
         watchOptions: {
-            ignored: ["**/*.json"]
+            ignored: ["**/*.json", "**/*.logs"]
         }
     },
     plugins: [
         //new BundleAnalyzerPlugin()
     ]
   }
+//   ,chainWebpack: config => {
+//       config.devtool("source-map")
+//   }
 //   ,chainWebpack: config => {
 //     // Also see .env file for environment variables https://cli.vuejs.org/guide/mode-and-env.html#environment-variables
 //     config

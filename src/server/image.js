@@ -31,7 +31,10 @@ export default class Image
         return !!this.dataPath;
     }
     getErrorDirectory() {
-        return upath.join(this.getSourceDirectory(), "Error_" + this.type);
+        return upath.join(this.getSourceDirectory(), "Error_" + this.type.toLowerCase());
+    }
+    getProcessedDirectory() {
+        return upath.join(this.getSourceDirectory(), "Processed_" + this.type.toLowerCase());
     }
     getSourceDirectory() {
         return upath.dirname(this.dataPath || this.imagePath);
@@ -100,15 +103,16 @@ export default class Image
                             this.image.packagePath = upath.join(sourceDir, this.image.data.package);
                             // TODO Unpack if zip file
                         }
-                    } 
-                    catch(e) {}
+                    } catch(e) {
+                        this.image.dataPath = "";
+                    }
                     
                     resolve();
                 });
             }
             async readMetadata()
             {
-                if(!this.image.imagePath) {
+                if(!this.image.hasImagePath()) {
                     return;
                 }
 
@@ -119,7 +123,7 @@ export default class Image
                 .then(pid => {
                     processid = pid;
                 })
-                .then(() => ep.readMetadata(this.image.path, ['-File:all']))
+                .then(() => ep.readMetadata(this.image.imagePath, ['-File:all']))
                 .then(metadata => {
                     let fileMetadata = metadata.data[0];
                     this.image.metadata = fileMetadata;

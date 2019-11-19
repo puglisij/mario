@@ -10,6 +10,9 @@
                 v-on:pause="pause" 
                 v-on:stop="stop"></start-stop>
         
+            <checkbox name="pauseAfterEveryPipeline" v-model="configuration.pauseAfterEveryPipeline" v-on:change="onConfigurationCheckbox">
+                Pause after every pipeline
+            </checkbox>
             <checkbox name="pauseAfterEveryAction" v-model="configuration.pauseAfterEveryAction" v-on:change="onConfigurationCheckbox">
                 Pause after every action
             </checkbox>
@@ -40,16 +43,18 @@
             <jsx 
                 v-if="currentTabComponent == 'jsx'"
             ></jsx>
-            <the-console 
-                v-else-if="currentTabComponent == 'the-console'"
-            ></the-console>
+            <keep-alive>
+                <the-console 
+                    v-if="currentTabComponent == 'the-console'"
+                ></the-console>
+            </keep-alive>
             <configurator 
-                v-else-if="currentTabComponent == 'configurator'" 
+                v-if="currentTabComponent == 'configurator'" 
                 v-bind:configuration="configuration"
                 v-on:update:watchers="onWatchersConfiguration"
             ></configurator>
             <pipelines
-                v-else-if="currentTabComponent == 'pipelines' && areConfigurationsLoaded"
+                v-if="currentTabComponent == 'pipelines' && areConfigurationsLoaded"
                 v-bind:configuration="pipelineConfiguration"
                 v-on:changed="onPipelinesConfiguration"
             ></pipelines>
@@ -58,16 +63,13 @@
 </template>
 
 <script>
-/* npm modules */
-import { mapState, mapGetters } from 'vuex';
-
 /* local modules */
 import checkbox from "./checkbox.vue";
 import startStop from "./start-stop.vue";
 import jsx from "./jsx.vue";
-import theConsole from "./the-console.vue";
 import configurator from "./configurator.vue";
 import pipelines from "./pipelines.vue";
+import global from "../global";
 import Server from "../server";
 
 
@@ -77,14 +79,13 @@ export default {
         checkbox,
         startStop,
         jsx,
-        theConsole,
         configurator,
         pipelines
     },
     data: () => ({
         tabs: ["jsx", "the-console", "configurator", "pipelines"],
         tabNames: ["Jsx", "Console", "Configuration", "Pipelines"],
-        currentTab: "pipelines",
+        currentTab: "the-console",
         server: null,
         configuration: {},
         pipelineConfiguration: {},
@@ -95,22 +96,13 @@ export default {
         isPipelineActive: false
     }),
     computed: {
-        ...mapState(['cs', 'extensionPath', 'hostPath', 'hostActionPath']),
         currentTabComponent() {
             return this.currentTab.toLowerCase();
         }
     },
-    watch: {
-        configuration: function(val, oldVal) {
-            console.log("Configuration changed.");
-        },
-        pipelineConfiguration: function(val, oldVal) {
-            console.log("Pipeline Configuration changed.");
-        }
-    },
     created() 
     {
-        this.server = new Server(this.hostPath, this.hostActionPath);
+        this.server = new Server(global.hostPath, global.hostActionPath);
         this.server.init();
         this.server.on("init", this.onInitComplete);
         this.server.on("state", this.onStateChange);

@@ -8,13 +8,13 @@
 */
 action.createArchiveDirectory = function createArchiveDirectory(archiveName)
 {
-    var subDirectory = IMAGE.get("skuSuffix");
-    var archiveDirectoryRoot = IMAGE.get("archiveDirectory") || "../Archive";
+    var subDirectory = IMAGE.data("skuSuffix");
+    var archiveDirectoryRoot = IMAGE.data("archiveDirectory") || "../Archive";
     var archiveDirectory;
     if(subDirectory) {
-        archiveDirectory = new Folder(archiveDirectoryRoot + "/" + archiveType + "/" + subDirectory)
+        archiveDirectory = new Folder(archiveDirectoryRoot + "/" + archiveName.toLowerCase() + "/" + subDirectory.toLowerCase())
     } else {
-        archiveDirectory = new Folder(archiveDirectoryRoot + "/" + archiveType);
+        archiveDirectory = new Folder(archiveDirectoryRoot + "/" + archiveName.toLowerCase());
     } 
     return action.createDirectory(archiveDirectory);
 }

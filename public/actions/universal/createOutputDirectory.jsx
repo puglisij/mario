@@ -5,8 +5,8 @@
 */
 action.createOutputDirectory = function createOutputDirectory() 
 {
-    var id = IMAGE.projectId || IMAGE.getType();
-    var outputDirectoryRoot = IMAGE.get("outputDirectory") || "../Output";
-    var outputDirectory = new Folder(outputDirectoryRoot + "/" + id);
+    var subDirectory = "" + IMAGE.data("projectId") || IMAGE.getType();
+    var outputDirectoryRoot = IMAGE.data("outputDirectory") || activeDocument.path + "/../Output";
+    var outputDirectory = new Folder(outputDirectoryRoot + "/" + subDirectory.toLowerCase());
     return action.createDirectory(outputDirectory);
 };

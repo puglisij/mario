@@ -3,6 +3,7 @@
 */
 action.revert = function revert()
 {
+    // Is Revert slow?
     try{
         var idRvrt = charIDToTypeID( "Rvrt" );
         executeAction( idRvrt, undefined, DialogModes.NO );

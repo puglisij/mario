@@ -20,7 +20,7 @@ product.addAdditionalShots= function addAdditionalShots()
 	action.setPreference_ResizeOnPaste(false);
 
     // Loop through other illustrated use shots that match this DocID in RGBArchive
-	var fileNames = IMAGE.get("illustratedUseShots");
+	var fileNames = IMAGE.data("illustratedUseShots");
     if (fileNames)
     {
         for (var i = 0; i < fileNames.length; ++i)
@@ -44,8 +44,8 @@ product.addAdditionalShots= function addAdditionalShots()
                     product.dropShadow();
                     action.unsharpMask({
                         amountPercent: 40,
-                        radiusPixels: 1,
-                        thresholdLevels: 0
+                        radiusPixels: 0.4,
+                        thresholdLevels: 2
                     });
                     action.setLayerIconColor(LayerIconColor.Violet);
                 }
@@ -55,7 +55,7 @@ product.addAdditionalShots= function addAdditionalShots()
 
 	
     // Loop through other product use shots that match this SKU in RGBArchive
-    var suffixes = IMAGE.get("productShots");
+    var suffixes = IMAGE.data("productShots");
     if(suffixes)
     {
         for(var i = 0; i < suffixes.length; ++i)

@@ -36,8 +36,6 @@
             </div>
             <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
             <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Pipline</button>
-
-            <button class="topcoat-button--large" type="button" @click="onPrint">Print</button>
         </form>
         <div class="pipeline-editor" v-if="isEditorOpen">
             <h3>Editing: {{ pipelineBeingEdited.name }}</h3>
@@ -187,7 +185,6 @@ export default {
         ---------------*/ 
         onActionAdd(event)
         {
-            console.log(`Action add.`);
             this.pipelineBeingEdited.externalActions.push({
                 action: ""
             });
@@ -198,12 +195,10 @@ export default {
         },
         onActionChange(index, action) 
         {
-            console.log(`Action ${index} changed: `); console.dir(action);
             this.markDirty();
         },
         onActionDelete(index)
         {
-            console.log(`Action ${index} delete.`);
             this.$dialog.open({
                 name: "confirm",
                 onYes: () => {
@@ -214,42 +209,11 @@ export default {
         },
         onActionPositionChange(event) 
         {
-            console.log(`Action position change.`);
             this.markDirty();
         },
         onConfigurationSubmit(event) 
         {
             event.preventDefault();
-        }, 
-        // For debugging only
-        onPrint()
-        {
-            console.log("Pipelines: "); 
-            let json = ``;
-            for(const p of this.local.pipelines) 
-            {
-                json += `
-                    { 
-                        "id": "${p.id}",
-                        "for": "${p.for}",
-                        "name": "${p.name}",
-                        "externalActions": [
-                `;
-                for(const a of p.externalActions) {
-                json += `
-                            {
-                                "id": "${a.id}",
-                                "action": "${a.action}",
-                                "parameters": ${JSON.stringify(a.parameters)}
-                            }
-                `
-                }
-                json += `
-                        ]
-                    }
-                `
-            }
-            console.log(json);
         }
     }
 }

@@ -36,7 +36,6 @@ export default {
     methods: {
         markForSave: function(el) {
             this.needSaved = true;
-            console.log("Watcher configuration changed.");
         },
         getWatcher: function(id) {
             return this.configuration.watchers.find(w => w.id == id);

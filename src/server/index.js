@@ -12,13 +12,13 @@ import EventEmitter from "events";
 /* local modules */
 import Image from './image';
 import ServerConfiguration from './serverConfiguration';
-import classifiers from '../classifiers';
 import _ from '../utils';
 
 const ServerState = {
-    STOPPED: 0, 
-    PAUSED: 1,
-    RUNNING: 2
+    UNINITIALIZED: 0,
+    STOPPED: 1, 
+    PAUSED: 2,
+    RUNNING: 3
 };
 const port = 3001;
 const app = express();
@@ -46,17 +46,22 @@ export default class Server extends EventEmitter
         this.pipelineConfig = {};
         this.pipelineConfigPath = upath.join(serverPath, "config-pipeline.json");
         this.pipelineConfigurator = null;
-
+        
         // Path watcher instances for new images
         this.watchers = [];
         // Pipelines mapping type => pipeline actions
         this.pipelines = {};
+        // Flag indicating configuration has changed and pipeline mapping needs reloaded
+        this.needToReloadPipelines = true;
         // Images waiting for processing
         this.pipelineQueue = [];
 
         this.cs = new CSInterface();     
+        this.cs.addEventListener("debug.pause", event => {
+            this.pause();
+        });
         this._isPipelinesRunningMutex = false;
-        this._serverState = ServerState.STOPPED;
+        this._serverState = ServerState.UNINITIALIZED;
     }
     _loadConfiguration() 
     {
@@ -65,6 +70,8 @@ export default class Server extends EventEmitter
         if(!this.config.watchers) {
             throw new Error("Server config missing 'watchers'.");
         }
+        console.log("Loaded server config: ");
+        console.dir(this.config);
     }
     _loadPipelineConfiguration()
     {
@@ -74,27 +81,37 @@ export default class Server extends EventEmitter
             throw new Error("Server pipeline config missing 'pipelines'.");
         }
     }
+    _loadPipelineMapping()
+    {
+        for(const pipeline of this.pipelineConfig.pipelines)
+        {
+            const forType = pipeline.for.toLowerCase();
+            _.getOrDefine(this.pipelines, forType, []).push(pipeline);
+        }
+        this.needToReloadPipelines = false;
+    }
     getConfiguration() {
         return this.configurator.clone();
     }
     getPipelineConfiguration() {
         return this.pipelineConfigurator.clone();
     }
-    setConfiguration(key, value)
+    setConfiguration(key, value) 
     {
-        // TODO changes to pipeline options don't require server restart?
         this.configurator.set(key, value);
-        console.log(`Server config ${key} changed to ${value}`);
+        console.log(`Configuration ${key} changed to ${value}`);
     }
-    setPipelineConfiguration(key, value)
+    setPipelineConfiguration(key, value) 
     {
         this.pipelineConfigurator.set(key, value);
+        this.needToReloadPipelines = true;
+        console.log(`Pipeline Configuration ${key} changed to ${value}`);
     }
     isPaused() {
         return this._state == ServerState.PAUSED;
     }
     isStopped() {
-        return this._state == ServerState.STOPPED;
+        return this._state == ServerState.STOPPED || this._state == ServerState.UNINITIALIZED;
     }
     get _state() {
         return this._serverState;
@@ -105,22 +122,8 @@ export default class Server extends EventEmitter
     }
     async init() 
     {
-        //-----------------
-        // Load config
-        //-----------------
         this._loadConfiguration();
-        console.log("Loaded server config: ");
-        console.dir(this.config);
-
-        //-----------------
-        // Load Pipelines 
-        //-----------------
         this._loadPipelineConfiguration();
-        for(const pipeline of this.pipelineConfig.pipelines)
-        {
-            const forType = pipeline.for.toLowerCase();
-            _.getOrDefine(this.pipelines, forType, []).push(pipeline);
-        }
 
         //-----------------
         // Load Actions 
@@ -130,11 +133,17 @@ export default class Server extends EventEmitter
         let loadActionsResult = await this.runJsx(actionScript);
         console.log("Loaded actions.");
 
+        this._state = ServerState.STOPPED;
         this.emit("init");
     }
     async start()
     {
-        if (this._state == ServerState.STOPPED) 
+        console.log(`Server started.`);
+
+        if (this.needToReloadPipelines) 
+            this._loadPipelineMapping()
+
+        if (this.isStopped()) 
         {
             //-----------------
             // Setup watchers 
@@ -147,11 +156,12 @@ export default class Server extends EventEmitter
                     return upath.join(watchPathRoot, "*." + ext)
                 });
                 const watcher = chokidar.watch(watchPaths, {
-                    ignored: /^\.|Output|Error/, 
+                    ignored: /^\.|Output|Error|Archive|Processed/, 
                     depth: 0
                 })
-                .on("add", this.processImage.bind(this, watchDefaultType))
-                .on("addDir", this.processImage.bind(this, watchDefaultType));
+                .on("add", path => {
+                    this.processImage(path, watchDefaultType);
+                });
 
                 console.log(`Watcher set for ${watchPaths.toString()}`);
                 this.watchers.push(watcher);
@@ -194,6 +204,7 @@ export default class Server extends EventEmitter
     }
     pause()
     {
+        console.log(`Server paused.`);
         this._state = ServerState.PAUSED;
     }
     close() 
@@ -221,21 +232,21 @@ export default class Server extends EventEmitter
         }
     }
     /**
-     * Run classifiers, read metadata, and notify CEP pipeline image is ready for processing 
+     * Read metadata, and notify CEP pipeline image is ready for processing 
      */
-    async processImage(defaultType, path)
+    async processImage(path, defaultType)
     {
         path = upath.normalize(path);
         const imageName = upath.basename(path);
-        const reader = new Image.Reader(path, imageName, { type: defaultType });
-        console.log("Processing: " + imageName + " Full Path: " + path + " Default Type: " + defaultType);
+        const reader = new Image.Reader(path, { type: defaultType });
+        console.log(`Processing: ${imageName} Full Path: ${path} Default Type: ${defaultType}`);
 
         try {
             await reader.readProcessingData();
             await reader.readMetadata();
         } catch(e) {
             const image = reader.getImage();
-            this.moveToErrored(image, e.toString());
+            this.moveImageToErrored(image, e.toString());
             return;
         }
 
@@ -251,35 +262,45 @@ export default class Server extends EventEmitter
             this.runPipelines();
         }
     }
-    async moveToErrored(image, message)
+    async moveImageTo(image, dir)
     {
-        const errorDir = image.getErrorDirectory();
-        const errorLogsPath = upath.join(errorDir, "error.log");
         await new Promise(resolve => {
-            fs.mkdir(errorDir, { recursive: false }, err => {
-                if(err) throw err;
+            fs.mkdir(dir, { recursive: true }, err => {
+                if(err && !err.code == "EEXIST") 
+                    console.error(err + "\nImage move failed. Could not create directory " + dir);
                 resolve();
             });
         });
-        fs.writeFile(errorLogsPath, 
-            message, 
-            err => {
-                if(err) 
-                    console.error(err + "\nErrored image logs could not be written to " + errorLogsPath);
-            });
         const allFilePaths = image.getAllFilePaths();
         for(const filePath of allFilePaths) 
         {
             const fileName = upath.basename(filePath);
-            const toPath = upath.join(errorDir, fileName);
+            const toPath = upath.join(dir, fileName);
             fs.rename(filePath, toPath, err => {
-                if(err) {
-                    console.error(err + "\nErrored image could not be moved to " + toPath);
-                    return;
-                }
-                console.log("Errored image moved to: " + toPath);
+                if(err) 
+                    console.error(err + "\nImage could not be moved to " + toPath);
             });
         }
+    }
+    async moveImageToErrored(image, message)
+    {
+        const errorDir = image.getErrorDirectory();
+        const errorLogsPath = upath.join(errorDir, "error.log");
+        fs.writeFile(errorLogsPath, [   
+                ``,
+                `date: ${new Date().toLocaleString()}`,
+                `imagePath: ${image.imagePath}`, 
+                `dataPath: ${image.dataPath}`, 
+                message
+            ].join(`\n`), 
+            {
+                flag: 'a'
+            },
+            err => {
+                if(err) 
+                    console.error(err + "\nErrored image logs could not be written to " + errorLogsPath);
+            });
+        this.moveImageTo(image, errorDir);
     }
     /**
      * Run images through pipeline per its configuration
@@ -290,70 +311,58 @@ export default class Server extends EventEmitter
         this._isPipelinesRunningMutex = true; // mutex
         let image = null;
 
-        await this.runJsx(`__PIPELINE = {};`);
+        await this.runJsx(`app.displayDialogs = DialogModes.NO;`);
         while(image = this.pipelineQueue.pop())
         {
             const pipelines = this.pipelines[image.type.toLowerCase()];
             if(!pipelines) {
-                console.error("Pipeline not found for image: " + image.imagePath + " type: " + image.type);
+                console.error(`Pipeline not found for image: ${image.imagePath} type: ${image.type}`);
                 continue;
             }
 
-            for(const pipeline of pipelines) 
+            try 
             {
-                if(pipeline.disabled) {
-                    console.log(`Pipeline ${pipeline.name} is disabled. Skipping.`);
-                    continue;
-                }
-    
-                try 
+                await this.runPipelineImageStart(image);
+
+                for(const pipeline of pipelines) 
                 {
+                    if(pipeline.disabled) continue;
                     this.emit("pipelinestart", image.type);
-    
-                    // Open document 
-                    await this.runJsx(`closeAll();
-                        __PIPELINE.restoreUnits = _.saveUnits(); 
-                        IMAGE=new ImageForProcessing(${JSON.stringify(image)});`);
-                    if(image.hasImagePath()) {
-                        await this.runJsx(`openAsActive('${image.imagePath}');`);
-                    }
-    
+                    
                     // Run Actions
-                    for(const photoshopActionConfig of pipeline.externalActions) 
+                    for(const jsxAction of pipeline.externalActions) 
                     {
-                        const psAction = photoshopActionConfig.action;
-                        const psActionParameters = photoshopActionConfig.parameters;
-    
-                        this.emit("action", psAction);
+                        this.emit("action", jsxAction.action);
                         // Call jsx action by name with config parameters 
-                        let result = await this.runAction(psAction, psActionParameters);
-                        if (result === "EXIT") {
-                            break;
-                        }
+                        let result = await this.runAction(jsxAction.action, jsxAction.parameters);
+
                         await this.pauseCheck(this.config.pauseAfterEveryAction);
-                        if(this._state == ServerState.STOPPED) {
-                            break;
-                        }
+                        if(result === "EXIT") break;
+                        if(this.isStopped()) break;
                     }
+                    await this.runJsx(`closeAll();`);
+                    await this.pauseCheck(this.config.pauseAfterEveryPipeline);
+                    if(this.isStopped()) break;
                 }
-                catch(e) 
-                {
-                    await this.pauseCheck(this.config.pauseOnExceptions);
-                    this.moveToErrored(image, e.toString());
-                }
-                finally 
-                {
-                    this.emit("pipelineend", image.type);
-                    await this.runJsx(`__PIPELINE.restoreUnits && __PIPELINE.restoreUnits();`);
-                    await this.pauseCheck(this.config.pauseAfterEveryImage);
-                    if(this._state == ServerState.STOPPED) {
-                        break;
-                    }
-                }
-                
+                    
+                this.moveImageTo(image, image.getProcessedDirectory());
                 console.log("Pipeline completed for image: " + image.imageName);
             }
+            catch(e) 
+            {
+                await this.pauseCheck(this.config.pauseOnExceptions);
+                this.moveImageToErrored(image, e.toString());
+            }
+            finally 
+            {
+                this.emit("pipelineend", image.type);
+                await this.runPipelineImageEnd(image);
+                await this.pauseCheck(this.config.pauseAfterEveryImage);
+                if(this.isStopped()) break;
+            }
         }
+        await this.runJsx(`closeAll(); $.gc();`);
+        this.updateMemoryStats();
         this._isPipelinesRunningMutex = false;
         console.log("Pipeline queue finished.");
     }
@@ -387,19 +396,41 @@ export default class Server extends EventEmitter
             namespaceDefine);
     }
     /**
+     * Close all documents. Save Photoshop settings. Instantiate IMAGE instance
+     * @param {Image} image 
+     * @returns {Promise}
+     */
+    runPipelineImageStart(image)
+    {
+        return this.runJsx(`closeAll();
+        __PIPELINE = {};
+        __PIPELINE.restoreUnits = _.saveUnits(); 
+        IMAGE=new ImageForProcessing(${JSON.stringify(image)});`);
+    }
+    /**
+     * Restore Photoshop settings.
+     * @param {Image} image 
+     * @returns {Promise}
+     */
+    runPipelineImageEnd(image)
+    {
+        return this.runJsx(`__PIPELINE.restoreUnits && __PIPELINE.restoreUnits(); IMAGE=null;`);
+    }
+    /**
      * Run the Photoshop JSX pipeline action function by the given name, with the given parameters
-     * @param {*} actionName the jsx action function name (e.g. action.saveDocument)
-     * @param {*} actionParameters the jsx action function parameters, either a primitive or object
+     * @param {string} actionName the jsx action function name (e.g. action.saveDocument)
+     * @param {string} actionParameters the jsx action function parameters, either a primitive or object
+     * @returns {Promise}
      */
     runAction(psActionName, actionParameters)
     {
         const psActionParameters = JSON.stringify(actionParameters);
+        console.log(`Running Action: ${psActionName}`);
         return this.runJsx(`(function(){
             try {
                 var result = ${psActionName}(${psActionParameters});
                 return result;
             } catch(e) {
-                alert("Cannot run action: ${psActionName} Exception: " + e); 
                 return "Exception: " + e.toString();
             }
         }())`);
@@ -407,6 +438,7 @@ export default class Server extends EventEmitter
     /**
      * Note that evalScript runs asynchronously, but Photoshop runs the code synchronously
      * @param {string} jsxString the jsx code string
+     * @returns {Promise}
      */
     runJsx(jsxString)
     {
@@ -420,10 +452,14 @@ export default class Server extends EventEmitter
                     console.error(errorMessage);
                     reject(errorMessage);
                 } else {
-                    console.log(`Jsx: \n\t${jsxString}\nResult: ${result}`);
                     resolve(result)
                 }
             });
         })
+    }
+    updateMemoryStats()
+    {
+
+        this.emit("stats" )
     }
 }

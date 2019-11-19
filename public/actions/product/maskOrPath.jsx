@@ -10,6 +10,8 @@ product.maskOrPath = function maskOrPath(options)
     {
         _maskActions();
     } else {
+        activeDocument.flatten();
+        action.setColorChannel_8Bit();
         _pathActions(options.border);
     }
     restoreUnits();
@@ -20,13 +22,9 @@ product.maskOrPath = function maskOrPath(options)
     */
     function _pathActions(border) 
     {
-        activeDocument.flatten();
-
-        action.setColorChannel_8Bit();
-
-        layerRef = activeDocument.artLayers.getByName("Background")
         // Set background to layer
-        if (activeDocument.layers[0].isBackgroundLayer == true) activeDocument.layers[0].isBackgroundLayer = false
+        if (activeDocument.layers[0].isBackgroundLayer == true) 
+            activeDocument.layers[0].isBackgroundLayer = false
         try {
             // Set selection to "Path 1"
             activeDocument.pathItems.getByName("Path 1").makeSelection(0, true, SelectionType.REPLACE)

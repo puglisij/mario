@@ -14,9 +14,9 @@
 <script>
 /* npm modules  (Alternatively use cep_node.require) */ 
 import upath from 'upath';
-import { mapState, mapGetters } from 'vuex';
 
 /* local modules */
+import appGlobal from "./global";
 import themeManager from "./themeManager";
 import menus from "./components/menus.vue";
 import server from "./components/server.vue";
@@ -32,6 +32,9 @@ export default {
 
         }
     },
+    computed: {
+        cs() { return appGlobal.cs; }
+    },
     /**  
      * about to be initialized. data is not yet reactive 
      */
@@ -46,9 +49,9 @@ export default {
         this.importJSX("image.jsx"); // import this here?
 
         console.log(`App mounted.\n
-            Extension Path: ${this.extensionPath}\n
-            Host Path: ${this.hostPath}\n
-            Host Action Path: ${this.hostActionPath}`);
+            Extension Path: ${appGlobal.extensionPath}\n
+            Host Path: ${appGlobal.hostPath}\n
+            Host Action Path: ${appGlobal.hostActionPath}`);
     },
     /**  
      * right before render happens. template compiled and virtual DOM update by vue.  
@@ -76,12 +79,9 @@ export default {
      * nothing left on your component. do last minute cleanups, etc. 
      */
     destroyed() {},
-    computed: {
-        ...mapState(['cs', 'extensionPath', 'hostPath', 'hostActionPath'])
-    },
     methods: {
         importJSX(fileName) {
-            let importPath = upath.join(this.hostPath, fileName);
+            let importPath = upath.join(appGlobal.hostPath, fileName);
             this.cs.evalScript('try{ var file = File("' + importPath + '").fsName; $.evalFile(file); }catch(e){ alert("File: " + file + " Import Exception: " + e); }', result => {
                 console.log("Jsx File Imported: " + importPath + " Result: " + result);
             });
@@ -106,7 +106,6 @@ export default {
 @import url("http://fonts.googleapis.com/css?family=Source+Sans+Pro:300");
 @import url("http://fonts.googleapis.com/css?family=Source+Code+Pro");
 
-/* NOTE: Import global variables in webpack config */
 html, body {
     margin: 0;
     padding: 0;

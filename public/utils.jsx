@@ -41,15 +41,17 @@ var _ = {
         return false;
     },
     /**
-    * Add the specified keyword to the document
-    * @param {bool} dontDuplicate true if only one instance should exist (will not retroactively delete duplicate keywords)
+    * Add the specified keyword to the document. Does not duplicate by default.
+    * @param {bool} [allowDuplicates = false] true if multiple instances can exist (will not retroactively delete duplicate keywords)
     */
-    addKeyword: function(keyword, dontDuplicate) 
+    addKeyword: function(keyword, allowDuplicates) 
     {
-        if(dontDuplicate && _.hasKeyword(keyword)) {
+        if(allowDuplicates !== true && _.hasKeyword(keyword)) {
             return;
         }
-        activeDocument.info.keywords.push(keyword);
+        var keywords = activeDocument.info.keywords;
+            keywords.push(keyword);
+        activeDocument.info.keywords = keywords;
     },
     /**
     * Removes the layer with the given name, if found.
@@ -77,6 +79,38 @@ var _ = {
             return pathItem;
         } catch(err) {}
         return null;
+    },
+    /**
+    * Replaces the mustache {{expression}} in the given text with the given input text
+    * @param {string} template the template string e.g. "my template is {{foo}}"
+    * @param {object} map the object with name, value pairs e.g. { foo: "awesome" }
+    */
+    mustache: function(template, map)
+    {
+        var result = [], t = 0;
+        var tokens = template.split(/({{)|(}})/g);
+
+        function nextToken() {
+            var n = t + 1;
+            while((typeof tokens[n] === undefined || tokens[n] === "{{") && n < tokens.length) { n += 1; }
+            return tokens[t = n];
+        }
+
+        for(t = 0; t < tokens.length; ++t)
+        {
+            var token = tokens[t];
+            if(token === "{{") {
+                var key = nextToken().trim();
+                if(key && map[key] !== undefined) {
+                    if(nextToken() === "}}") {
+                        result.push(map[key]);
+                    }
+                }
+            } else if(token && token !== "}}") {
+                result.push(token);
+            }
+        }
+        return result.join('');
     }
 }
 
@@ -87,7 +121,7 @@ function s2t(s) { return app.stringIDToTypeID(s) }
 function c2t(c) { return app.charIDToTypeID(c) }
 
 /**
-* Simple cross-platform path joining. Works similar to node.js  path.join(). 
+* Cross-platform path joining. Works similar to node.js  path.join(). 
 * If path does not exist, the returned path may be invalid.
 */
 // function pathJoin()

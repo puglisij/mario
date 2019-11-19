@@ -15,81 +15,86 @@
 */
 product.makeWebTIF = function makeWebTIF()
 {
-    var sku = IMAGE.get("sku");
+    var sku = IMAGE.data("sku");
     if(!sku) {
         throw new Error("Image data missing sku.");
     }
 
-    var tif;
-    var viewPaths = IMAGE.get("additionalViews");
-    if(!viewPaths) {
+    var viewsDirectory = IMAGE.getPackagePath();
+    var views = IMAGE.data("additionalViews");
+    if(!views) {
         throw new Error("Image data missing additionalViews.");
     }
 
+    var tif;
     // Add Additional Views as Layers 
-    for(var i = 0; i < viewPaths.length; ++i) 
+    for(var i = 0; i < views.length; ++i) 
     {
-        var viewFile = new File(viewPaths[i]);
-        // var view = app.open(viewFile);
+        var view = views[i];
+        var viewIsFromArchives = view.isFromArchives;
+        var viewFile = new File(viewsDirectory + "/" + view.file);
+        var view = app.open(viewFile);
         
-        // action.setColorMode("RGB");
-        // product.maskOrPath({ border: 50 });
-        // action.saveToArchiveDirectory("RGB");
+        action.setColorMode("RGB");
+        product.maskOrPath({ border: 50 });
+        action.saveAsPSDToArchiveDirectory("RGB");
 
-        // app.preferences.rulerUnits = Units.PIXELS;
-        // app.preferences.typeUnits = TypeUnits.PIXELS;
+        app.preferences.rulerUnits = Units.PIXELS;
+        app.preferences.typeUnits = TypeUnits.PIXELS;
 
-        // // Remove all alpha channel objects
-        // activeDocument.channels.removeAll();
+        // Remove all alpha channel objects
+        activeDocument.channels.removeAll();
 
-        // // Duplicate image becomes activeDocument
-        // var duplicateViewName = _.getDocumentNameWithoutExtension();
-        // var duplicateView = action.duplicateView(duplicateViewName);
-        // activeDocument = duplicateView;
+        // Duplicate image becomes activeDocument
+        var duplicateViewName = _.getDocumentNameWithoutExtension();
+        var duplicateView = action.duplicateDocument(duplicateViewName);
+        activeDocument = duplicateView;
 
-        // action.convertActiveLayerToSmartObject();
-        // activeDocument.activeLayer.name = duplicateViewName.toString();
-        // activeDocument.resizeCanvas("300px", "300px", AnchorPosition.MIDDLECENTER);
+        action.convertActiveLayerToSmartObject();
+        activeDocument.activeLayer.name = duplicateViewName.toString();
+        activeDocument.resizeCanvas("300px", "300px", AnchorPosition.MIDDLECENTER);
 
-        // // Trim transparent area around the image
-        // activeDocument.trim(TrimType.TRANSPARENT);
+        if(viewIsFromArchives) {
+            action.setLayerIconColor(LayerIconColor.Violet);
+        }
 
-        // var scale = 29;
-        // if (_.hasKeyword("1to1")) {
-        //     scale = 58;
-        // }
-        // if (_.hasKeyword("4to1")) {
-        //     scale = 17;
-        // }
-        // action.scaleLayerByPercent(scale);
-        // product.dropShadow();
-        // action.unsharpMask({
-        //     amountPercent: 40,
-        //     radiusPixels: 0.4,
-        //     thresholdLevels: 2
-        // });
+        // Trim transparent area around the image
+        activeDocument.trim(TrimType.TRANSPARENT);
 
-        //  // Create TIF, if not created
-        // if(!tif) {
-        //     // The created TIF becomes the active document
-        //     var outputDirectory = action.createOutputDirectory(outputDirectory);
-        //     var newTifFilePath = outputDirectory.fullName + "/" + sku + ".tif";
-        //     action.saveAsTIF(newTifFile);
-        //     action.makeWhiteBackground();
+        var scale = 29;
+        if (_.hasKeyword("1to1")) {
+            scale = 58;
+        }
+        if (_.hasKeyword("4to1")) {
+            scale = 17;
+        }
+        action.scaleLayerByPercent(scale);
+        product.dropShadow();
+        action.unsharpMask({
+            amountPercent: 40,
+            radiusPixels: 0.4,
+            thresholdLevels: 2
+        });
+        
+         // Create TIF, if not created
+        if(!tif) {
+            // The created TIF becomes the active document
+            var outputDirectory = action.createOutputDirectory();
+            var newTifFilePath = outputDirectory.fullName + "/" + sku + ".tif";
+            action.saveAsTIF(newTifFilePath);
+            action.makeWhiteBackground();
 
-        //     tif = activeDocument;
-        //     activeDocument = tif;
-        // } else {
-        //     // Place duplicated document as new layer into TIF
-        //     activeDocument = duplicateView;
-        //     duplicateView.activeLayer.duplicate(tif);
-        //     duplicateView.close(SaveOptions.DONOTSAVECHANGES);
-        //     activeDocument = tif;
-        // }
-
-        // product.trimAndResizeCanvas();
-        // product.addAdditionalShots();
-        // product.addKeyword_PackDupe();
+            tif = activeDocument;
+            activeDocument = tif;
+        } else {
+            // Place duplicated document as new layer into TIF
+            activeDocument = duplicateView;
+            duplicateView.activeLayer.duplicate(tif);
+            duplicateView.close(SaveOptions.DONOTSAVECHANGES);
+            activeDocument = tif;
+        }
+        
+        product.trimAndResizeCanvas();
     }
 }
 

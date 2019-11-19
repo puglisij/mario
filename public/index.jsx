@@ -1,22 +1,8 @@
-function openAsActive(filePath)
-{
-    var fileRef = new File(filePath);
-    var docRef = app.open(fileRef);
-    app.activeDocument = docRef; 
-}
-function closeWithSave()
-{
-    app.activeDocument.close(SaveOptions.SAVECHANGES);
-}
-function closeWithoutSave()
-{
-    app.activeDocument.close(SaveOptions.DONOTSAVECHANGES);
-}
 function closeAll()
 {
     while(app.documents.length)
     {
-        app.activeDocument.close();
+        app.activeDocument.close(SaveOptions.DONOTSAVECHANGES);
     }
 }
 
@@ -30,13 +16,39 @@ function importAction(actionFilePath)
         alert("File: " + file + " Action Import Exception: " + e); 
     }
 }
-function runAction(actionName, parameters)
+
+
+/*
+    CSXSEvents can be received on the HTML Panel side using CSInterface
+    https://www.davidebarranca.com/2014/07/html-panels-tips-11-externalobject-cep-events/
+*/
+function JsxEvents() {}
+JsxEvents.isSupported = false;
+JsxEvents.init = function() 
 {
-    try { 
-        var result = this[actionName]; //.call(IMAGE, parameters);
-        $.writeln(actionName + " action successful");
-        return result;
-    } catch(e) { 
-        alert("Cannot run action: " + actionName + " Exception: " + e); 
+    // CSXSEvent is supported if PlugPlugExternalObject exists
+    try {
+        var xLib = new ExternalObject("lib:\PlugPlugExternalObject");
+        this.isSupported = !!xLib;
+    } catch (e) {
+        alert("xLib create failed: " + e);
     }
-}
+};
+/**
+* Dispatch event which can be received by Panel
+*/
+JsxEvents.dispatch = function(type, data) 
+{
+    if(!this.isSupported) {
+        return;
+    }
+    try {
+        var eventObj = new CSXSEvent();
+            eventObj.type = type;
+            eventObj.data = data || " ";
+            eventObj.dispatch();
+    } catch(e) {
+        // fail
+    }
+};
+JsxEvents.init();

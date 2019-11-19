@@ -25,7 +25,6 @@ export default {
     },
     methods: {
         onCheckbox(event) {
-            console.log(`checkbox ${event.target.name} changed to ${event.target.checked}`);
             this.$emit("change", event.target.checked, event.target.name);
         }
     }

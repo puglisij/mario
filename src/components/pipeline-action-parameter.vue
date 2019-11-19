@@ -80,12 +80,6 @@ export default {
         isNumber() { return this.type === TYPE_NUMBER; },
         isString() { return this.type === TYPE_STRING; }
     },
-    created() {
-        console.log(`parameter created()`)
-    },
-    mounted() {
-        console.log(`parameter mounted()`)
-    },
     methods: {
         /**
          * Keep the original type
