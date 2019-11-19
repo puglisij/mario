@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ExtensionManifest ExtensionBundleId="com.a-new-hope" ExtensionBundleVersion="1.0.0" ExtensionBundleName="a-new-hope" Version="8.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest ExtensionBundleId="com.mario" ExtensionBundleVersion="1.0.0" ExtensionBundleName="mario" Version="8.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.a-new-hope.panel" Version="1.0.0" />
+    <Extension Id="com.mario.panel" Version="1.0.0" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
@@ -15,7 +15,7 @@
     </RequiredRuntimeList>
   </ExecutionEnvironment>
   <DispatchInfoList>
-    <Extension Id="com.a-new-hope.panel">
+    <Extension Id="com.mario.panel">
       <DispatchInfo>
         <Resources>
           <MainPath>./public/index-dev.html</MainPath>
@@ -31,7 +31,7 @@
         </Lifecycle>
         <UI>
           <Type>Panel</Type>
-          <Menu>A New Hope</Menu>
+          <Menu>Mario</Menu>
           <Geometry>
             <Size>
               <Height>600</Height>
