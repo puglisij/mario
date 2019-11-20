@@ -1,18 +1,7 @@
 
 /**
-* Make web image TIF:
-    - remove all alpha channels 
-    - duplicates the image as new document (same name without extension) - ill refer to this as "clone" below
-    - creates a new placed layer with clone name (becomes active layer - i think this effectively just renames the topmost layer in the doc)
-    - Resizes the canvas to 300x300px
-    - Trims the image based on transparency (this may result in an even smaller canvas size?)
-    - Scales current layer based on a keyword (1to1 [58%], 4to1 [17%]) if no keyword its scaled by 29%
-    - Adds a drop shadow to current layer
-    - Adds unsharp mask to current layer
-    - Adds an empty Note and moves it to 20, 20
-    - loads a TIF by the sku name from the appropriate folder in /Working/Work/Web/  - Removes the layer matching the clone name. Places clone as a new layer into TIF . Closes clone without saving.
-    - if TIF doesnt exist then it creates it and adds a white background
-*/
+* Assembles product views into a single web TIF. Also saves each view to RGB Archive. 
+*/ 
 product.makeWebTIF = function makeWebTIF()
 {
     var sku = IMAGE.data("sku");
@@ -27,6 +16,7 @@ product.makeWebTIF = function makeWebTIF()
     }
 
     var tif;
+    var BORDER_SIZE = 50;
     // Add Additional Views as Layers 
     for(var i = 0; i < views.length; ++i) 
     {
@@ -36,11 +26,19 @@ product.makeWebTIF = function makeWebTIF()
         var view = app.open(viewFile);
         
         action.convertToColorProfile("RGB");
-        product.maskOrPath({ border: 50 });
-        action.saveAsPSDToArchiveDirectory("RGB");
+        product.maskOrPath();
 
+        // Add border 
         app.preferences.rulerUnits = Units.PIXELS;
         app.preferences.typeUnits = TypeUnits.PIXELS;
+
+        activeDocument.resizeCanvas(
+            activeDocument.width + BORDER_SIZE, 
+            activeDocument.height + BORDER_SIZE, 
+            AnchorPosition.MIDDLECENTER
+        );
+
+        action.saveAsPSDToArchiveDirectory("RGB");
 
         // Remove all alpha channel objects
         activeDocument.channels.removeAll();

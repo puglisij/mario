@@ -196,3 +196,5 @@ function actionDescriptorToJSON(actionDescriptor)
     convertDesc, DialogModes.NO );
     return jsonDesc.getString( s2t("json") );
 }
+
+"";

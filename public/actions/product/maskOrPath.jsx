@@ -1,29 +1,27 @@
 /**
 * If Image has keyword "masked" then masking actions are applied. Otherwise path actions are applied.
+* Image is trimmed by alpha 
 * @param {object} options 
-* @param {Number} options.border the border size for pathing
+* @param {Number} [options.pathName = "Path 1"] the name of the path to use for path action
 */
 product.maskOrPath = function maskOrPath(options)
 {
-    var restoreUnits = _.saveUnits();
+    options = options || {};
+    
     if(_.hasKeyword("masked")) {
         _maskActions();
     } else {
-        _pathActions(options.border);
+        _pathActions(options.pathName || "Path 1");
     }
 
     try{
         activeDocument.trim(TrimType.TRANSPARENT);
-        app.preferences.rulerUnits = Units.PIXELS;
-        activeDocument.resizeCanvas(activeDocument.width + border, activeDocument.height + border, AnchorPosition.MIDDLECENTER)
     } catch(err){}
-
-    restoreUnits();
 
     /*
     *  Functions
     */
-    function _pathActions(border) 
+    function _pathActions(pathName) 
     {
         activeDocument.flatten();
         action.setColorChannel_8Bit();
@@ -33,7 +31,7 @@ product.maskOrPath = function maskOrPath(options)
             activeDocument.layers[0].isBackgroundLayer = false;
         try {
             // Set selection to "Path 1"
-            activeDocument.pathItems.getByName("Path 1").makeSelection(0, true, SelectionType.REPLACE);
+            activeDocument.pathItems.getByName(pathName).makeSelection(0, true, SelectionType.REPLACE);
         } catch(err) {
             // has no Path
             return false;
@@ -50,7 +48,7 @@ product.maskOrPath = function maskOrPath(options)
         return true;
     }
 
-    function _maskActions(border) 
+    function _maskActions() 
     {
         action.removeHiddenLayers();
         try {

@@ -4,10 +4,18 @@
         <div class="row">
             <div class="topcoat-button-bar">
                 <div class="topcoat-button-bar__item">
-                    <button class="topcoat-button-bar__button--large" v-on:click="toggleScriptListener" v-bind:style="{ color: isScriptListening ? '#0f0' : '#f00'}">Toggle ScriptListener</button>
+                    <button class="topcoat-button-bar__button--large" 
+                        @click="toggleScriptListener" 
+                    >
+                        Toggle ScriptListener {{ isScriptListening ? 'Off' : 'On'}}
+                    </button>
                 </div>
                 <div class="topcoat-button-bar__item">
-                    <button class="topcoat-button-bar__button--large" v-on:click="clearScriptListener">Clear ScriptListener</button>
+                    <button class="topcoat-button-bar__button--large" 
+                        @click="clearScriptListener"
+                    >
+                        Clear ScriptListener
+                    </button>
                 </div>
             </div>
         </div>
@@ -67,12 +75,6 @@ export default {
             fs.writeFile(SCRIPT_LOG_PATH, "", err => 
             {
                 if(err) throw err; 
-
-                this.$root.$notify({
-                    group: "mario", 
-                    title: "Success!",
-                    text: `ScriptListenerLog was cleared.`
-                })
             })
         },
         toggleScriptListener() 

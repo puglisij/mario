@@ -1,7 +1,6 @@
 <template>
   <div>
         <h1 v-bind:style="{ color: statusColor }">Mario</h1>
-        
         <section class="content">
             <h2>Server</h2>
 
@@ -118,34 +117,29 @@ export default {
         this.server.on("pipelineend", this.onPipelineEnd);
 
         window.addEventListener("beforeunload", event => {
-            this.stop();
+            this.server && this.server.close();
         });
         console.log("Server component created.");
     },
     beforeDestroy() 
     {
         // Cleanup server instance
-        this.stop();
+        this.server && this.server.close();
         console.log("Server component destroyed.");
     },
     methods: 
     {
         start() 
         {
-            console.log("Server start received");
             this.server.start();
-            //const forked = fork('server.js');
-            //forked.kill();
         },
         pause() 
         {
-            console.log("Server pause received");
             this.server.pause();
         },
         stop() 
         {
-            console.log("Server stop received");
-            this.server && this.server.close();
+            this.server && this.server.stop();
         }, 
         onInitComplete() {
             const configClone = this.server.getConfiguration();
@@ -188,6 +182,17 @@ export default {
 </script>
 
 <style scoped lang="scss">
+    .mario {
+        animation: play 0.8s steps(4) infinite;
+
+        background: url('https://raw.githubusercontent.com/LantareCode/random-this-and-thats/master/CSS/SuperMario-Animation/images/mariowalking/result.png') left center;    
+        width: 71px;
+        height: 72px;
+    }
+    @keyframes play{
+        100%{background-position: -284px;}
+    }
+
     .light {
         .tabs {
             background: #F4F4F4;

@@ -133,6 +133,41 @@ export default class Server extends EventEmitter
         let loadActionsResult = await this.runJsx(actionScript);
         console.log("Loaded actions.");
 
+        //-----------------
+        // Setup routes
+        //-----------------
+        app.get('/activedocument', (req, res) => {
+            this.cs.evalScript("_.getDocumentPath()", function(activeDocumentPath) {
+                res.status(200).send("Active Document: " + activeDocumentPath);
+            });
+        });
+        app.get('/status', (req, res) => {
+            // search for files matching parameters 
+            res.status(200).send(
+                "Mario Status: " + Object.keys(ServerState).find(p => ServerState[p] === this._state)
+            );
+        });
+        app.post('/process', (req, res) => {
+            // stream image file or zip to processing directory
+            // stream json data to file in processing directory
+            // process
+            res.status(201).json({ success: false })
+        });
+        app.use((req, res, next) => {
+            res.status(404).send("Sorry, can't find that!");
+        });
+        app.use((err, req, res, next) => {
+            console.error(err.stack);
+            res.status(500).send('Something broke!')
+        });
+
+        //-----------------
+        // Start server
+        //-----------------
+        this.server = app.listen(port, function() {
+            console.log(`Express is listening to http://localhost:${port}`);
+        });
+
         this._state = ServerState.STOPPED;
         this.emit("init");
     }
@@ -166,39 +201,6 @@ export default class Server extends EventEmitter
                 console.log(`Watcher set for ${watchPaths.toString()}`);
                 this.watchers.push(watcher);
             }
-
-            //-----------------
-            // Setup routes
-            //-----------------
-            app.get('/activedocument', (req, res) => {
-                this.cs.evalScript("_.getDocumentPath()", function(activeDocumentPath) {
-                    res.send("Success! Active Document: " + activeDocumentPath);
-                });
-            });
-            app.get('/search', (req, res) => {
-                // search for files matching parameters 
-                res.status(200).send("Search results are thus...");
-            });
-            app.post('/process', (req, res) => {
-                // stream image file or zip to processing directory
-                // stream json data to file in processing directory
-                // process
-                res.status(201).json({ success: true })
-            });
-            app.use(function(req, res, next) {
-                res.status(404).send("Sorry, can't find that!");
-            });
-            app.use(function (err, req, res, next) {
-                console.error(err.stack)
-                res.status(500).send('Something broke!')
-            });
-
-            //-----------------
-            // Start server
-            //-----------------
-            this.server = app.listen(port, function() {
-                console.log(`Express is listening to http://localhost:${port}`);
-            });
         }
         this._state = ServerState.RUNNING;
     }
@@ -207,14 +209,19 @@ export default class Server extends EventEmitter
         console.log(`Server paused.`);
         this._state = ServerState.PAUSED;
     }
+    stop()
+    {
+        console.log(`Server stopped.`);
+        this.watchers.forEach(watcher => watcher.close());
+        this._state = ServerState.STOPPED;
+    }
     close() 
     {
-        console.log("Server closing...");
-        this.watchers.forEach(watcher => watcher.close());
+        console.log(`Server closing...`);
+        this.stop();
         this.server && this.server.close(() => {
-            console.log("Server closed.");
+            console.log(`Server closed.`);
         });
-        this._state = ServerState.STOPPED;
     }
     pauseCheck(doPause)
     {
@@ -262,7 +269,7 @@ export default class Server extends EventEmitter
             this.runPipelines();
         }
     }
-    async moveImageTo(image, dir)
+    async moveImagePathsToDirectory(imagePaths, dir, message)
     {
         await new Promise(resolve => {
             fs.mkdir(dir, { recursive: true }, err => {
@@ -271,8 +278,7 @@ export default class Server extends EventEmitter
                 resolve();
             });
         });
-        const allFilePaths = image.getAllFilePaths();
-        for(const filePath of allFilePaths) 
+        for(const filePath of imagePaths) 
         {
             const fileName = upath.basename(filePath);
             const toPath = upath.join(dir, fileName);
@@ -281,12 +287,10 @@ export default class Server extends EventEmitter
                     console.error(err + "\nImage could not be moved to " + toPath);
             });
         }
-    }
-    async moveImageToErrored(image, message)
-    {
-        const errorDir = image.getErrorDirectory();
-        const errorLogsPath = upath.join(errorDir, "error.log");
-        fs.writeFile(errorLogsPath, [   
+        if(message) 
+        {
+            const logPath = upath.join(dir, ".logs");
+            fs.writeFile(logPath, [   
                 ``,
                 `date: ${new Date().toLocaleString()}`,
                 `imagePath: ${image.imagePath}`, 
@@ -298,9 +302,21 @@ export default class Server extends EventEmitter
             },
             err => {
                 if(err) 
-                    console.error(err + "\nErrored image logs could not be written to " + errorLogsPath);
+                    console.error(err + "\nImage logs could not be written to " + logPath);
             });
-        this.moveImageTo(image, errorDir);
+        }
+    }
+    async moveImageToProcessed(image)
+    {
+        const processedDir = image.getProcessedDirectory();
+        const allFiles = image.getAllFilePaths();
+        this.moveImagePathsToDirectory(allFiles, processedDir);
+    }
+    async moveImageToErrored(image, message)
+    {
+        const errorDir = image.getErrorDirectory();
+        const allFiles = image.getAllFilePaths();
+        this.moveImagePathsToDirectory(allFiles, errorDir, message);
     }
     /**
      * Run images through pipeline per its configuration
@@ -345,7 +361,7 @@ export default class Server extends EventEmitter
                     if(this.isStopped()) break;
                 }
                     
-                this.moveImageTo(image, image.getProcessedDirectory());
+                this.moveImageToProcessed(image);
                 console.log("Pipeline completed for image: " + image.imageName);
             }
             catch(e) 
