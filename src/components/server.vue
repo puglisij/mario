@@ -39,14 +39,12 @@
                 <button class="topcoat-tab-bar__button">{{ tabNames[index] }}</button>
             </label>
         </div>
-        <section class="content">
-            <jsx 
-                v-if="currentTabComponent == 'jsx'"
-            ></jsx>
+        <section class="content"> 
             <keep-alive>
-                <the-console 
-                    v-if="currentTabComponent == 'the-console'"
-                ></the-console>
+                <the-console v-if="currentTabComponent == 'the-console'"></the-console>
+            </keep-alive>
+            <keep-alive> 
+                <jsx v-if="currentTabComponent == 'jsx'"></jsx>
             </keep-alive>
             <configurator 
                 v-if="currentTabComponent == 'configurator'" 

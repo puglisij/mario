@@ -11,6 +11,7 @@ const Plugin = {
         open (options) {
             events.$emit('open', options)
             // TODO return Promise for onYes, onCancel to support await pattern
+            // TODO Could instead use the Window() api to create dialogs on JSX side
         },
   
         close (name) {

@@ -70,7 +70,7 @@ class Logger extends EventEmitter
         const yyyymmdd = new Date().toISOString().slice(0,10);
         const logPath = upath.join(this.options.logDirectory, yyyymmdd + ".logs");
         this.logWriteStream = fs.createWriteStream(logPath, {
-            flag: "a",
+            flags: "a",
             encoding: "utf8"
         });
     }
