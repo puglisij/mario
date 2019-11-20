@@ -6,43 +6,45 @@
 product.maskOrPath = function maskOrPath(options)
 {
     var restoreUnits = _.saveUnits();
-    if(_.hasKeyword("masked")) 
-    {
+    if(_.hasKeyword("masked")) {
         _maskActions();
     } else {
-        activeDocument.flatten();
-        action.setColorChannel_8Bit();
         _pathActions(options.border);
     }
+
+    try{
+        activeDocument.trim(TrimType.TRANSPARENT);
+        app.preferences.rulerUnits = Units.PIXELS;
+        activeDocument.resizeCanvas(activeDocument.width + border, activeDocument.height + border, AnchorPosition.MIDDLECENTER)
+    } catch(err){}
+
     restoreUnits();
 
-    
     /*
     *  Functions
     */
     function _pathActions(border) 
     {
+        activeDocument.flatten();
+        action.setColorChannel_8Bit();
+
         // Set background to layer
         if (activeDocument.layers[0].isBackgroundLayer == true) 
-            activeDocument.layers[0].isBackgroundLayer = false
+            activeDocument.layers[0].isBackgroundLayer = false;
         try {
             // Set selection to "Path 1"
-            activeDocument.pathItems.getByName("Path 1").makeSelection(0, true, SelectionType.REPLACE)
+            activeDocument.pathItems.getByName("Path 1").makeSelection(0, true, SelectionType.REPLACE);
         } catch(err) {
             // has no Path
             return false;
         }
 
         try {
-            activeDocument.selection.invert()
+            activeDocument.selection.invert();
             //Invert selection
-            activeDocument.selection.clear()
+            activeDocument.selection.clear();
             //Delete selection
-            activeDocument.selection.deselect()
-            activeDocument.trim(TrimType.TRANSPARENT)
-
-            app.preferences.rulerUnits = Units.PIXELS;
-            activeDocument.resizeCanvas(activeDocument.width + border, activeDocument.height + border, AnchorPosition.MIDDLECENTER)
+            activeDocument.selection.deselect();
         } catch(err) {}
 
         return true;
@@ -50,29 +52,13 @@ product.maskOrPath = function maskOrPath(options)
 
     function _maskActions(border) 
     {
-        try {
-            //Delete Hidden
-            var id1616 = charIDToTypeID("Dlt ");
-            var desc325 = new ActionDescriptor();
-            var id1617 = charIDToTypeID("null");
-            var ref254 = new ActionReference();
-            var id1618 = charIDToTypeID("Lyr ");
-            var id1619 = charIDToTypeID("Ordn");
-            var id1620 = stringIDToTypeID("hidden");
-            ref254.putEnumerated(id1618, id1619, id1620);
-            desc325.putReference(id1617, ref254);
-            executeAction(id1616, desc325, DialogModes.NO);
-            var id1615 = charIDToTypeID("MrgV");
-        } catch(err) {}
-        
+        action.removeHiddenLayers();
         try {
             activeDocument.mergeVisibleLayers()
-            activeDocument.activeLayer.rasterize(RasterizeType.ENTIRELAYER)
-            //Merge Visible
+            activeDocument.activeLayer.rasterize(RasterizeType.ENTIRELAYER);
         }
         catch(err) {}
-
-        action.setColorChannel_8Bit()
+        action.setColorChannel_8Bit();
         
         try {
             // ======================================================= Select Layer    
@@ -102,13 +88,6 @@ product.maskOrPath = function maskOrPath(options)
             executeAction(id358, desc88, DialogModes.NO);
             // ======================================================= trim down the Image.
         } catch(err) {}
-        
-        try{
-
-            activeDocument.trim(TrimType.TRANSPARENT)
-            app.preferences.rulerUnits = Units.PIXELS;
-            activeDocument.resizeCanvas(activeDocument.width + border, activeDocument.height + border, AnchorPosition.MIDDLECENTER)
-        } catch(err){}
     }
 }
 

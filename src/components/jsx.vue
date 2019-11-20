@@ -1,7 +1,7 @@
 <template>
     <div class="jsx">
         <h2>ExtendScript</h2>
-        <!-- <div class="row">
+        <div class="row">
             <div class="topcoat-button-bar">
                 <div class="topcoat-button-bar__item">
                     <button class="topcoat-button-bar__button--large" v-on:click="toggleScriptListener" v-bind:style="{ color: isScriptListening ? '#0f0' : '#f00'}">Toggle ScriptListener</button>
@@ -10,16 +10,16 @@
                     <button class="topcoat-button-bar__button--large" v-on:click="clearScriptListener">Clear ScriptListener</button>
                 </div>
             </div>
-        </div> -->
-        <div class="row">
-            <label style="display: inline-block; margin-right: .5em;">
+        </div>
+        <div class="controls">
+            <label>
                 <input class="topcoat-text-input--large" type="text" ref="charId" placeholder="CharID" v-model="charId" v-on:change="calculateStringId" v-on:focus="$event.target.select()"/> 
             </label>
-            <label style="display: inline-block;">
+            <label>
                 <input class="topcoat-text-input--large" type="text" ref="stringId" placeholder="StringID" v-model="stringId" v-on:change="calculateCharId" v-on:focus="$event.target.select()"/>
             </label>
         </div>
-        <div class="row">
+        <div class="controls">
             <textarea class="topcoat-textarea" v-model="jsxText" rows="14" cols="45"></textarea>
             <br/><br/>
             <!-- <button class="topcoat-button--large" v-show="jsxText.length > 0" >Save as Action</button> -->
@@ -100,12 +100,6 @@ export default {
                 this.scriptWatcher = chokidar.watch(SCRIPT_LOG_PATH);
                 this.scriptWatcher.on("change", debounce(this.readScriptListenerLog, 1000));
             }
-
-            this.$root.$notify({
-                group: "mario",
-                title: "Success!",
-                text: `ScriptListener is: ${this.isScriptListening ? "On" : "Off"}`
-            })
         },
         readScriptListenerLog(path) 
         {
@@ -148,7 +142,5 @@ export default {
 </script>
 
 <style scoped>
-    .row {
-        margin-bottom: .5em;
-    }
+
 </style>

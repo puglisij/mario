@@ -32,7 +32,7 @@ product.makeCMYK = function makeCMYK()
             h: scale + "%", 
             method: ResampleMethod.BICUBIC
         });
-        action.setColorMode("CMYK");
+        action.convertToColorProfile("CMYK");
         action.saveAsPSDToArchiveDirectory("CMYK");
         action.revert();
         action.closeDocument();

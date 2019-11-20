@@ -1,5 +1,7 @@
 <template>
   <div>
+        <h1 v-bind:style="{ color: statusColor }">Mario</h1>
+        
         <section class="content">
             <h2>Server</h2>
 
@@ -96,6 +98,13 @@ export default {
     computed: {
         currentTabComponent() {
             return this.currentTab.toLowerCase();
+        },
+        statusColor() {
+            if(this.isServerStopped) 
+                return "#e52521";
+            if(this.isServerPaused) 
+                return "#fbd000";
+            return "#43b047";
         }
     },
     created() 
@@ -179,7 +188,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-
     .light {
         .tabs {
             background: #F4F4F4;

@@ -1,5 +1,5 @@
 <template>
-    <div class="start-stop-buttons">
+    <div class="controls">
         <button class="topcoat-button--large" v-on:click="startPause">
             {{ primaryButtonLabel }}
         </button>

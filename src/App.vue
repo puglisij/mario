@@ -1,9 +1,5 @@
 <template>
   <div id="app">
-    <div class="app-title">
-        <h1>Mario</h1>
-    </div>
-
     <a-dialog name="confirm"></a-dialog>
     <!-- Utility component to handle context and flyout menus -->
     <menus />
@@ -147,6 +143,13 @@ h4 {
     font-size: 12px; 
     font-weight: 400;
 }
+
+
+.controls {
+    margin: .5em 0;
+}
+
+
 
 #app::-webkit-scrollbar {
   display: block;

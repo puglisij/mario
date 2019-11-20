@@ -10,17 +10,20 @@
                 v-show="!isEditorOpen || (isEditorOpen && pipelineBeingEdited.id === pipeline.id)"
                 :key="pipeline.id"
             >
-                <input class="topcoat-text-input" type="text" 
-                    placeholder="my-pipeline-name"
-                    v-model="pipeline.name"
-                    @change="onPipeline(pipeline.id)"
-                />
-                <br/>
-                <input class="topcoat-text-input" type="text" 
-                    placeholder="my-type-1, my-type-2"
-                    v-model="pipeline.for"
-                    @change="onPipeline(pipeline.id)"
-                />
+                <label>
+                    <input class="topcoat-text-input" type="text" 
+                        placeholder="my-pipeline-name"
+                        v-model="pipeline.name"
+                        @change="onPipeline(pipeline.id)"
+                    />
+                </label>
+                <label>
+                    <input class="topcoat-text-input" type="text" 
+                        placeholder="my-type-1, my-type-2"
+                        v-model="pipeline.for"
+                        @change="onPipeline(pipeline.id)"
+                    />
+                </label>
                 <checkbox 
                     v-model="pipeline.disabled" 
                     @change="onPipeline(pipeline.id)">
@@ -34,11 +37,13 @@
                     @click="onDeletePipeline(pipeline.id);"
                 >X</button>
             </div>
-            <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
-            <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Pipline</button>
+            <div class="controls" v-if="!isEditorOpen">
+                <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
+                <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Pipline</button>
+            </div>
         </form>
         <div class="pipeline-editor" v-if="isEditorOpen">
-            <h3>Editing: {{ pipelineBeingEdited.name }}</h3>
+            <h3 class="pipeline-editor-header">Editing: {{ pipelineBeingEdited.name }}</h3>
             <div class="pipeline-editor-board">
                 <draggable 
                     v-model="pipelineBeingEdited.externalActions"
@@ -57,7 +62,10 @@
                     />
                 </draggable>
             </div>
-            <button class="topcoat-button--large" type="button" @click="onActionAdd">Add Action</button>
+            <div class="controls">
+                <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
+                <button class="topcoat-button--large" type="button" @click="onActionAdd">Add Action</button>
+            </div>
         </div>
     </div>
 </template>
@@ -228,24 +236,21 @@ export default {
         padding: .5em;
 
         input[type=text] {
+            display: inline-block;
             margin: .25em 0;
+            width: 90%;
         }
         &-delete {
             float: right;
         }
     }
 
-    h3 {
-        margin: .5em;
-    }
-    input[type=text] {
-        display: inline-block;
-        width: 90%;
-    }
-
+    
     .pipeline-editor {
-        border-top: 1px solid #333;
         margin-top: .5em;
+    }
+    .pipeline-editor-header {
+        margin: .5em;
     }
     .pipeline-editor-board {
         position: relative;

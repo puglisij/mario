@@ -6,14 +6,12 @@
                 @change="emitChange"
             />
         </label>
-        <br/>
         <label>
             <input class="topcoat-text-input" type="text" placeholder="jpg, jpeg, png, psd, tif, etc." 
                 v-model="localWatcher.extensions"
                 @change="onExtensions" 
             />
         </label>
-        <br/>
         <label>
             <input class="topcoat-text-input" type="text" placeholder="the default pipeline type (e.g. product)" 
                 v-model="localWatcher.defaultType"
@@ -100,7 +98,7 @@ export default {
     label {
         display: inline-block;
         margin: .25em 0;
-        width: 85%;
+        width: 90%;
     }
     input[type=text] {
         width: 100%;

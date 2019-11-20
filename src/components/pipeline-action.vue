@@ -93,7 +93,7 @@ export default {
         /** 
             Raw Action Example:
             {
-                "action": "action.setColorMode",
+                "action": "action.convertToColorProfile",
                 "parameters": "RGB"
             }
             Action parameters may be a single value or an object with key, value pairs. 

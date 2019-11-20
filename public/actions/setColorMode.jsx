@@ -1,7 +1,7 @@
 /**
 * Set the document to either "CMYK" or "RGB" color space. 
 */
-action.setColorMode = function setColorMode(spaceType) 
+action.convertToColorProfile = function convertToColorProfile(spaceType) 
 {
     if(spaceType == "RGB") {
         assignRGBColorProfile();
@@ -10,6 +10,7 @@ action.setColorMode = function setColorMode(spaceType)
     }
 
     function assignRGBColorProfile(){
+        // Adobe RGB 1998
         // =======================================================
         var idconvertToProfile = stringIDToTypeID( "convertToProfile" );
         var desc1870 = new ActionDescriptor();
@@ -38,31 +39,34 @@ action.setColorMode = function setColorMode(spaceType)
     }
 
     function assignCMYKColorProfile(){
+        // US Web Coated (SWOP) v2
         // =======================================================
         var idconvertToProfile = stringIDToTypeID( "convertToProfile" );
-        var desc1868 = new ActionDescriptor();
+        var desc53 = new ActionDescriptor();
         var idnull = charIDToTypeID( "null" );
-        var ref564 = new ActionReference();
-        var idDcmn = charIDToTypeID( "Dcmn" );
-        var idOrdn = charIDToTypeID( "Ordn" );
-        var idTrgt = charIDToTypeID( "Trgt" );
-        ref564.putEnumerated( idDcmn, idOrdn, idTrgt );
-        desc1868.putReference( idnull, ref564 );
+            var ref10 = new ActionReference();
+            var idDcmn = charIDToTypeID( "Dcmn" );
+            var idOrdn = charIDToTypeID( "Ordn" );
+            var idTrgt = charIDToTypeID( "Trgt" );
+            ref10.putEnumerated( idDcmn, idOrdn, idTrgt );
+        desc53.putReference( idnull, ref10 );
         var idTMd = charIDToTypeID( "TMd " );
         var idCMYM = charIDToTypeID( "CMYM" );
-        desc1868.putClass( idTMd, idCMYM );
+        desc53.putClass( idTMd, idCMYM );
         var idInte = charIDToTypeID( "Inte" );
         var idInte = charIDToTypeID( "Inte" );
         var idClrm = charIDToTypeID( "Clrm" );
-        desc1868.putEnumerated( idInte, idInte, idClrm );
+        desc53.putEnumerated( idInte, idInte, idClrm );
         var idMpBl = charIDToTypeID( "MpBl" );
-        desc1868.putBoolean( idMpBl, true );
+        desc53.putBoolean( idMpBl, true );
         var idDthr = charIDToTypeID( "Dthr" );
-        desc1868.putBoolean( idDthr, true );
+        desc53.putBoolean( idDthr, true );
         var idFltt = charIDToTypeID( "Fltt" );
-        desc1868.putBoolean( idFltt, false );
+        desc53.putBoolean( idFltt, false );
+        var idrasterizePlaced = stringIDToTypeID( "rasterizePlaced" );
+        desc53.putBoolean( idrasterizePlaced, false );
         var idsdwM = charIDToTypeID( "sdwM" );
-        desc1868.putInteger( idsdwM, 4 );
-        executeAction( idconvertToProfile, desc1868, DialogModes.NO );
+        desc53.putInteger( idsdwM, 2 );
+        executeAction( idconvertToProfile, desc53, DialogModes.NO );
     }
 }

@@ -72,7 +72,4 @@ export default {
             color: #f87c82;
         }
     }
-    .controls {
-        margin-top: .5em;
-    }
 </style>

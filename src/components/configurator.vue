@@ -11,8 +11,10 @@
             @delete="onDeleteWatcher(watcher.id)"
         >
         </watcher>
-        <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
-        <button class="topcoat-button--large" type="button" @click="onAddNewWatcher">Add Watcher</button>
+        <div class="controls">
+            <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
+            <button class="topcoat-button--large" type="button" @click="onAddNewWatcher">Add Watcher</button>
+        </div>
     </form>
 </template>
 

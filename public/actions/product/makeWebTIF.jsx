@@ -35,7 +35,7 @@ product.makeWebTIF = function makeWebTIF()
         var viewFile = new File(viewsDirectory + "/" + view.file);
         var view = app.open(viewFile);
         
-        action.setColorMode("RGB");
+        action.convertToColorProfile("RGB");
         product.maskOrPath({ border: 50 });
         action.saveAsPSDToArchiveDirectory("RGB");
 
