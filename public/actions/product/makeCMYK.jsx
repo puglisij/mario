@@ -43,7 +43,7 @@ product.makeCMYK = function makeCMYK()
         );
 
         action.convertToColorProfile("CMYK");
-        action.saveAsPSDToArchiveDirectory("CMYK");
+        universal.saveAsPSDToArchiveDirectory("CMYK");
         action.revert();
         action.closeDocument();
     }

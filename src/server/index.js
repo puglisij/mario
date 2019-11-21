@@ -128,10 +128,9 @@ export default class Server extends EventEmitter
         //-----------------
         // Load Actions 
         //-----------------
-        let actionScript = "action={};";
-            actionScript += this.loadActionPath(this.actionPath, "");
+        let actionScript = this.loadActionPaths(this.actionPath, "action");
         let loadActionsResult = await this.runJsx(actionScript);
-        console.log("Loaded actions.");
+        console.log("Loaded actions."); 
 
         //-----------------
         // Setup routes
@@ -269,16 +268,20 @@ export default class Server extends EventEmitter
             this.runPipelines();
         }
     }
-    async moveImagePathsToDirectory(imagePaths, dir, message)
+    makeImageDirectory(dir)
     {
-        await new Promise(resolve => {
+        return new Promise(resolve => {
             fs.mkdir(dir, { recursive: true }, err => {
                 if(err && !err.code == "EEXIST") 
                     console.error(err + "\nImage move failed. Could not create directory " + dir);
                 resolve();
             });
         });
-        for(const filePath of imagePaths) 
+    }
+    async moveImagePathsToDirectory(image, dir)
+    {
+        const allFiles = image.getAllFilePaths();
+        for(const filePath of allFiles) 
         {
             const fileName = upath.basename(filePath);
             const toPath = upath.join(dir, fileName);
@@ -287,36 +290,34 @@ export default class Server extends EventEmitter
                     console.error(err + "\nImage could not be moved to " + toPath);
             });
         }
-        if(message) 
-        {
-            const logPath = upath.join(dir, ".logs");
-            fs.writeFile(logPath, [   
-                ``,
-                `date: ${new Date().toLocaleString()}`,
-                `imagePath: ${image.imagePath}`, 
-                `dataPath: ${image.dataPath}`, 
-                message
-            ].join(`\n`), 
-            {
-                flag: 'a'
-            },
-            err => {
-                if(err) 
-                    console.error(err + "\nImage logs could not be written to " + logPath);
-            });
-        }
     }
     async moveImageToProcessed(image)
     {
         const processedDir = image.getProcessedDirectory();
-        const allFiles = image.getAllFilePaths();
-        this.moveImagePathsToDirectory(allFiles, processedDir);
+        await this.makeImageDirectory(processedDir);
+        this.moveImagePathsToDirectory(image, processedDir);
     }
     async moveImageToErrored(image, message)
     {
         const errorDir = image.getErrorDirectory();
-        const allFiles = image.getAllFilePaths();
-        this.moveImagePathsToDirectory(allFiles, errorDir, message);
+        const errorLogPath = upath.join(errorDir, "error.logs");
+        await this.makeImageDirectory(errorDir);
+        this.moveImagePathsToDirectory(image, errorDir);
+
+        fs.writeFile(errorLogPath, [   
+            `\n`,
+            `Time: ${new Date().toLocaleString()}`,
+            `imagePath: ${image.imagePath}`, 
+            `dataPath: ${image.dataPath}`, 
+            message
+        ].join(`\n`), 
+        {
+            flag: 'a'
+        },
+        err => {
+            if(err) 
+                console.error(err + "\nImage Errored but logs could not be written to " + errorLogPath);
+        });
     }
     /**
      * Run images through pipeline per its configuration
@@ -386,26 +387,39 @@ export default class Server extends EventEmitter
      * Reads all jsx files in the given directory recursively, and builds an import JSX string for execution.
      * Each new directory encountered becomes a nested namespace.
      * @param {string} pathToActions the current path to the jsx action files
-     * @param {string} namespace the current action namespace (e.g.  product)
+     * @param {string} defaultNamespace The default namespace for actions in the root path 
      */
-    loadActionPath(pathToActions, namespace)
+    loadActionPaths(pathToActions, defaultNamespace)
     {
-        let namespacePrefix = `${namespace}.`;
-        let namespaceDefine = `${namespace}={};`;
-        if(!namespace) {
-            namespacePrefix = "";
-            namespaceDefine = "";
+        return this.loadActionPath(pathToActions, "", defaultNamespace); 
+    }
+    loadActionPath(pathToActions, namespace, defaultNamespace)
+    {
+        let namespacePrefix = `${defaultNamespace}.`;
+        let namespaceDefine = `${defaultNamespace}={};`;
+        let areInRootPath = true;
+        if(namespace) {
+            namespacePrefix = `${namespace}.`;
+            namespaceDefine = `${namespace}={};`;
+            areInRootPath = false;
         }
         
         return fs.readdirSync(pathToActions)
             .reduce((script, name) => 
             {
                 let nextPath = upath.join(pathToActions, name);
+                let nextActionName = namespacePrefix + name.split('.')[0];
                 let nextScript;
-                if(fs.statSync(nextPath).isDirectory()) {
-                    nextScript = this.loadActionPath(nextPath, `${namespacePrefix}${name}`);
+                if(fs.statSync(nextPath).isDirectory()) 
+                {
+                    // if were in the root action directory, we dont want to include the default namespace prefix in
+                    // other subdirectory actions
+                    if(areInRootPath) 
+                        nextScript = this.loadActionPath(nextPath, name);
+                    else 
+                        nextScript = this.loadActionPath(nextPath, namespacePrefix + name);
                 } else {
-                    nextScript = `importAction("${nextPath}");`
+                    nextScript = `importAction("${nextPath}", "${nextActionName}");`;
                 }
                 return script + nextScript;
             }, 
@@ -447,7 +461,7 @@ export default class Server extends EventEmitter
                 var result = ${psActionName}(${psActionParameters});
                 return result;
             } catch(e) {
-                return "Exception: " + e.toString();
+                return e.toString();
             }
         }())`);
     } 

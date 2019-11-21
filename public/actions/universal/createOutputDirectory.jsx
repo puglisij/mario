@@ -3,7 +3,7 @@
 * The created directory will be at:
 *   <outputDirectory or ../Output>/<projectId or type>
 */
-action.createOutputDirectory = function createOutputDirectory() 
+universal.createOutputDirectory = function createOutputDirectory() 
 {
     var subDirectory = "" + IMAGE.data("projectId") || IMAGE.getType();
     var outputDirectoryRoot = IMAGE.data("outputDirectory") || activeDocument.path + "/../Output";

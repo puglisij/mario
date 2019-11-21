@@ -86,9 +86,6 @@ export default {
                     && _.first(this.localAction.parameters).name === SINGLE_NONAME_PARAMETER;
         }
     },
-    created() {
-        console.log("Action created()");
-    },
     methods: {
         /** 
             Raw Action Example:
@@ -151,7 +148,6 @@ export default {
                     value: parameterValue
                 };
             }
-            console.log("Converted to local action: "); console.dir(localAction);
             return localAction;
         },
         emitChange()
@@ -180,7 +176,6 @@ export default {
                 name: SINGLE_NONAME_PARAMETER, 
                 value: ""
             });
-            console.log("add single parameter");
             this.emitChange();
         },
         onParameterAddMultiple(event) 
@@ -190,7 +185,6 @@ export default {
                 name: "name", 
                 value: ""
             });
-            console.log("add multiple parameters");
             this.emitChange();
         },
         onParameterChanged(id, name, value) 
@@ -198,13 +192,11 @@ export default {
             this.localAction.parameters[id].name = name;
             this.localAction.parameters[id].value = value;
 
-            console.log(`onParameterChanged()`);
             this.emitChange();
         }, 
         onParameterDelete(id) {
             this.$delete(this.localAction.parameters, id);
 
-            console.log(`onParameterDelete() ${id}`)
             this.emitChange();
         } 
     }

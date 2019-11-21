@@ -12,7 +12,7 @@ product.saveForWeb = function saveForWeb(options)
     }
 
     var fileName = IMAGE.parameters(options.fileName);
-    var outputDirectory = action.createOutputDirectory();
+    var outputDirectory = universal.createOutputDirectory();
     var file = new File(outputDirectory + "/" + fileName);
 
     action.saveForWeb({ 

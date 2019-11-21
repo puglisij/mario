@@ -1,18 +1,4 @@
-# cep-vue-cli-basic
-
-## Template used in [generator-cep-vue-cli](https://github.com/Inventsable/generator-cep-vue-cli)
-
-> **NOTE:** This repo should not be `git clone`d directly because it has breaking placeholder values and will not run on it's own.
-
-```bash
-# NPM, Yeoman and generator-cep-vue-cli are required
-npm install -g yo
-npm install -g generator-cep-vue-cli
-
-# In any valid CEP extension folder:
-# (e.g. <USERNAME>/AppData/Roaming/CEP/extensions)
-yo cep-vue-cli
-```
+# Mario
 
 ## No setup required for:
 
@@ -21,7 +7,6 @@ yo cep-vue-cli
 - [Vue-CLI-3](https://cli.vuejs.org/) as Node.js tooling (webkit)
 - Full typescript support for any app with pravdomil's Adobe types (same as writing .jsx scripts but access to host DOM as autocomplete while typing)
 - Various personal utility components that handle context/flyout menus, launching CEF debug, common errors with Webpack, matching all host app styles and more
-- ✨ [All color themes of any host app automatically handled by starlette library](https://github.com/Inventsable/starlette) ✨
 
 ## [Never used Node, Vue CLI-3 or Webpack?](#Getting-Started)
 
@@ -37,34 +22,6 @@ This panel comes with 5 commands baked in ([see details here](https://github.com
 - `npm run register` - Reports the current user data (if any) and prompts to save new info to be used in certificates.
 - `npm run sign` - Automatically stages and signs the extension, placing it in a `./archive` directory within the current panel.
 
----
-
-## Filetree for panel:
-
-Base panel results in clean and simple Single File Component infrastructure. `CSInterface` exists on the level of `App.vue` and is accessible anywhere via `this.app.csInterface` (`this.$root.$children[0].csInterface`).
-
-:file_folder: your-panel-name
-<br>&nbsp;&nbsp;|\_\_&nbsp;:file_folder: CSXS
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: manifest.xml
-<br>&nbsp;&nbsp;|\_\_&nbsp;:file_folder: public
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: CSInterface.js
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: index.html (**Production:** used with `npm run build`)
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: index-dev.html (**Development:** used with `npm run serve`)
-<br>&nbsp;&nbsp;|\_\_&nbsp;:file_folder: src
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:file_folder: [components](#components)
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:file_folder: main (utility)
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: HelloWorld.vue
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:file_folder: [host (.jsx and scripting files)](#scripting)
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:file_folder: plugins (Vue-CLI-3 plugins)
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: App.vue
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: main.js
-<br>&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: .debug
-<br>&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: .gitignore
-<br>&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: package.json
-<br>&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: package-lock.json
-<br>&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: vue.config.js (Avoids `file not found` errors in `index.html` after `npm run build`)
-
----
 
 ## Contexts
 
@@ -152,11 +109,7 @@ You can automate this by using `npm run switch`. In case you need to do it manua
 
 ## Getting Started
 
-You don't need to understand Node, npm packages, Vue CLI-3 or webpack to use these templates, it's a good starting point to avoid all the pitfalls in having your own functional panel using them.
-
-I was very overwhelmed when I first jumped to Single File Components rather than using Vue's CDN and writing everything in one .js file. Afterall, this looks gigantic and there are a ton of cryptic files, but after some practice and troubleshooting how to setup the environment, it's incredibly powerful to use and can be much simpler than gigantic .js files with 10k+ worth of code!
-
-For the most part, you don't need to alter or modify any file/folder not shown below:
+Other files/folders you should generally not need to modify are shown below:
 
 :file_folder: your-panel-name
 <br>&nbsp;&nbsp;|\_\_&nbsp;:file_folder: CSXS

@@ -6,7 +6,7 @@
 *   <archiveDirectory or ../Archive>/<archiveName>/
 * @param {string} archiveName the name of the archive subdirectory
 */
-action.createArchiveDirectory = function createArchiveDirectory(archiveName)
+universal.createArchiveDirectory = function createArchiveDirectory(archiveName)
 {
     var subDirectory = IMAGE.data("skuSuffix");
     var archiveDirectoryRoot = IMAGE.data("archiveDirectory") || "../Archive";

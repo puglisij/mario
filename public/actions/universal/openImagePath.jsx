@@ -1,7 +1,7 @@
 /**
 * Convenience action to open the image given by "imagePath" property on the IMAGE instance
 */
-action.openImagePath = function openImagePath()
+universal.openImagePath = function openImagePath()
 {
     var imagePath = IMAGE.getImagePath();
     if(!imagePath) {

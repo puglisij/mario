@@ -38,7 +38,7 @@ product.makeWebTIF = function makeWebTIF()
             AnchorPosition.MIDDLECENTER
         );
 
-        action.saveAsPSDToArchiveDirectory("RGB");
+        universal.saveAsPSDToArchiveDirectory("RGB");
 
         // Remove all alpha channel objects
         activeDocument.channels.removeAll();
@@ -77,7 +77,7 @@ product.makeWebTIF = function makeWebTIF()
          // Create TIF, if not created
         if(!tif) {
             // The created TIF becomes the active document
-            var outputDirectory = action.createOutputDirectory();
+            var outputDirectory = universal.createOutputDirectory();
             var newTifFilePath = outputDirectory.fullName + "/" + sku + ".tif";
             action.saveAsTIF(newTifFilePath);
             action.makeWhiteBackground();

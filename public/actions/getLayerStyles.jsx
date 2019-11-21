@@ -1,3 +1,8 @@
+
+action.getLayerStyles = function getLayerStyles()
+{
+
+};
 // function getLayerStyles(layerDesc)
 // {
 //     // layerDesc optional - allows getting styles by index, id, or name. default is activeLayer
