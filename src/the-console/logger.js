@@ -80,6 +80,13 @@ class Logger extends EventEmitter
         this.logWriteStream = null;
     }
     /**
+     * Clear the buffered logs
+     */
+    clear() 
+    {
+        this.logBuffer = [];
+    }
+    /**
      * Read all buffered logs formatted with html
      * @returns {string}
      */

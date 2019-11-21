@@ -1,25 +1,23 @@
 <template>
     <div class="jsx">
         <h2>ExtendScript</h2>
-        <div class="row">
-            <div class="topcoat-button-bar">
-                <div class="topcoat-button-bar__item">
-                    <button class="topcoat-button-bar__button--large" 
-                        @click="toggleScriptListener" 
-                    >
-                        Toggle ScriptListener {{ isScriptListening ? 'Off' : 'On'}}
-                    </button>
-                </div>
-                <div class="topcoat-button-bar__item">
-                    <button class="topcoat-button-bar__button--large" 
-                        @click="clearScriptListener"
-                    >
-                        Clear ScriptListener
-                    </button>
-                </div>
+        <div class="controls scriptlistener">
+            <div class="button">
+                <button class="topcoat-button--large" 
+                    @click="toggleScriptListener" 
+                >
+                    Toggle ScriptListener {{ isScriptListening ? 'Off' : 'On'}}
+                </button>
+            </div>
+            <div class="button">
+                <button class="topcoat-button--large" 
+                    @click="clearScriptListener"
+                >
+                    Clear ScriptListener
+                </button>
             </div>
         </div>
-        <div class="controls">
+        <div class="controls identifiers">
             <label>
                 <input class="topcoat-text-input--large" type="text" ref="charId" placeholder="CharID" v-model="charId" v-on:change="calculateStringId" v-on:focus="$event.target.select()"/> 
             </label>
@@ -27,12 +25,17 @@
                 <input class="topcoat-text-input--large" type="text" ref="stringId" placeholder="StringID" v-model="stringId" v-on:change="calculateCharId" v-on:focus="$event.target.select()"/>
             </label>
         </div>
-        <div class="controls">
+        <div class="controls code">
             <textarea class="topcoat-textarea" v-model="jsxText" rows="14" cols="45"></textarea>
             <br/><br/>
             <!-- <button class="topcoat-button--large" v-show="jsxText.length > 0" >Save as Action</button> -->
             <button class="topcoat-button--large" v-show="jsxText.length > 0" v-on:click="runJsxText">Run</button>
-            <button class="topcoat-button--large" v-show="jsxText.length > 0" v-on:click="clearJsxText">Clear</button>
+            <button class="topcoat-button--large" v-show="jsxText.length > 0" v-on:click="clearJsx">Clear</button>
+            <button class="topcoat-button--large" v-show="jsxResult.length > 0" v-on:click="clearJsxResult">Clear Console</button>
+        </div>
+        <div class="result">
+            <span>Result: </span> 
+            <pre>{{ jsxResult }}</pre>
         </div>
     </div>
 </template>
@@ -54,20 +57,28 @@ export default {
     computed: {
         cs() { return global.cs; }
     },
-    data: () => ({
-        charId: "",
-        stringId: "",
-        jsxText: "",
-        isScriptListening: false,
-        scriptWatcher: null 
-    }),
+    data() {
+        return {
+            charId: "",
+            stringId: "",
+            jsxText: "",
+            jsxResult: "",
+            isScriptListening: false,
+            scriptWatcher: null 
+        }
+    },
     methods: {
-        clearJsxText() {
+        clearJsxResult() {
+            this.jsxResult = "";
+        },
+        clearJsx() {
             this.jsxText = "";
+            this.jsxResult = "";
         },
         runJsxText() {
-            this.cs.evalScript(`` + this.jsxText, function(result) {
-                console.log(`JSX Result: ${result}`)
+            this.cs.evalScript(`` + this.jsxText, result => {
+                this.jsxResult = result.trim();
+                console.log(`JSX Result: ${result}`);
             });
         },
         clearScriptListener() 
@@ -143,6 +154,40 @@ export default {
 };
 </script>
 
-<style scoped>
-
+<style lang="scss">
+    .jsx {
+        .scriptlistener {
+            display: flex;
+            .button {
+                margin-right: .5em;
+                width: 40%;
+            }
+            button {
+                width: 100%;
+            }
+        }
+        .identifiers {
+            display: flex;
+            label {
+                margin-right: .5em;
+                width: 40%;
+            }
+            input {
+                width: 100%;
+            }
+        }
+        .code {
+            textarea {
+                width: 100%;
+            }
+            button {
+                margin-right: .5em;
+            }
+        }
+        .result {
+            background: rgba(0,0,0,0.2);
+            margin-top: 1em;
+            padding: 1em;
+        }
+    }
 </style>
