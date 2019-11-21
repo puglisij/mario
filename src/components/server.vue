@@ -1,32 +1,32 @@
 <template>
   <div>
         <h1 v-bind:style="{ color: statusColor }">Mario</h1>
-        <section class="content">
-            <h2>Server</h2>
+
+        <section class="main-content">
+            <div class="activity" v-bind:style="{ color: statusColor }" v-if="isPipelineActive">
+                <span><strong>Pipeline:</strong> {{ currentPipeline }}</span><br/>
+                <span><strong>Action:</strong> {{ currentPipelineAction }}</span>
+            </div>
 
             <start-stop 
-                v-bind:isPaused="isServerPaused" 
-                v-bind:isStopped="isServerStopped"
-                v-on:start="start" 
-                v-on:pause="pause" 
-                v-on:stop="stop"></start-stop>
+                :isPaused="isServerPaused" 
+                :isStopped="isServerStopped"
+                @start="start" 
+                @pause="pause" 
+                @stop="stop"></start-stop>
         
-            <checkbox name="pauseAfterEveryPipeline" v-model="configuration.pauseAfterEveryPipeline" v-on:change="onConfigurationCheckbox">
+            <checkbox name="pauseAfterEveryPipeline" v-model="configuration.pauseAfterEveryPipeline" @change="onConfigurationCheckbox">
                 Pause after every pipeline
             </checkbox>
-            <checkbox name="pauseAfterEveryAction" v-model="configuration.pauseAfterEveryAction" v-on:change="onConfigurationCheckbox">
+            <checkbox name="pauseAfterEveryAction" v-model="configuration.pauseAfterEveryAction" @change="onConfigurationCheckbox">
                 Pause after every action
             </checkbox>
-            <checkbox name="pauseAfterEveryImage" v-model="configuration.pauseAfterEveryImage" v-on:change="onConfigurationCheckbox">
+            <checkbox name="pauseAfterEveryImage" v-model="configuration.pauseAfterEveryImage" @change="onConfigurationCheckbox">
                 Pause after each image
             </checkbox>
-            <checkbox name="pauseOnExceptions" v-model="configuration.pauseOnExceptions" v-on:change="onConfigurationCheckbox">
+            <checkbox name="pauseOnExceptions" v-model="configuration.pauseOnExceptions" @change="onConfigurationCheckbox">
                 Pause on Exceptions
             </checkbox>
-
-            <p class="current-action" v-if="isPipelineActive">
-                Action: {{ currentPipelineAction }}
-            </p>
         </section>
         
         <div class="topcoat-tab-bar tabs">
@@ -34,7 +34,7 @@
                 v-for="(tab, index) in tabs" 
                 v-bind:key="tab"
                 v-bind:ref="'tab-' + tab.toLowerCase()"
-                v-on:click="currentTab = tab"
+                @click="currentTab = tab"
             >
                 <input type="radio" v-bind:checked="currentTab == tab">
                 <button class="topcoat-tab-bar__button">{{ tabNames[index] }}</button>
@@ -50,12 +50,12 @@
             <configurator 
                 v-if="currentTabComponent == 'configurator'" 
                 v-bind:configuration="configuration"
-                v-on:update:watchers="onWatchersConfiguration"
+                @update:watchers="onWatchersConfiguration"
             ></configurator>
             <pipelines
                 v-if="currentTabComponent == 'pipelines' && areConfigurationsLoaded"
                 v-bind:configuration="pipelineConfiguration"
-                v-on:changed="onPipelinesConfiguration"
+                @changed="onPipelinesConfiguration"
             ></pipelines>
         </section>
   </div>
@@ -91,6 +91,7 @@ export default {
         areConfigurationsLoaded: false,
         isServerPaused: false, 
         isServerStopped: true,
+        currentPipeline: "",
         currentPipelineAction: "",
         isPipelineActive: false
     }),
@@ -152,13 +153,15 @@ export default {
             this.isServerPaused = this.server.isPaused();
             this.isServerStopped = this.server.isStopped();
         },
-        onPipelineStart() {
+        onPipelineStart(pipelineName) {
             this.isPipelineActive = true;
+            this.currentPipeline = pipelineName;
         },
-        onAction(action) {
-            this.currentPipelineAction = action;
+        onAction(actionName) {
+            this.currentPipelineAction = actionName;
         },
         onPipelineEnd() {
+            this.currentPipeline = "";
             this.currentPipelineAction = "";
             this.isPipelineActive = false;
         },
@@ -212,10 +215,15 @@ export default {
             display: inline-block;
         }
     }
+    .main-content {
+        padding: 0 .5em .5em .5em;
+    }
     .content {
         padding: .5em;
     }
-    .current-action {
+    .activity {
         font-size: .8em;
+        line-height: 2em;
+        padding: 0 .5em;
     }
 </style>

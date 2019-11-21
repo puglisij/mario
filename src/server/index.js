@@ -142,15 +142,28 @@ export default class Server extends EventEmitter
         });
         app.get('/status', (req, res) => {
             // search for files matching parameters 
-            res.status(200).send(
-                "Mario Status: " + Object.keys(ServerState).find(p => ServerState[p] === this._state)
-            );
+            res.status(200).json({
+                status: Object.keys(ServerState).find(p => ServerState[p] === this._state),
+                needUserInteraction: false
+            });
         });
         app.post('/process', (req, res) => {
             // stream image file or zip to processing directory
             // stream json data to file in processing directory
             // process
-            res.status(201).json({ success: false })
+            res.status(201).json({ success: false });
+        });
+        app.post('/start', (req, res) => {
+            this.start();
+            res.status(200).json({ success: true });
+        });
+        app.post('/stop', (req, res) => {
+            this.stop();
+            res.status(200).json({ success: true });
+        });
+        app.post('/restart', (req, res) => {
+            this.restart();
+            res.status(200).json({ success: true });
         });
         app.use((req, res, next) => {
             res.status(404).send("Sorry, can't find that!");
@@ -170,36 +183,42 @@ export default class Server extends EventEmitter
         this._state = ServerState.STOPPED;
         this.emit("init");
     }
+    async restart()
+    {
+        this.stop(); // TODO: Await this._isPipelinesRunningMutex === false ?
+        this.start();
+    }
     async start()
     {
+        if(!this.isStopped()) {
+            return;
+        }
+
         console.log(`Server started.`);
 
         if (this.needToReloadPipelines) 
             this._loadPipelineMapping()
 
-        if (this.isStopped()) 
+        //-----------------
+        // Setup watchers 
+        //-----------------
+        for(const watcherConfig of this.config.watchers) 
         {
-            //-----------------
-            // Setup watchers 
-            //-----------------
-            for(const watcherConfig of this.config.watchers) 
-            {
-                const watchDefaultType = watcherConfig.defaultType;
-                const watchPathRoot = upath.normalize(watcherConfig.path);
-                const watchPaths = watcherConfig.extensions.map(ext => {
-                    return upath.join(watchPathRoot, "*." + ext)
-                });
-                const watcher = chokidar.watch(watchPaths, {
-                    ignored: /^\.|Output|Error|Archive|Processed/, 
-                    depth: 0
-                })
-                .on("add", path => {
-                    this.processImage(path, watchDefaultType);
-                });
+            const watchDefaultType = watcherConfig.defaultType;
+            const watchPathRoot = upath.normalize(watcherConfig.path);
+            const watchPaths = watcherConfig.extensions.map(ext => {
+                return upath.join(watchPathRoot, "*." + ext)
+            });
+            const watcher = chokidar.watch(watchPaths, {
+                ignored: /^\.|Output|Error|Archive|Processed/, 
+                depth: 0
+            })
+            .on("add", path => {
+                this.processImage(path, watchDefaultType);
+            });
 
-                console.log(`Watcher set for ${watchPaths.toString()}`);
-                this.watchers.push(watcher);
-            }
+            console.log(`Watcher set for ${watchPaths.toString()}`);
+            this.watchers.push(watcher);
         }
         this._state = ServerState.RUNNING;
     }

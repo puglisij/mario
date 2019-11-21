@@ -11,6 +11,7 @@
             <!-- name -->
             <div class="action-name">
                 <input class="topcoat-text-input" type="text" placeholder="the action string (e.g. 'action.saveDocument')"
+                    title="The action function name as given in the jsx. Case sensitive."
                     :value="localAction.action"
                     @change="onActionName"
                 />
@@ -37,12 +38,14 @@
                     @delete="onParameterDelete"
                 />
                 <button class="topcoat-button" type="button" 
+                    title="Single parameters are passed as a single parameter, literal value, to the action function."
                     v-if="!hasParameters" 
                     @click="onParameterAddSingle"
                 >
                     Add Single
                 </button>
                 <button class="topcoat-button" type="button" 
+                    title="Multiple parameters are passed as an object of key value pairs to the action function."
                     v-if="!hasParameters || !hasSingleParameter" 
                     @click="onParameterAddMultiple"
                 >

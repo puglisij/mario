@@ -12,6 +12,7 @@
             >
                 <label>
                     <input class="topcoat-text-input" type="text" 
+                        title="A name for the pipeline. Only used for reference."
                         placeholder="my-pipeline-name"
                         v-model="pipeline.name"
                         @change="onPipeline(pipeline.id)"
@@ -19,6 +20,7 @@
                 </label>
                 <label>
                     <input class="topcoat-text-input" type="text" 
+                        title="The 'type' of image processes that will flow through this pipeline. Determined either by watcher default type or json 'type' property. Only one may be specified. Case insensitive."
                         placeholder="my-type-1, my-type-2"
                         v-model="pipeline.for"
                         @change="onPipeline(pipeline.id)"
@@ -34,6 +36,7 @@
                     @click="onToggleEditor(pipeline.id);"
                 >{{ isEditorOpen ? "Close" : "Open" }} Editor</button>
                 <button class="pipeline-delete topcoat-icon-button--quiet" type="button"
+                    title="Delete this pipeline"
                     @click="onDeletePipeline(pipeline.id);"
                 >X</button>
             </div>

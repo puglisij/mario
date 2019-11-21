@@ -29,9 +29,9 @@
             <textarea class="topcoat-textarea" v-model="jsxText" rows="14" cols="45"></textarea>
             <br/><br/>
             <!-- <button class="topcoat-button--large" v-show="jsxText.length > 0" >Save as Action</button> -->
-            <button class="topcoat-button--large" v-show="jsxText.length > 0" v-on:click="runJsxText">Run</button>
-            <button class="topcoat-button--large" v-show="jsxText.length > 0" v-on:click="clearJsx">Clear</button>
-            <button class="topcoat-button--large" v-show="jsxResult.length > 0" v-on:click="clearJsxResult">Clear Console</button>
+            <button class="topcoat-button--large" v-show="jsxText.length > 0" @click="runJsxText">Run</button>
+            <button class="topcoat-button--large" v-show="jsxText.length > 0" @click="clearJsx">Clear</button>
+            <button class="topcoat-button--large" v-show="jsxResult.length > 0" @click="clearJsxResult">Clear Result</button>
         </div>
         <div class="result">
             <span>Result: </span> 
@@ -160,7 +160,7 @@ export default {
             display: flex;
             .button {
                 margin-right: .5em;
-                width: 40%;
+                width: 47.5%;
             }
             button {
                 width: 100%;
@@ -170,7 +170,7 @@ export default {
             display: flex;
             label {
                 margin-right: .5em;
-                width: 40%;
+                width: 47.5%;
             }
             input {
                 width: 100%;
@@ -178,7 +178,7 @@ export default {
         }
         .code {
             textarea {
-                width: 100%;
+                width: calc(95% + .5em);
             }
             button {
                 margin-right: .5em;
@@ -188,6 +188,7 @@ export default {
             background: rgba(0,0,0,0.2);
             margin-top: 1em;
             padding: 1em;
+            width: calc(95% + .5em);
         }
     }
 </style>

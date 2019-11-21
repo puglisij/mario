@@ -2,18 +2,21 @@
     <div class="watcher">
         <label>
             <input class="topcoat-text-input" type="text" placeholder="/my/watch/folder" 
+                title="The path to the folder to watch for new json, or image types for processing, given below."
                 v-model="localWatcher.path"
                 @change="emitChange"
             />
         </label>
         <label>
             <input class="topcoat-text-input" type="text" placeholder="jpg, jpeg, png, psd, tif, etc." 
+                title="Either multiple image extensions, or json (exclusive)."
                 v-model="localWatcher.extensions"
                 @change="onExtensions" 
             />
         </label>
         <label>
             <input class="topcoat-text-input" type="text" placeholder="the default pipeline type (e.g. product)" 
+                title="The default type if no json data is made available for a new image process."
                 v-model="localWatcher.defaultType"
                 @change="emitChange" 
             />
