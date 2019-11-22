@@ -70,6 +70,8 @@ Action functions can either receive a single primitive value, or an options obje
 Conventions: 
 - Actions that have no business specific logic or data references will be defined in the 
   root /actions directory. For example, action.saveDocument() which just saves the active document. 
+  These types of actions can be thought of as 'Augmenting' Photoshop functionality which isnt availble 
+  via their existing jsx API. For example, adding a drop shadow to a layer. 
 - Business specific actions should be defined in other subdirectories. 
   Its recommended that actions specific to a particular Pipeline should be defined in a 
   subdirectory by that Pipeline name. 
@@ -127,6 +129,20 @@ Available methods are:
 - hasKeyword() can be used to check if a keyword exists in the 'imagePath' XMP metadata 
 - context() can be used to get or set context variables required by other actions in the pipeline 
 - parameters() fills in mustache template strings {{ key }} data by the key 
+
+
+JSX 
+------------------
+Polyfils: 
+Currently the Adobe jsx engine is built on an old version of the JS standard. Many functions such as Array.prototype.forEach 
+are not available. If any standard function is not available, a polyfil can often be added to the 
+at /public/polyfil.jsx which is imported when Mario is opened. 
+
+Utilities: 
+Utility functions can be added to the file at /public/utils.jsx 
+These are made available on the global underscore _  object. 
+Utilities are functions that might assist the development of Actions. 
+For example, string templating functions or geometry calculations. 
 
 
 Roadmap 
