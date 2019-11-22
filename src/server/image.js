@@ -61,22 +61,54 @@ export default class Image
             constructor(path, defaultData) 
             {
                 this.image = new Image();
-                this.image.data = defaultData;
-                this.image.type = defaultData.type;
+                this.image.data = defaultData || {};
+                this.image.type = defaultData.type || defaultData.type;
 
-                // Either an Image or JSON file
-                const dirName = upath.dirname(path);
-                const fileName = upath.basename(path);
-                const fileExtension = upath.extname(path);
-                const name = fileName.split('.')[0];
+                if(path)
+                {
+                    path = upath.normalize(path);
+                    // Either an Image or JSON file
+                    const dirName = upath.dirname(path);
+                    const fileName = upath.basename(path);
+                    const fileExtension = upath.extname(path);
+                    const name = fileName.split('.')[0];
 
-                // TODO: Also support binary data using MessagePack standard for serialization?
-                if(fileExtension === ".json") {
-                    this.image.dataPath = path;
-                } else {
-                    this.image.dataPath = upath.join(dirName, name + '.json');
-                    this.image.imagePath = path;
+                    // TODO: Also support binary data using MessagePack standard for serialization?
+                    if(fileExtension === ".json") {
+                        this.image.dataPath = path;
+                    } else {
+                        this.image.dataPath = upath.join(dirName, name + '.json');
+                        this.image.imagePath = path;
+                    }
                 }
+            }
+            /**
+             * Read the given json or object as the 'data' for the image
+             * @param {string|object} json 
+             */
+            async readProcessingDataFromJson(json)
+            {
+                this.image.data = json;
+                if(typeof json === "string") {
+                    try {
+                        this.image.data = JSON.parse(json);
+                    } catch(e) {
+                        console.error(e + `\nCould not process image.`)
+                    }
+                }
+                if (this.image.data.type) {
+                    this.image.type = this.image.data.type;
+                }
+                // Don't override original image path
+                if(this.image.data.image && !this.image.hasImagePath()) {
+                    this.image.imagePath = upath.normalize(this.image.data.image);
+                }
+                // TODO: Unpack if zip file
+                if(this.image.data.package) {
+                    const sourceDir = this.image.getSourceDirectory();
+                    this.image.packagePath = upath.join(sourceDir, this.image.data.package);
+                }
+                return Promise.resolve();
             }
             async readProcessingData()
             {
@@ -87,29 +119,17 @@ export default class Image
                         let rawJson = await promisify(fs.readFile)(this.image.dataPath, {
                             encoding: 'utf8'
                         });
-
-                        this.image.data = JSON.parse(rawJson);
-                        if (this.image.data.type) {
-                            this.image.type = this.image.data.type;
-                        }
-                        if(this.image.data.image) {
-                            if(this.image.hasImagePath()) {
-                                console.log(`Watched image path ${this.image.imagePath} was overridden by data image path: ${this.image.data.image}`)
-                            }
-                            this.image.imagePath = this.image.data.image;
-                        }
-                        if(this.image.data.package) {
-                            const sourceDir = this.image.getSourceDirectory();
-                            this.image.packagePath = upath.join(sourceDir, this.image.data.package);
-                            // TODO Unpack if zip file
-                        }
+                        this.readProcessingDataFromJson(rawJson);
                     } catch(e) {
                         this.image.dataPath = "";
                     }
-                    
                     resolve();
                 });
             }
+            /**
+             * Reads any metadata from the image file at 'imagePath'
+             * Should be called after either readProcessingDataFromJson() or readProcessingData()
+             */
             async readMetadata()
             {
                 if(!this.image.hasImagePath()) {

@@ -214,7 +214,7 @@ export default class Server extends EventEmitter
                 depth: 0
             })
             .on("add", path => {
-                this.processImage(path, watchDefaultType);
+                this.processImageAtPath(path, watchDefaultType);
             });
 
             console.log(`Watcher set for ${watchPaths.toString()}`);
@@ -230,7 +230,10 @@ export default class Server extends EventEmitter
     stop()
     {
         console.log(`Server stopped.`);
-        this.watchers.forEach(watcher => watcher.close());
+        this.watchers.forEach(watcher => {
+            watcher.removeAllListeners();
+            watcher.close();
+        });
         this._state = ServerState.STOPPED;
     }
     close() 
@@ -257,9 +260,20 @@ export default class Server extends EventEmitter
         }
     }
     /**
+     * Manually shove an image into a pipeline
+     * @param {string|object} json what would ordinarily be read from a json file
+     */
+    async processImageWithJson(json)
+    {
+        const reader = new Image.Reader();
+              reader.readProcessingDataFromJson(json);
+        const image = reader.getImage();
+        this.pushToPipeline(image);
+    }
+    /**
      * Read metadata, and notify CEP pipeline image is ready for processing 
      */
-    async processImage(path, defaultType)
+    async processImageAtPath(path, defaultType)
     {
         path = upath.normalize(path);
         const imageName = upath.basename(path);

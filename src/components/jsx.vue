@@ -67,7 +67,23 @@ export default {
             scriptWatcher: null 
         }
     },
+    beforeDestroy() {
+        this.destroyScriptListener();
+    },
     methods: {
+        startScriptListener()
+        {
+            this.scriptWatcher = chokidar.watch(SCRIPT_LOG_PATH);
+            this.scriptWatcher.on("change", debounce(this.readScriptListenerLog, 1000));
+        },
+        destroyScriptListener()
+        {
+            if(this.scriptWatcher) {
+                this.scriptWatcher.removeAllListeners();
+                this.scriptWatcher.close();
+                this.scriptWatcher = null;
+            }
+        },
         clearJsxResult() {
             this.jsxResult = "";
         },
@@ -105,14 +121,9 @@ export default {
             executeAction(listenerID, d, DialogModes.NO);
             `);
 
-            this.scriptWatcher && this.scriptWatcher.close();
-            this.scriptWatcher = null;
-
+            this.destroyScriptListener();
             if(this.isScriptListening) 
-            {
-                this.scriptWatcher = chokidar.watch(SCRIPT_LOG_PATH);
-                this.scriptWatcher.on("change", debounce(this.readScriptListenerLog, 1000));
-            }
+                this.startScriptListener();
         },
         readScriptListenerLog(path) 
         {

@@ -118,18 +118,31 @@ export default {
         this.server.on("pipelineend", this.onPipelineEnd);
 
         window.addEventListener("beforeunload", event => {
-            this.server && this.server.close();
+            this.destroy();
         });
+        
         console.log("Server component created.");
     },
     beforeDestroy() 
     {
-        // Cleanup server instance
-        this.server && this.server.close();
-        console.log("Server component destroyed.");
+        this.destroy();
     },
     methods: 
     {
+        destroy() 
+        {
+            // Cleanup server instance
+            if(this.server) 
+            {
+                this.server.removeListener("init", this.onInitComplete);
+                this.server.removeListener("state", this.onStateChange);
+                this.server.removeListener("pipelinestart", this.onPipelineStart);
+                this.server.removeListener("action", this.onAction);
+                this.server.removeListener("pipelineend", this.onPipelineEnd);
+                this.server.close();
+            }
+            console.log("Server component destroyed.");
+        },
         start() 
         {
             this.server.start();

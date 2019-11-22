@@ -31,10 +31,19 @@ export default {
     activated() {
         this.autoScroll();
     },
+    deactivated() {
+        this.destroy();
+    },
     mounted() {
         this.autoScroll();
     },
+    beforeDestroy() {
+        this.destroy();
+    },
     methods: {
+        destroy() {
+            logger.removeListener('logs', this.onLogs); 
+        },
         autoScroll() 
         {
             if(this.doAutoScroll && this.$refs.output) {
