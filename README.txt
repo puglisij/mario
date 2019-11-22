@@ -51,10 +51,14 @@ Package - a directory containing other images required by a pipeline for process
 Pipelines
 --------------
 A configurable series of JSX actions to be performed on an IMAGE. 
-This is configurable via Mario's UI. 
+Pipelines are configurable via Mario's UI. 
 * Currently only linear configurations can be created via the UI. For pipelines requiring loops, 
 or other types of control flow, a custom action is necessary. 
 Actions may call other actions from within themselves. 
+
+Conventions:
+- A Pipeline can be thought of as generating as 'single' output file, and this is a good convention 
+to follow to avoid overly complex pipeline configurations. 
 
 
 Actions 
@@ -85,7 +89,11 @@ Contains data needed for a pipeline in order for a particular IMAGE to be proces
 'type' - (optional) the type indicating the pipeline(s) that will process the IMAGE. 
 'image' - (optional) a path to the Working Image used in the pipeline. Generally opened at the very start. 
 'package' - (optional) a path to the Package folder containing other images used by the pipeline. 
+NOTE: As a convention, any other paths in the json data will be expected to be relative to the 'package' path 
+
 All other data will be made available on the IMAGE instance on the photoshop jsx side. 
+Or said another way, Mario ALWAYS looks for the 'type', 'image', and 'package' properties.
+All other properties in the json are only used by JSX actions. 
 
 
 Input Methods
