@@ -41,12 +41,6 @@ const TYPES = [
     TYPE_BOOLEAN
 ];
 
-/*
-    Auto - type will not be forced but will be autodetected
-    Number - force the input value to be a Number
-    Boolean - force the input value to be a Boolean 
-    String - force the input value to be a string (e.g. String 'true' will not be forced to a Boolean true)
-*/
 export default { 
     name: 'pipeline-action-parameter',
     components: {
@@ -58,7 +52,6 @@ export default {
 
         return {
             type: type, 
-            lockType: !_.isUndefined(this.value) && !_.isNull(this.value) && !_.isEmptyString(this.value),
             localValue: type === TYPE_NOT_SUPPORTED ? null : this.value,
             localName: this.name,
         }
@@ -150,18 +143,11 @@ export default {
         },
         onTextValue(event)
         {
-            // const conversion = this.autoType(event.target.value);
-            // this.type = conversion.type;
-            // this.localValue = conversion.value;
-
             this.localValue = this.forceType(event.target.value);
-
-            console.log(`paramter onValue forced ${this.type}`);
             this.emitChange();
         },
         onName(event) 
         {
-            console.log("parameter onName");
             this.emitChange();
         },
         onDelete(event) {
