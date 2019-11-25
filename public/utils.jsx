@@ -111,6 +111,35 @@ var _ = {
             }
         }
         return result.join('');
+    }, 
+    isBoolean: function isBoolean(val) {
+        return typeof val === "boolean";
+    },
+    isNumber: function isNumber(val) {
+        return typeof val === "number" && val === val;
+    },
+    isObject: function isObject(val) {
+        return val !== null && typeof(val) === "object" && !Array.isArray(val);
+    },
+    isEmptyObject: function isEmptyObject(obj) 
+    {
+        return Object.keys(obj || {}).length === 0;
+    },
+    isString: function isString(val) {
+        return typeof val === "string";
+    },
+    isEmptyString: function isEmptyString(val) {
+        return val === "";
+    },
+    isArray: function isArray(val) 
+    {
+        return Array.isArray(val)
+    },
+    isUndefined: function isUndefined(val) {
+        return typeof val === "undefined";
+    },
+    isNull: function isNull(val) {
+        return val === null;
     }
 }
 

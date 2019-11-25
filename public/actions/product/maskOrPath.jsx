@@ -1,12 +1,16 @@
 /**
 * Knocks out an iamge using Masking or Pathing, based on the data field "masked"
 * Image is trimmed by alpha 
+* @param {object} options 
+* @param {boolean} options.isMasked 
 */
-product.maskOrPath = function maskOrPath()
+product.maskOrPath = function maskOrPath(options)
 {
-    var isMasked = IMAGE.data("masked");
-    if(typeof isMasked !== "boolean") {
-        throw new Error("Missing data property 'masked'");
+    options = options || {};
+
+    var isMasked = !_.isUndefined(options.isMasked) ? options.isMasked : IMAGE.data("masked");
+    if(_.isBoolean(isMasked)) {
+        throw new Error("Missing parameter 'isMasked' or data property 'masked'");
     }
     
     if(isMasked) { //|| _.hasKeyword("masked")) {

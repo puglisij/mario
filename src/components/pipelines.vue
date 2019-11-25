@@ -14,21 +14,21 @@
                     <input class="topcoat-text-input" type="text" 
                         title="A name for the pipeline. Only used for reference."
                         placeholder="my-pipeline-name"
-                        v-model="pipeline.name"
-                        @change="onPipeline(pipeline.id)"
+                        :value="pipeline.name"
+                        @change="onPipelineName($event, pipeline)"
                     />
                 </label>
                 <label>
                     <input class="topcoat-text-input" type="text" 
-                        title="The 'type' of image processes that will flow through this pipeline. Determined either by watcher default type or json 'type' property. Only one may be specified. Case insensitive."
+                        title="The 'type'(s) of image processes that will flow through this pipeline, as determined by watcher default type or json 'type' property. Case insensitive."
                         placeholder="my-type-1, my-type-2"
-                        v-model="pipeline.for"
-                        @change="onPipeline(pipeline.id)"
+                        :value="pipeline.for"
+                        @change="onPipelineFor($event, pipeline)"
                     />
                 </label>
                 <checkbox 
                     v-model="pipeline.disabled" 
-                    @change="onPipeline(pipeline.id)">
+                    @change="onPipeline">
                     Disabled 
                 </checkbox>
 
@@ -171,8 +171,24 @@ export default {
         getPipeline: function(id) {
             return this.local.pipelines.find(x => x.id == id);
         },
-        onPipeline(id)
+        validateFor(forTypes) {
+            let forTypesArray = forTypes.split(','); 
+                forTypesArray = forTypesArray.map(ext => ext.replace(/[^a-z0-9_]/gi, ''));
+                forTypesArray = forTypesArray.filter(ext => ext && ext.length > 0);
+            return forTypesArray;
+        },
+        onPipeline()
         {
+            this.markDirty();
+        },
+        onPipelineName(event, pipeline) 
+        {
+            pipeline.name = event.target.value;
+            this.markDirty();
+        },
+        onPipelineFor(event, pipeline) 
+        {
+            pipeline.for = this.validateFor(event.target.value);
             this.markDirty();
         },
         onAddNewPipeline()

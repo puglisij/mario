@@ -85,6 +85,10 @@ Conventions:
 Input JSON 
 --------------
 Optional json file. 
+NOTE: One json file is expected per IMAGE process. If there are multiple images needed for a process 
+    (such as when 'package' is defined) than any data needed for these should be listed in the 
+    single json file, such as in an array of objects. 
+
 Contains data needed for a pipeline in order for a particular IMAGE to be processed. 
 'type' - (optional) the type indicating the pipeline(s) that will process the IMAGE. 
 'image' - (optional) a path to the Working Image used in the pipeline. Generally opened at the very start. 

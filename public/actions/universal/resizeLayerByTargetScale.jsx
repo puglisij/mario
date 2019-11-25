@@ -19,5 +19,5 @@ universal.resizeLayerByTargetScale = function resizeLayerByTargetScale(options)
 
     // Dont scale below 0%
     var percentageScale = Math.max((targetScale / currentScale) * 100, 0);
-    action.scaleLayerByPercent(scale);
+    action.scaleLayerByPercent(percentageScale);
 }

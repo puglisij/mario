@@ -2,7 +2,7 @@
 * Scale the active image by the target scale
 * Uses the 'currentScale' and 'targetScale' data properties
 * @param {object} [options] 
-* @param {ResampleMethod|string} options.method the resampling method to use
+* @param {ResampleMethod|string} [options.method] the resampling method to use
 * @param {number} options.currentScale the current resolution (pixels per inch)
 * @param {number} options.targetScale the target resolution (pixels per inch)
 */
@@ -22,6 +22,6 @@ universal.resizeImageByTargetScale = function resizeImageByTargetScale(options)
     action.resizeImage({
             w: percentageScale + "%",
             h: percentageScale + "%", 
-            method: method
+            method: options.method
         });
 }

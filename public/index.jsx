@@ -15,7 +15,7 @@ function importAction(actionFilePath, actionName)
         wrapAction(actionName);
     } catch(e) { 
         alert("File: " + file + " Action Import Exception: " + e); 
-    }
+    } 
 }
 
 /** 
@@ -46,7 +46,7 @@ function wrapAction(actionName)
             return originalMethod.apply(nameSpace, arguments);
         } catch(e) {
             throw e 
-                + "\nLine Number: " + e.line 
+                + (e.line !== undefined ? "\nLine Number: " + e.line  : "")
                 + "\nAction: " + actionName;
         }
     };

@@ -10,23 +10,11 @@ product.makeWebTIF = function makeWebTIF()
         throw new Error("Image data missing sku.");
     }
 
-    var viewsDirectory = IMAGE.getPackagePath();
-    var views = IMAGE.data("additionalViews");
-    if(!views) {
-        throw new Error("Image data missing additionalViews.");
-    }
-
     var tif;
     var BORDER_SIZE = 50;
-    // Add Additional Views as Layers 
-    for(var i = 0; i < views.length; ++i) 
+
+    universal.private.eachAdditionalView(function(view)
     {
-        var view = views[i];
-        var viewIsFromArchives = view.isFromArchives;
-        var viewFile = new File(viewsDirectory + "/" + view.file);
-        var view = app.open(viewFile);
-        
-        action.convertToColorProfile("RGB");
         product.maskOrPath();
 
         // Add border 
@@ -38,8 +26,7 @@ product.makeWebTIF = function makeWebTIF()
             activeDocument.height + BORDER_SIZE, 
             AnchorPosition.MIDDLECENTER
         );
-
-        universal.saveAsPSDToArchiveDirectory("RGB");
+        action.convertToColorProfile("RGB");
 
         // Remove all alpha channel objects
         activeDocument.channels.removeAll();
@@ -52,8 +39,8 @@ product.makeWebTIF = function makeWebTIF()
         action.convertActiveLayerToSmartObject();
         activeDocument.activeLayer.name = duplicateViewName.toString();
         activeDocument.resizeCanvas("300px", "300px", AnchorPosition.MIDDLECENTER);
-
-        if(viewIsFromArchives) {
+        
+        if(view.isFromArchives) {
             action.setLayerIconColor(LayerIconColor.Violet);
         }
 
@@ -62,9 +49,9 @@ product.makeWebTIF = function makeWebTIF()
 
         universal.resizeLayerByTargetScale({
             currentScale: IMAGE.data("currentScale"),
-            targetScale: IMAGE.data("rgbTargetScale")
+            targetScale: IMAGE.data("webTifTargetScale")
         })
-
+        
         product.dropShadow();
         action.unsharpMask({
             amountPercent: 40,
@@ -91,7 +78,7 @@ product.makeWebTIF = function makeWebTIF()
         }
         
         product.trimAndResizeCanvas();
-    }
+    });
 }
 
 

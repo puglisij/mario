@@ -1,6 +1,7 @@
 <template>
   <div>
         <h1 v-bind:style="{ color: statusColor }">Mario</h1>
+        <!-- <div class="mario stand"></div> -->
 
         <section class="main-content">
             <div class="activity" v-bind:style="{ color: statusColor }" v-if="isPipelineActive">
@@ -204,14 +205,27 @@ export default {
 
 <style scoped lang="scss">
     .mario {
-        animation: play 0.8s steps(4) infinite;
-
-        background: url('https://raw.githubusercontent.com/LantareCode/random-this-and-thats/master/CSS/SuperMario-Animation/images/mariowalking/result.png') left center;    
-        width: 71px;
-        height: 72px;
+        background: url('../img/mario-sprites.png');    
+        width: 32px;
+        height: 45px;
     }
-    @keyframes play{
-        100%{background-position: -284px;}
+    .stand {
+        background-position: -5px -895px; 
+        width: 40px;
+    }
+    .run-1 {
+        background-position: -130px -895px;
+    }
+    .run-2 {
+        background-position: -166px -895px;
+    }
+    .run-3 {
+        background-position: -198px -895px;
+        width: 40px;
+    }
+    .run-4 {
+        background-position: -242px -895px;
+        width: 40px;
     }
 
     .light {

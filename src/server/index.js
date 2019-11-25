@@ -49,7 +49,7 @@ export default class Server extends EventEmitter
         
         // Path watcher instances for new images
         this._fileWatchers = [];
-        // Pipelines mapping type => pipeline actions
+        // Pipelines mapping type => pipelines
         this._pipelinesMap = {};
         // Flag indicating configuration has changed and pipeline mapping needs reloaded
         this._needToReloadPipelines = true;
@@ -70,8 +70,9 @@ export default class Server extends EventEmitter
             this._pipelinesMap = {};
             for(const pipeline of this._pipelineConfig.pipelines)
             {
-                const forType = pipeline.for.toLowerCase();
-                _.getOrDefine(this._pipelinesMap, forType, []).push(pipeline);
+                for(const forType of pipeline.for) {
+                    _.getOrDefine(this._pipelinesMap, forType.toLowerCase(), []).push(pipeline);
+                }
             }
             this._needToReloadPipelines = false;
         }
@@ -117,10 +118,10 @@ export default class Server extends EventEmitter
         console.log(`Pipeline Configuration ${key} changed to ${value}`);
     }
     isPaused() {
-        return this._state == ServerState.PAUSED;
+        return this._state === ServerState.PAUSED;
     }
     isStopped() {
-        return this._state == ServerState.STOPPED || this._state == ServerState.UNINITIALIZED;
+        return this._state === ServerState.STOPPED || this._state === ServerState.UNINITIALIZED;
     }
     get _state() {
         return this._serverState;
@@ -138,7 +139,7 @@ export default class Server extends EventEmitter
         // Load Actions 
         //-----------------
         let actionScript = this.loadActionPaths(this._actionPath, "action");
-        let loadActionsResult = await this.runJsx(actionScript);
+        await this.runJsx(actionScript);
         console.log("Loaded actions."); 
 
         //-----------------
@@ -205,34 +206,32 @@ export default class Server extends EventEmitter
     }
     async start()
     {
-        if(!this.isStopped()) {
-            return;
-        }
-
-        console.log(`Server started.`);
-
-        //-----------------
-        // Setup watchers 
-        //-----------------
-        for(const watcherConfig of this._config.watchers) 
+        if(this.isStopped()) 
         {
-            const watchDefaultType = watcherConfig.defaultType;
-            const watchPathRoot = upath.normalize(watcherConfig.path);
-            const watchPaths = watcherConfig.extensions.map(ext => {
-                return upath.join(watchPathRoot, "*." + ext)
-            });
-            const watcher = chokidar.watch(watchPaths, {
-                ignored: /^\.|Output|Error|Archive|Processed/, 
-                depth: 0
-            })
-            .on("add", path => {
-                this.processImageAtPath(path, watchDefaultType);
-            });
+            // Setup file watchers
+            for(const watcherConfig of this._config.watchers) 
+            {
+                const watchDefaultType = watcherConfig.defaultType;
+                const watchPathRoot = upath.normalize(watcherConfig.path);
+                const watchPaths = watcherConfig.extensions.map(ext => {
+                    return upath.join(watchPathRoot, "*." + ext)
+                });
+                const watcher = chokidar.watch(watchPaths, {
+                    ignored: /^\.|Output|Error|Archive|Processed/, 
+                    depth: 0
+                })
+                .on("add", path => {
+                    this.processImageAtPath(path, watchDefaultType);
+                });
 
-            console.log(`Watcher set for ${watchPaths.toString()}`);
-            this._fileWatchers.push(watcher);
+                console.log(`Watcher set for ${watchPaths.toString()}`);
+                this._fileWatchers.push(watcher);
+            }
+            console.log(`Server initialized.`);
         }
+
         this._state = ServerState.RUNNING;
+        console.log(`Server started.`);
     }
     pause()
     {
@@ -258,7 +257,7 @@ export default class Server extends EventEmitter
     }
     pauseCheck(doPause)
     {
-        if(doPause || this._state == ServerState.PAUSED) 
+        if(doPause || this.isPaused()) 
         {
             this._state = ServerState.PAUSED;
             console.log("Server waiting on pause...");
@@ -408,7 +407,7 @@ export default class Server extends EventEmitter
                 }
                     
                 this.moveImageToProcessed(image);
-                console.log("Pipeline completed for image: " + image.imageName);
+                console.log("Pipeline completed for image: " + image.imagePath);
             }
             catch(e) 
             {
