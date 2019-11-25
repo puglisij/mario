@@ -41,6 +41,7 @@ function wrapAction(actionName)
         throw new Error("Action " + actionName + " is not a function.");
     }
     nameSpace[methodName] = function() {
+        "use strict";
         try {
             return originalMethod.apply(nameSpace, arguments);
         } catch(e) {

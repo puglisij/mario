@@ -35,6 +35,10 @@
                 <button class="topcoat-icon-button--quiet" type="button"
                     @click="onToggleEditor(pipeline.id);"
                 >{{ isEditorOpen ? "Close" : "Open" }} Editor</button>
+                <!-- <span class="button-divider">|</span>
+                <button class="topcoat-icon-button--quiet" type="button"
+                    @click="onRunPipelineWithDefaults(pipeline.id);"
+                >Run with Defaults</button> -->
                 <button class="pipeline-delete topcoat-icon-button--quiet" type="button"
                     title="Delete this pipeline"
                     @click="onDeletePipeline(pipeline.id);"
@@ -64,11 +68,18 @@
                         @delete="onActionDelete(index)"
                     />
                 </draggable>
-            </div>
+            </div> 
             <div class="controls">
                 <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
                 <button class="topcoat-button--large" type="button" @click="onActionAdd">Add Action</button>
             </div>
+            <h3 class="pipeline-editor-header">Default JSON</h3>
+            <textarea class="pipeline-editor-defaults topcoat-textarea" 
+                :value="pipelineBeingEditedDefaults"
+                @change="onDefaultsChange"
+                cols="45"
+            ></textarea>
+            <p class="error" v-if="pipelineDefaultsError">{{pipelineDefaultsError}}</p> 
         </div>
     </div>
 </template>
@@ -99,10 +110,25 @@ export default {
         return {
             local: this.toLocalConfiguration(this.configuration),
             needSaved: false,
-            pipelineBeingEdited: {}
+            pipelineBeingEdited: {}, 
+            pipelineDefaultsError: ""
         };
     },
     computed: {
+        pipelineBeingEditedDefaults() 
+        {
+            let defaults = this.pipelineBeingEdited.defaults;
+            if(!this.pipelineBeingEdited.defaults || _.isEmptyObject(this.pipelineBeingEdited.defaults)) 
+            {
+                defaults = {
+                    type: this.pipelineBeingEdited.for, 
+                    image: "", 
+                    package: ""
+                };
+            }
+            this.pipelineDefaultsError = "";
+            return JSON.stringify(defaults, null, 4);
+        },
         isEditorOpen() {
             return !_.isEmptyObject(this.pipelineBeingEdited); 
         }
@@ -174,6 +200,23 @@ export default {
                 }
             });
             this.markDirty();
+        },
+        onDefaultsChange(event) 
+        {
+            try {
+                const defaults = JSON.parse(event.target.value);
+                      defaults.type = defaults.type || this.pipelineBeingEdited.type;
+                this.pipelineBeingEdited.defaults = defaults;
+                this.pipelineDefaultsError = "";
+                this.markDirty();
+            } catch(e) {
+                this.pipelineDefaultsError = e.toString();
+            }
+        },
+        onRunPipelineWithDefaults(id)
+        {
+            const pipeline = _.simpleDeepClone(this.getPipeline(id));
+            this.$emit("runwithdefaults", pipeline);
         },
         onToggleEditor(id) 
         {
@@ -247,16 +290,27 @@ export default {
             float: right;
         }
     }
-
+    .button-divider {
+        margin: 0 .5em;
+    }
     
     .pipeline-editor {
-        margin-top: .5em;
+        background: rgba(0,0,0,0.1);
+        border-radius: 5px;
+        padding: .5em;
     }
     .pipeline-editor-header {
-        margin: .5em;
+        margin: 0;
+        padding: .5em;
     }
     .pipeline-editor-board {
         position: relative;
     }
-
+    .pipeline-editor-defaults {
+        height: 400px;
+        width: 100%;
+    }
+    .error {
+        color: red;
+    }
 </style>

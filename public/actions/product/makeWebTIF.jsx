@@ -1,4 +1,5 @@
 
+
 /**
 * Assembles product views into a single web TIF. Also saves each view to RGB Archive. 
 */ 
@@ -59,14 +60,11 @@ product.makeWebTIF = function makeWebTIF()
         // Trim transparent area around the image
         activeDocument.trim(TrimType.TRANSPARENT);
 
-        var scale = 29;
-        if (_.hasKeyword("1to1")) {
-            scale = 58;
-        }
-        if (_.hasKeyword("4to1")) {
-            scale = 17;
-        }
-        action.scaleLayerByPercent(scale);
+        universal.resizeLayerByTargetScale({
+            currentScale: IMAGE.data("currentScale"),
+            targetScale: IMAGE.data("rgbTargetScale")
+        })
+
         product.dropShadow();
         action.unsharpMask({
             amountPercent: 40,

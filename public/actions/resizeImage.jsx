@@ -9,9 +9,9 @@
 action.resizeImage = function resizeImage(options)
 {
     if(options.method === undefined) {
-        method = ResampleMethod.BILINEAR;
+        var method = ResampleMethod.BILINEAR;
     } else {
-        method = typeof(options.method) === "string" ? ResampleMethod[options.method.toUpperCase()] : options.method;
+        var method = typeof(options.method) === "string" ? ResampleMethod[options.method.toUpperCase()] : options.method;
     }
     activeDocument.resizeImage(
         new UnitValue(options.w), 

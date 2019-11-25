@@ -37,24 +37,24 @@ export default class Server extends EventEmitter
     constructor(serverPath, actionPath) 
     {
         super();
-        this.server = null;
-        this.actionPath = actionPath;
+        this._httpServer = null;
+        this._actionPath = actionPath;
         
-        this.config = {};
-        this.configPath = upath.join(serverPath, "config.json");
-        this.configurator = null;
-        this.pipelineConfig = {};
-        this.pipelineConfigPath = upath.join(serverPath, "config-pipeline.json");
-        this.pipelineConfigurator = null;
+        this._config = {};
+        this._configPath = upath.join(serverPath, "config.json");
+        this._configurator = null;
+        this._pipelineConfig = {};
+        this._pipelineConfigPath = upath.join(serverPath, "config-pipeline.json");
+        this._pipelineConfigurator = null;
         
         // Path watcher instances for new images
-        this.watchers = [];
+        this._fileWatchers = [];
         // Pipelines mapping type => pipeline actions
-        this.pipelines = {};
+        this._pipelinesMap = {};
         // Flag indicating configuration has changed and pipeline mapping needs reloaded
-        this.needToReloadPipelines = true;
+        this._needToReloadPipelines = true;
         // Images waiting for processing
-        this.pipelineQueue = [];
+        this._pipelineQueue = [];
 
         this.cs = new CSInterface();     
         this.cs.addEventListener("debug.pause", event => {
@@ -63,48 +63,57 @@ export default class Server extends EventEmitter
         this._isPipelinesRunningMutex = false;
         this._serverState = ServerState.UNINITIALIZED;
     }
+    get pipelinesMap() 
+    {
+        if (this._needToReloadPipelines) 
+        {
+            this._pipelinesMap = {};
+            for(const pipeline of this._pipelineConfig.pipelines)
+            {
+                const forType = pipeline.for.toLowerCase();
+                _.getOrDefine(this._pipelinesMap, forType, []).push(pipeline);
+            }
+            this._needToReloadPipelines = false;
+        }
+        return this._pipelinesMap;
+    }
+    set pipelinesMap(val) 
+    {
+        this._pipelinesMap = val;
+    }
     _loadConfiguration() 
     {
-        this.configurator = new ServerConfiguration();
-        this.config = this.configurator.load(this.configPath);
-        if(!this.config.watchers) {
+        this._configurator = new ServerConfiguration();
+        this._config = this._configurator.load(this._configPath);
+        if(!this._config.watchers) {
             throw new Error("Server config missing 'watchers'.");
         }
         console.log("Loaded server config: ");
-        console.dir(this.config);
+        console.dir(this._config);
     }
     _loadPipelineConfiguration()
     {
-        this.pipelineConfigurator = new ServerConfiguration();
-        this.pipelineConfig = this.pipelineConfigurator.load(this.pipelineConfigPath);
-        if(!this.pipelineConfig.pipelines) {
+        this._pipelineConfigurator = new ServerConfiguration();
+        this._pipelineConfig = this._pipelineConfigurator.load(this._pipelineConfigPath);
+        if(!this._pipelineConfig.pipelines) {
             throw new Error("Server pipeline config missing 'pipelines'.");
         }
     }
-    _loadPipelineMapping()
-    {
-        for(const pipeline of this.pipelineConfig.pipelines)
-        {
-            const forType = pipeline.for.toLowerCase();
-            _.getOrDefine(this.pipelines, forType, []).push(pipeline);
-        }
-        this.needToReloadPipelines = false;
-    }
     getConfiguration() {
-        return this.configurator.clone();
+        return this._configurator.clone();
     }
     getPipelineConfiguration() {
-        return this.pipelineConfigurator.clone();
+        return this._pipelineConfigurator.clone();
     }
     setConfiguration(key, value) 
     {
-        this.configurator.set(key, value);
+        this._configurator.set(key, value);
         console.log(`Configuration ${key} changed to ${value}`);
     }
     setPipelineConfiguration(key, value) 
     {
-        this.pipelineConfigurator.set(key, value);
-        this.needToReloadPipelines = true;
+        this._pipelineConfigurator.set(key, value);
+        this._needToReloadPipelines = true;
         console.log(`Pipeline Configuration ${key} changed to ${value}`);
     }
     isPaused() {
@@ -128,13 +137,19 @@ export default class Server extends EventEmitter
         //-----------------
         // Load Actions 
         //-----------------
-        let actionScript = this.loadActionPaths(this.actionPath, "action");
+        let actionScript = this.loadActionPaths(this._actionPath, "action");
         let loadActionsResult = await this.runJsx(actionScript);
         console.log("Loaded actions."); 
 
         //-----------------
         // Setup routes
         //-----------------
+        app.get('/pipeline/:type/configuration', (req, res) => {
+            res.header("Content-Type", "application/json");
+            res.send(
+                JSON.stringify(this.pipelinesMap[req.params.type.toLowerCase()], null, 4)
+            );
+        });
         app.get('/activedocument', (req, res) => {
             this.cs.evalScript("_.getDocumentPath()", function(activeDocumentPath) {
                 res.status(200).send("Active Document: " + activeDocumentPath);
@@ -176,7 +191,7 @@ export default class Server extends EventEmitter
         //-----------------
         // Start server
         //-----------------
-        this.server = app.listen(port, function() {
+        this._httpServer = app.listen(port, function() {
             console.log(`Express is listening to http://localhost:${port}`);
         });
 
@@ -196,13 +211,10 @@ export default class Server extends EventEmitter
 
         console.log(`Server started.`);
 
-        if (this.needToReloadPipelines) 
-            this._loadPipelineMapping()
-
         //-----------------
         // Setup watchers 
         //-----------------
-        for(const watcherConfig of this.config.watchers) 
+        for(const watcherConfig of this._config.watchers) 
         {
             const watchDefaultType = watcherConfig.defaultType;
             const watchPathRoot = upath.normalize(watcherConfig.path);
@@ -218,7 +230,7 @@ export default class Server extends EventEmitter
             });
 
             console.log(`Watcher set for ${watchPaths.toString()}`);
-            this.watchers.push(watcher);
+            this._fileWatchers.push(watcher);
         }
         this._state = ServerState.RUNNING;
     }
@@ -230,7 +242,7 @@ export default class Server extends EventEmitter
     stop()
     {
         console.log(`Server stopped.`);
-        this.watchers.forEach(watcher => {
+        this._fileWatchers.forEach(watcher => {
             watcher.removeAllListeners();
             watcher.close();
         });
@@ -240,7 +252,7 @@ export default class Server extends EventEmitter
     {
         console.log(`Server closing...`);
         this.stop();
-        this.server && this.server.close(() => {
+        this._httpServer && this._httpServer.close(() => {
             console.log(`Server closed.`);
         });
     }
@@ -296,7 +308,7 @@ export default class Server extends EventEmitter
     }
     pushToPipeline(image)
     {
-        this.pipelineQueue.push(image);
+        this._pipelineQueue.push(image);
         if(!this._isPipelinesRunningMutex) {
             this.runPipelines();
         }
@@ -362,9 +374,9 @@ export default class Server extends EventEmitter
         let image = null;
 
         await this.runJsx(`app.displayDialogs = DialogModes.NO;`);
-        while(image = this.pipelineQueue.pop())
+        while(image = this._pipelineQueue.pop())
         {
-            const pipelines = this.pipelines[image.type.toLowerCase()];
+            const pipelines = this.pipelinesMap[image.type.toLowerCase()];
             if(!pipelines) {
                 console.error(`Pipeline not found for image: ${image.imagePath} type: ${image.type}`);
                 continue;
@@ -386,12 +398,12 @@ export default class Server extends EventEmitter
                         // Call jsx action by name with config parameters 
                         let result = await this.runAction(jsxAction.action, jsxAction.parameters);
 
-                        await this.pauseCheck(this.config.pauseAfterEveryAction);
+                        await this.pauseCheck(this._config.pauseAfterEveryAction);
                         if(result === "EXIT") break;
                         if(this.isStopped()) break;
                     }
                     await this.runJsx(`closeAll();`);
-                    await this.pauseCheck(this.config.pauseAfterEveryPipeline);
+                    await this.pauseCheck(this._config.pauseAfterEveryPipeline);
                     if(this.isStopped()) break;
                 }
                     
@@ -400,14 +412,14 @@ export default class Server extends EventEmitter
             }
             catch(e) 
             {
-                await this.pauseCheck(this.config.pauseOnExceptions);
+                await this.pauseCheck(this._config.pauseOnExceptions);
                 this.moveImageToErrored(image, e.toString());
             }
             finally 
             {
                 this.emit("pipelineend", image.type);
                 await this.runPipelineImageEnd(image);
-                await this.pauseCheck(this.config.pauseAfterEveryImage);
+                await this.pauseCheck(this._config.pauseAfterEveryImage);
                 if(this.isStopped()) break;
             }
         }

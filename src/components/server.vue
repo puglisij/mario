@@ -56,6 +56,7 @@
                 v-if="currentTabComponent == 'pipelines' && areConfigurationsLoaded"
                 v-bind:configuration="pipelineConfiguration"
                 @changed="onPipelinesConfiguration"
+                @runwithdefaults="onPipelineRunWithDefaults"
             ></pipelines>
         </section>
   </div>
@@ -120,7 +121,7 @@ export default {
         window.addEventListener("beforeunload", event => {
             this.destroy();
         });
-        
+
         console.log("Server component created.");
     },
     beforeDestroy() 
@@ -192,6 +193,10 @@ export default {
         {
             this.server.setPipelineConfiguration("pipelines", newPipelines);
             console.log("Pipelines updated.");
+        }, 
+        onPipelineRunWithDefaults(pipeline) {
+            const defaults = pipeline.defaults;
+            this.server.processImageWithJson(defaults);
         }
     }
 };

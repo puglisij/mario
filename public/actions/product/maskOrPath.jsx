@@ -1,17 +1,18 @@
 /**
-* If Image has keyword "masked" then masking actions are applied. Otherwise path actions are applied.
+* Knocks out an iamge using Masking or Pathing, based on the data field "masked"
 * Image is trimmed by alpha 
-* @param {object} options 
-* @param {Number} [options.pathName = "Path 1"] the name of the path to use for path action
 */
-product.maskOrPath = function maskOrPath(options)
+product.maskOrPath = function maskOrPath()
 {
-    options = options || {};
+    var isMasked = IMAGE.data("masked");
+    if(typeof isMasked !== "boolean") {
+        throw new Error("Missing data property 'masked'");
+    }
     
-    if(_.hasKeyword("masked")) {
+    if(isMasked) { //|| _.hasKeyword("masked")) {
         _maskActions();
     } else {
-        _pathActions(options.pathName || "Path 1");
+        _pathActions("Path 1");
     }
 
     try{

@@ -62,7 +62,7 @@ export default class Image
             {
                 this.image = new Image();
                 this.image.data = defaultData || {};
-                this.image.type = defaultData.type || defaultData.type;
+                this.image.type = this.image.data.type || this.image.type;
 
                 if(path)
                 {

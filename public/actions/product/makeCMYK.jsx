@@ -19,19 +19,11 @@ product.makeCMYK = function makeCMYK()
         var view = app.open(viewFile);
 
         product.maskOrPath();
-        // Scale
-        var scale = 50;
-        if (_.hasKeyword("2to1")) {
-            scale = 50;
-        }
-        if (_.hasKeyword("4to1")) {
-            scale = 25;
-        }
-        action.resizeImage({
-            w: scale + "%",
-            h: scale + "%", 
-            method: ResampleMethod.BICUBIC
+        universal.resizeImageByTargetScale({
+            currentScale: IMAGE.data("currentScale"), 
+            targetScale: IMAGE.data("cmykTargetScale")
         });
+
         // Add border
         app.preferences.rulerUnits = Units.PIXELS;
         app.preferences.typeUnits = TypeUnits.PIXELS;
