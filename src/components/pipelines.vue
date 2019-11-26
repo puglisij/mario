@@ -5,45 +5,51 @@
             novalidate="true"
         >
             <h2>Pipelines</h2>
-            <div class="pipeline clearfix"
-                v-for="pipeline in local.pipelines"
-                v-show="!isEditorOpen || (isEditorOpen && pipelineBeingEdited.id === pipeline.id)"
-                :key="pipeline.id"
+            <draggable 
+                v-model="local.pipelines"
+                group="pipelines" 
+                @change="onPipelinePositionChange"
             >
-                <label>
-                    <input class="topcoat-text-input" type="text" 
-                        title="A name for the pipeline. Only used for reference."
-                        placeholder="my-pipeline-name"
-                        :value="pipeline.name"
-                        @change="onPipelineName($event, pipeline)"
-                    />
-                </label>
-                <label>
-                    <input class="topcoat-text-input" type="text" 
-                        title="The 'type'(s) of image processes that will flow through this pipeline, as determined by watcher default type or json 'type' property. Case insensitive."
-                        placeholder="my-type-1, my-type-2"
-                        :value="pipeline.for"
-                        @change="onPipelineFor($event, pipeline)"
-                    />
-                </label>
-                <checkbox 
-                    v-model="pipeline.disabled" 
-                    @change="onPipeline">
-                    Disabled 
-                </checkbox>
+                <div class="pipeline clearfix"
+                    v-for="pipeline in local.pipelines"
+                    v-show="!isEditorOpen || (isEditorOpen && pipelineBeingEdited.id === pipeline.id)"
+                    :key="pipeline.id"
+                >
+                    <label>
+                        <input class="topcoat-text-input" type="text" 
+                            title="A name for the pipeline. Only used for reference."
+                            placeholder="my-pipeline-name"
+                            :value="pipeline.name"
+                            @change="onPipelineName($event, pipeline)"
+                        />
+                    </label>
+                    <label>
+                        <input class="topcoat-text-input" type="text" 
+                            title="The 'type'(s) of image processes that will flow through this pipeline, as determined by watcher default type or json 'type' property. Case insensitive."
+                            placeholder="my-type-1, my-type-2"
+                            :value="pipeline.for"
+                            @change="onPipelineFor($event, pipeline)"
+                        />
+                    </label>
+                    <checkbox 
+                        v-model="pipeline.disabled" 
+                        @change="onPipeline">
+                        Disabled 
+                    </checkbox>
 
-                <button class="topcoat-icon-button--quiet" type="button"
-                    @click="onToggleEditor(pipeline.id);"
-                >{{ isEditorOpen ? "Close" : "Open" }} Editor</button>
-                <!-- <span class="button-divider">|</span>
-                <button class="topcoat-icon-button--quiet" type="button"
-                    @click="onRunPipelineWithDefaults(pipeline.id);"
-                >Run with Defaults</button> -->
-                <button class="pipeline-delete topcoat-icon-button--quiet" type="button"
-                    title="Delete this pipeline"
-                    @click="onDeletePipeline(pipeline.id);"
-                >X</button>
-            </div>
+                    <button class="topcoat-icon-button--quiet" type="button"
+                        @click="onToggleEditor(pipeline.id);"
+                    >{{ isEditorOpen ? "Close" : "Open" }} Editor</button>
+                    <!-- <span class="button-divider">|</span>
+                    <button class="topcoat-icon-button--quiet" type="button"
+                        @click="onRunPipelineWithDefaults(pipeline.id);"
+                    >Run with Defaults</button> -->
+                    <button class="pipeline-delete topcoat-icon-button--quiet" type="button"
+                        title="Delete this pipeline"
+                        @click="onDeletePipeline(pipeline.id);"
+                    >X</button>
+                </div>
+            </draggable>
             <div class="controls" v-if="!isEditorOpen">
                 <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
                 <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Pipline</button>
@@ -133,6 +139,9 @@ export default {
             return !_.isEmptyObject(this.pipelineBeingEdited); 
         }
     },
+    validations: {
+
+    },
     methods: {
         toLocalConfiguration(configuration)
         {
@@ -215,6 +224,10 @@ export default {
                     this.$delete(this.local.pipelines, index);
                 }
             });
+            this.markDirty();
+        },
+        onPipelinePositionChange(event) 
+        {
             this.markDirty();
         },
         onDefaultsChange(event) 

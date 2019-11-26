@@ -1,0 +1,1 @@
+{"pauseAfterEveryPipeline":false,"pauseAfterEveryAction":false,"pauseAfterEveryImage":false,"pauseOnExceptions":false,"watchers":[{"id":0,"path":"C:/image-processing/Process","extensions":["json"],"defaultType":"Product"},{"id":1,"path":"C:/image-processing/ProcessWeb","extensions":["tif"],"defaultType":"Product_SaveForWeb"}]}

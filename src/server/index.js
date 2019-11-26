@@ -57,8 +57,8 @@ export default class Server extends EventEmitter
         this._pipelineQueue = [];
 
         this.cs = new CSInterface();     
-        this.cs.addEventListener("debug.pause", event => {
-            this.pause();
+        this.cs.addEventListener("log", event => {
+            console.log("Jsx Event: " + event.data);
         });
         this._isPipelinesRunningMutex = false;
         this._serverState = ServerState.UNINITIALIZED;
@@ -388,6 +388,7 @@ export default class Server extends EventEmitter
                 for(const pipeline of pipelines) 
                 {
                     if(pipeline.disabled) continue;
+                    console.log(`Pipeline ${pipeline.name} started for image: ${image.imagePath}`);
                     this.emit("pipelinestart", image.type);
                     
                     // Run Actions
@@ -401,13 +402,13 @@ export default class Server extends EventEmitter
                         if(result === "EXIT") break;
                         if(this.isStopped()) break;
                     }
+                    console.log(`Pipeline ${pipeline.name} completed for image: ${image.imagePath}`);
                     await this.runJsx(`closeAll();`);
                     await this.pauseCheck(this._config.pauseAfterEveryPipeline);
                     if(this.isStopped()) break;
                 }
                     
                 this.moveImageToProcessed(image);
-                console.log("Pipeline completed for image: " + image.imagePath);
             }
             catch(e) 
             {
