@@ -184,7 +184,10 @@ module.exports = {
         "./src/utils/dev/.certignore"
       )} to exclude them from staging.`
     );
+    console.log(`   __dirname: ${chalk.green(__dirname)}`);
+    console.log(`   cwd: ${chalk.green(process.cwd())}`);
     console.log("");
+    
 
     promptUser().then(answer => {
       let spinner = ora({
@@ -208,7 +211,7 @@ module.exports = {
                 symbol: chalk.green("   ✔ "),
                 text: `Signing is complete.`
               });
-              fse.removeSync(`./${extString}-tmp`);
+              fse.removeSync(`../${extString}-tmp`);
               fse.removeSync(`./${rootDir}/archive/temp1.p12`);
               console.log(
                 boxen(`${chalk.blue(`${extString}.zxp`)} is ready!`, {
@@ -382,7 +385,7 @@ async function promptUser() {
       type: "input",
       name: "password",
       message: "Password for certificate",
-      default: "hello-world"
+      default: "abc123"
     },
     {
       type: "confirm",
@@ -403,7 +406,7 @@ function getIgnores() {
       return item.length > 2;
     });
     ignores = ignores.map(item => {
-      return item.replace(
+      return item.trim().replace(
         /[-\/\\^$*+?.()|[\]{}]/,
         `\\${item.match(/[-\/\\^$*+?.()|[\]{}]/)}`
       );
@@ -430,6 +433,7 @@ function stageExtensionFolder(extString) {
   return new Promise((resolve, reject) => {
     let tempdir = [];
     let omitted = getIgnores();
+
     fs.readdir("./", (err, list) => {
       if (err) reject("Error encountered while reading directory for staging.");
       list.forEach(filename => {
@@ -480,16 +484,16 @@ function signCommands(path, rootpath, password, includeZip) {
     );
     setTimeout(() => {
       console.log(
-        `${osPrefix}ZXPSignCmd -sign ./${path}-tmp ./${rootpath}/archive/${path}.zxp ./${rootpath}/archive/temp1.p12 ${password} -tsa http://time.certum.pl`
+        `${osPrefix}ZXPSignCmd -sign ../${path}-tmp ./${rootpath}/archive/${path}.zxp ./${rootpath}/archive/temp1.p12 ${password} -tsa http://time.certum.pl`
       );
       shell.exec(
-        `${osPrefix}ZXPSignCmd -sign ./${path}-tmp ./${rootpath}/archive/${path}.zxp ./${rootpath}/archive/temp1.p12 ${password} -tsa http://time.certum.pl`
+        `${osPrefix}ZXPSignCmd -sign ../${path}-tmp ./${rootpath}/archive/${path}.zxp ./${rootpath}/archive/temp1.p12 ${password} -tsa http://time.certum.pl`
       );
 
       if (includeZip)
         setTimeout(() => {
           shell.exec(
-            `${osPrefix}ZXPSignCmd -sign ./${path}-tmp ./${rootpath}/archive/${path}.zip ./${rootpath}/archive/temp1.p12 ${password} -tsa http://time.certum.pl`
+            `${osPrefix}ZXPSignCmd -sign ../${path}-tmp ./${rootpath}/archive/${path}.zip ./${rootpath}/archive/temp1.p12 ${password} -tsa http://time.certum.pl`
           );
         }, 1000);
       setTimeout(() => {
@@ -548,14 +552,30 @@ function switchContext() {
     const buildString = `<MainPath>./dist/index.html</MainPath>`;
     const commentedDevString = `<!-- <MainPath>./public/index-dev.html</MainPath> -->`;
     const commentedBuildString = `<!-- <MainPath>./dist/index.html</MainPath> -->`;
+
+    const isDevScript = /\<\!\--\s\<ScriptPath\>\.\/dist\/index\.jsx\<\/ScriptPath\>\s\-\-\>/;
+    const isBuildScript = /\<\!\--\s\<ScriptPath\>\.\/public\/index\.jsx\<\/ScriptPath\>\s\-\-\>/;
+    const isDevScriptVanilla = /\<ScriptPath\>\.\/dist\/index\.jsx\<\/ScriptPath\>/;
+    const isBuildScriptVanilla = /\<ScriptPath\>\.\/public\/index\.jsx\<\/ScriptPath\>/;
+    const devScriptString = `<ScriptPath>./public/index.jsx</ScriptPath>`;
+    const buildScriptString = `<ScriptPath>./dist/index.jsx</ScriptPath>`;
+    const commentedDevScriptString = `<!-- <ScriptPath>./public/index.jsx</ScriptPath> -->`;
+    const commentedBuildScriptString = `<!-- <ScriptPath>./dist/index.jsx</ScriptPath> -->`;
+
     if (isDev.test(xml)) {
       xml = xml.replace(isDev, buildString);
       xml = xml.replace(isBuildVanilla, commentedDevString);
+
+      xml = xml.replace(isDevScript, buildScriptString);
+      xml = xml.replace(isBuildScriptVanilla, commentedDevScriptString);
       fs.writeFileSync(`./CSXS/manifest.xml`, xml);
       resolve("PRODUCTION");
     } else if (isBuild.test(xml)) {
       xml = xml.replace(isBuild, devString);
       xml = xml.replace(isDevVanilla, commentedBuildString);
+
+      xml = xml.replace(isBuildScript, devScriptString);
+      xml = xml.replace(isDevScriptVanilla, commentedBuildScriptString);
       fs.writeFileSync(`./CSXS/manifest.xml`, xml);
       resolve("DEVELOPER");
     } else {
