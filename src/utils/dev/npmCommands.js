@@ -186,6 +186,7 @@ module.exports = {
     );
     console.log(`   __dirname: ${chalk.green(__dirname)}`);
     console.log(`   cwd: ${chalk.green(process.cwd())}`);
+    console.log(`   pwd: ${chalk.green(pwd)}`);
     console.log("");
     
 
@@ -211,7 +212,7 @@ module.exports = {
                 symbol: chalk.green("   ✔ "),
                 text: `Signing is complete.`
               });
-              fse.removeSync(`../${extString}-tmp`);
+              fse.removeSync(`./${extString}-tmp`);
               fse.removeSync(`./${rootDir}/archive/temp1.p12`);
               console.log(
                 boxen(`${chalk.blue(`${extString}.zxp`)} is ready!`, {
@@ -471,6 +472,7 @@ function signCommands(path, rootpath, password, includeZip) {
       fs.writeFileSync(`./src/utils/dev/certInfo.txt`, certInfo);
     }
     certInfo = certInfo.split(";");
+    // Navigate back one directory
     shell.cd(`..`);
     console.log(
       `${osPrefix}ZXPSignCmd -selfSignedCert ${certInfo[0]} ${certInfo[1]} ${
@@ -484,16 +486,16 @@ function signCommands(path, rootpath, password, includeZip) {
     );
     setTimeout(() => {
       console.log(
-        `${osPrefix}ZXPSignCmd -sign ../${path}-tmp ./${rootpath}/archive/${path}.zxp ./${rootpath}/archive/temp1.p12 ${password} -tsa http://time.certum.pl`
+        `${osPrefix}ZXPSignCmd -sign ./${path}-tmp ./${rootpath}/archive/${path}.zxp ./${rootpath}/archive/temp1.p12 ${password} `
       );
       shell.exec(
-        `${osPrefix}ZXPSignCmd -sign ../${path}-tmp ./${rootpath}/archive/${path}.zxp ./${rootpath}/archive/temp1.p12 ${password} -tsa http://time.certum.pl`
+        `${osPrefix}ZXPSignCmd -sign ./${path}-tmp ./${rootpath}/archive/${path}.zxp ./${rootpath}/archive/temp1.p12 ${password} `
       );
 
       if (includeZip)
         setTimeout(() => {
           shell.exec(
-            `${osPrefix}ZXPSignCmd -sign ../${path}-tmp ./${rootpath}/archive/${path}.zip ./${rootpath}/archive/temp1.p12 ${password} -tsa http://time.certum.pl`
+            `${osPrefix}ZXPSignCmd -sign ./${path}-tmp ./${rootpath}/archive/${path}.zip ./${rootpath}/archive/temp1.p12 ${password} `
           );
         }, 1000);
       setTimeout(() => {
