@@ -22,13 +22,20 @@ and point it to the repo directory.
 Note: Photoshop will need restarted in order to find new plugins added to the extensions directory. 
 
 1) git clone http://g1vptfs02:8080/tfs/FMG/Web/_git/web-mario
-2) mklink /D C:/Users/<user>/AppData/Roaming/Adobe/CEP/extensions/web-mario C:/Projects/web-mario 
+2) mklink /D C:/Users/<user>/AppData/Roaming/Adobe/CEP/extensions/web-mario C:/Projects/web-mario  (Windows)
 3) cd web-mario 
 4) npm install 
 5) npm run serve 
 6) Open Photoshop. Open Mario panel via Window > Extensions > Mario 
 7) Open a Chrome tab and visit http://localhost:8089/ if you wish to develop
 8) Do awesome things. Add solutions to any encountered issues to this Readme
+
+
+Issues 
+--------------
+If you encounter certificate signing errors. Try the following command to disable signature checking 
+> defaults write com.adobe.CSXS.9 PlayerDebugMode 1
+9 Corresponds to CC 2019. Change the number if necessary. 
 
 
 Glossary
@@ -161,6 +168,7 @@ Roadmap
 --------------
 - Add Rete.js visual node based editor for more powerful editing of pipeline logic / flow via the GUI. 
 - Parse jsx action JSDoc comments and use data in building existing action selection interface in the UI. 
+- Sync git version tags with manifest.xml 
 - A better Readme.md 
 
 
