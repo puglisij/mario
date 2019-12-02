@@ -18,6 +18,14 @@ module.exports = {
     plugins: [
         //new BundleAnalyzerPlugin()
     ]
+  },
+  chainWebpack: config => {
+    config.module
+    .rule('node')
+    .test(/.node$/)
+    .use('node-loader')
+    .loader('node-loader')
+    .end()
   }
 //   ,chainWebpack: config => {
 //       config.devtool("source-map")
