@@ -67,9 +67,9 @@
 /* local modules */
 import checkbox from "./checkbox.vue";
 import startStop from "./start-stop.vue";
-import jsx from "./jsx.vue";
-import configurator from "./configurator.vue";
-import pipelines from "./pipelines.vue";
+// import jsx from "./jsx.vue";
+// import configurator from "./configurator.vue";
+// import pipelines from "./pipelines.vue";
 import global from "../global";
 import Server from "../server";
 
@@ -79,9 +79,9 @@ export default {
     components: {
         checkbox,
         startStop,
-        jsx,
-        configurator,
-        pipelines
+        jsx: () => import("./jsx.vue"),
+        configurator: () => import("./configurator.vue"),
+        pipelines: () => import("./pipelines.vue")
     },
     data: () => ({
         tabs: ["jsx", "the-console", "configurator", "pipelines"],
@@ -163,6 +163,7 @@ export default {
             const pipelineConfigClone = this.server.getPipelineConfiguration();
             this.pipelineConfiguration = pipelineConfigClone;
             this.areConfigurationsLoaded = true;
+            this.$emit("loaded");
         },
         onStateChange() {
             this.isServerPaused = this.server.isPaused();
@@ -204,30 +205,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-    .mario {
-        background: url('../img/mario-sprites.png');    
-        width: 32px;
-        height: 45px;
-    }
-    .stand {
-        background-position: -5px -895px; 
-        width: 40px;
-    }
-    .run-1 {
-        background-position: -130px -895px;
-    }
-    .run-2 {
-        background-position: -166px -895px;
-    }
-    .run-3 {
-        background-position: -198px -895px;
-        width: 40px;
-    }
-    .run-4 {
-        background-position: -242px -895px;
-        width: 40px;
-    }
-
     .light {
         .tabs {
             background: #F4F4F4;

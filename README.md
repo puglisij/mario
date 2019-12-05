@@ -6,7 +6,7 @@
 - Hot Reloading (panel updates instantly on every save during `npm run serve`)
 - [Vue-CLI-3](https://cli.vuejs.org/) as Node.js tooling (webkit)
 - Full typescript support for any app with pravdomil's Adobe types (same as writing .jsx scripts but access to host DOM as autocomplete while typing)
-- Various personal utility components that handle context/flyout menus, launching CEF debug, common errors with Webpack, matching all host app styles and more
+- Various utility components that handle context/flyout menus, launching CEF debug, common errors with Webpack, matching all host app styles and more
 
 ## [Never used Node, Vue CLI-3 or Webpack?](#Getting-Started)
 
@@ -29,7 +29,7 @@ You can automate this by using `npm run switch`. In case you need to do it manua
 
 ### For development
 
-- Ensure `index-dev.html` is uncommented in `CSXS/manifest.xml`
+- Ensure `index-dev.html` is uncommented in `CSXS/manifest.xml`. Use `npm run switch`. 
 
 ```xml
   <Resources>
@@ -37,6 +37,7 @@ You can automate this by using `npm run switch`. In case you need to do it manua
     <!-- <MainPath>./dist/index.html</MainPath> -->
 ```
 
+- Restart Photoshop (Any changes to manifest.xml require a restart).
 - Run `npm run serve` in the terminal at the project root
 - Launch host application and find in Window > Extensions
 

@@ -3,7 +3,7 @@
     <a-dialog name="confirm"></a-dialog>
     <!-- Utility component to handle context and flyout menus -->
     <menus />
-    <server />
+    <server v-on:loaded="onServerLoaded"/>
   </div>
 </template>
 
@@ -14,19 +14,15 @@ import upath from 'upath';
 /* local modules */
 import appGlobal from "./global";
 import themeManager from "./themeManager";
-import menus from "./components/menus.vue";
-import server from "./components/server.vue";
 
 export default {
     name: "app",
     components: {
-        menus,
-        server
+        menus: () => import("./components/menus.vue"),
+        server: () => import("./components/server.vue")
     },
     data: () => {
-        return {
-
-        }
+        return {}
     },
     computed: {
         cs() { return appGlobal.cs; }
@@ -42,7 +38,7 @@ export default {
         // Jsx Environment Setup
         this.importJSX("utils.jsx");
         this.importJSX("polyfil.jsx");
-        this.importJSX("image.jsx"); // import this here?
+        this.importJSX("image.jsx"); 
 
         console.log(`App mounted.\n
             Extension Path: ${appGlobal.extensionPath}\n
@@ -92,6 +88,11 @@ export default {
         },
         onCancel() {
             console.log("modal cancel");
+        }, 
+        onServerLoaded() {
+            let spinnerEl = document.getElementById("loading");
+            if (spinnerEl) 
+                spinnerEl.style.display = "none";
         }
     }
 };
@@ -148,6 +149,8 @@ h4 {
 .controls {
     margin: .5em 0;
 }
+
+
 
 
 

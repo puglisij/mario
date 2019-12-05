@@ -6,14 +6,116 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Mario</title>
     <link rel="stylesheet" type="text/css" href="css/topcoat-desktop-dark.css" id="theme"/>
-    <script src="./CSInterface.js"></script>
-    <script>
-      window.require = require || cep_node.require;
-    </script>
+    <style>
+        .loading {
+            background: rgba(0,0,0,0.5);
+            display: flex; 
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+        .loading-content {
+            margin-top: 120px;
+            position: relative;
+            height: 120px;
+            width: 120px; 
+        }
+        .mario {
+            background: url('./img/mario-run.png');    
+            background-position: 0px 0px;
+            width: 40px;
+            height: 42px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .mario.stand {
+            background-position: 0px 0px; 
+            width: 40px;
+        }
+        .mario.run {
+            animation: mario-run 0.8s steps(4) infinite;
+        }
+        @keyframes mario-run {
+            100% {
+                background-position: -160px 0px;
+            }
+        }
+        .spring-spinner, .spring-spinner * {
+            box-sizing: border-box;
+        }
+        .spring-spinner {
+            height: 120px;
+            width: 120px;
+        }
+        .spring-spinner .spring-spinner-part {
+            overflow: hidden;
+            height: calc(120px / 2);
+            width: 120px;
+        }
+        .spring-spinner  .spring-spinner-part.bottom {
+            transform: rotate(180deg) scale(-1, 1);
+        }
+        .spring-spinner .spring-spinner-rotator {
+            width: 120px;
+            height: 120px;
+            border: calc(120px / 30) solid transparent;
+            border-right-color: #e52521;
+            border-top-color: #e52521;
+            border-radius: 50%;
+            box-sizing: border-box;
+            animation: spring-spinner-animation 3s ease-in-out infinite;
+            transform: rotate(-200deg);
+        }
+
+        @keyframes spring-spinner-animation {
+            0% {
+                border-width: calc(120px / 30);
+            }
+            25% {
+                border-width: calc(120px / 60);
+            }
+            50% {
+                transform: rotate(115deg);
+                border-width: calc(120px / 30);
+            }
+            75% {
+                border-width: calc(120px / 60);
+            }
+            100% {
+                border-width: calc(120px / 30);
+            }
+        }
+    </style>
   </head>
 
   <body>
-    <div id="app"></div>
+    <div id="app">
+        <!-- vue mounts here -->
+    </div>
+
+    <div id="loading" class="loading">
+        <div class="loading-content">
+            <div class="spring-spinner">
+                <div class="spring-spinner-part top">
+                    <div class="spring-spinner-rotator"></div>
+                </div>
+                <div class="spring-spinner-part bottom">
+                    <div class="spring-spinner-rotator"></div>
+                </div>
+            </div>
+            <div class="mario run"></div>
+        </div>
+    </div>
+    
+    <script src="./CSInterface.js"></script>
+    <script>
+      window.require = require || cep_node.require; 
+    </script>
     <!-- built files will be auto injected -->
   </body>
 </html>
