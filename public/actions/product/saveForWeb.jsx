@@ -8,7 +8,10 @@ product.saveForWeb = function saveForWeb(options)
 {
     var sku = IMAGE.data("sku");
     if(!sku) {
-        throw new Error("Image data missing sku.");
+        throw new Error("Image data missing sku. Sku required for file name.");
+    }
+    if(_.isUndefined(options.fileName)) {
+        throw new Error("fileName is undefined");
     }
 
     var fileName = IMAGE.parameters(options.fileName);

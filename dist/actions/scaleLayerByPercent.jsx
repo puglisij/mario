@@ -8,7 +8,10 @@ action.scaleLayerByPercent = function scaleLayerByPercent(percentageX, percentag
 {
     $.writeln("ScaleLayerByPercent()");
 
-    if(scaleX == scaleY == 100) {
+    percentageX = _.isUndefined(percentageX) ? 100 : percentageX;
+    percentageY = _.isUndefined(percentageY) ? 100 : percentageY;
+    
+    if(percentageX == percentageY == 100) {
         return;
     }
     var scaleX = UnitValue(percentageX, "%");

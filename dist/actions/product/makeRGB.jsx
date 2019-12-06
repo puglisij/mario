@@ -7,7 +7,9 @@ product.makeRGB = function makeRGB()
     
     universal.private.eachAdditionalView(function(view)
     {
-        product.maskOrPath();
+        product.maskOrPath({
+            isMasked: view.isMasked
+        });
 
         // Add border 
         app.preferences.rulerUnits = Units.PIXELS;
@@ -20,7 +22,10 @@ product.makeRGB = function makeRGB()
         );
 
         action.convertToColorProfile("RGB");
-        universal.saveAsPSDToArchiveDirectory("RGB");
+        universal.saveAsPSDToArchiveDirectory(
+            "RGB" 
+            + view.archiveSubdirectory ? "/" + view.archiveSubdirectory : ""
+        );
         action.revert();
         action.closeDocument();
     })

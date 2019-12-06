@@ -10,6 +10,9 @@ universal.resizeLayerByTargetScale = function resizeLayerByTargetScale(options)
 {
     var currentScale = options.currentScale;
     var targetScale = options.targetScale;
+    if(_.isUndefined(currentScale) || _.isUndefined(targetScale)) {
+        return;
+    }
     if(currentScale == targetScale) {
         return;
     }

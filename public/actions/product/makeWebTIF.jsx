@@ -64,8 +64,8 @@ product.makeWebTIF = function makeWebTIF()
             // The created TIF becomes the active document
             var outputDirectory = universal.createOutputDirectory();
             var newTifFilePath = outputDirectory.fullName + "/" + sku + ".tif";
-            action.saveAsTIF(newTifFilePath);
             action.makeWhiteBackground();
+            action.saveAsTIF(newTifFilePath);
 
             tif = activeDocument;
             activeDocument = tif;

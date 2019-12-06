@@ -7,7 +7,9 @@ product.makeCMYK = function makeCMYK()
 
     universal.private.eachAdditionalView(function(view)
     {
-        product.maskOrPath();
+        product.maskOrPath({
+            isMasked: view.isMasked
+        });
         universal.resizeImageByTargetScale({
             currentScale: IMAGE.data("currentScale"), 
             targetScale: IMAGE.data("cmykTargetScale")
@@ -24,7 +26,10 @@ product.makeCMYK = function makeCMYK()
         );
 
         action.convertToColorProfile("CMYK");
-        universal.saveAsPSDToArchiveDirectory("CMYK");
+        universal.saveAsPSDToArchiveDirectory(
+            "CMYK"
+            + view.archiveSubdirectory ? "/" + view.archiveSubdirectory : ""
+        );
         action.revert();
         action.closeDocument();
     });
