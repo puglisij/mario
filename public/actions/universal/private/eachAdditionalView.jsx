@@ -7,17 +7,16 @@
 universal.private.eachAdditionalView = function eachAdditionalView(cb)
 {
     var viewsDirectory = IMAGE.getPackagePath();
-    var views = IMAGE.data("packageViews");
+    var views = IMAGE.data("packageImages");
     if(!views) {
-        throw new Error("Image data missing 'packageViews'.");
+        throw new Error("Image data missing 'packageImages'.");
     }
 
     // For each Additional View in the data
     for(var i = 0; i < views.length; ++i) 
     {
         var view = views[i];
-        var viewIsFromArchives = view.isFromArchives;
-        var viewFile = new File(viewsDirectory + "/" + view.file);
+        var viewFile = new File(viewsDirectory + "/" + view.image);
         app.open(viewFile);
 
         cb(view);
