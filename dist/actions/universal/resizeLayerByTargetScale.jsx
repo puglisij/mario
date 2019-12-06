@@ -10,6 +10,9 @@ universal.resizeLayerByTargetScale = function resizeLayerByTargetScale(options)
 {
     var currentScale = options.currentScale;
     var targetScale = options.targetScale;
+    if(currentScale == targetScale) {
+        return;
+    }
     if(typeof targetScale !== "number" || typeof currentScale !== "number") {
         throw new Error("Target scale and Current scale must be defined and must be numbers.");
     }
