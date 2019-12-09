@@ -9,8 +9,8 @@ product.maskOrPath = function maskOrPath(options)
     options = options || {};
 
     var isMasked = !_.isUndefined(options.isMasked) ? options.isMasked : null;
-    if(_.isBoolean(isMasked)) {
-        throw new Error("Missing parameter 'isMasked' or data property 'masked'");
+    if(!_.isBoolean(isMasked)) {
+        throw new Error("Missing parameter 'isMasked'");
     }
     
     if(isMasked) { //|| _.hasKeyword("masked")) {

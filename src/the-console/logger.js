@@ -99,6 +99,8 @@ class Logger extends EventEmitter
      */
     close() 
     {
+        console.log("Logger closed.");
+
         if(!this.initialized) 
             return;
         this.initialized = false;

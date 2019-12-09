@@ -15,11 +15,12 @@
   "dependencies": {
     "async": "^3.1.0",
     "body-parser": "^1.18.2",
-    "chokidar": "^3.2.1",
+    "chokidar": "^3.3.0",
     "core-js": "^2.6.5",
     "debounce": "^1.2.0",
     "es6-promisify": "^6.0.2",
     "express": "^4.16.3",
+    "is-unc-path": "^1.0.0",
     "jsdoc-x": "^4.0.3",
     "node-exiftool": "^2.3.0",
     "request": "^2.85.0",

@@ -1,6 +1,8 @@
 
 /* npm modules */
+import path from 'path';
 import upath from 'upath';
+import isUncPath from 'is-unc-path';
 import fs from 'fs';
 import chokidar from 'chokidar';
 import debounce from 'debounce'; 
@@ -41,10 +43,10 @@ export default class Server extends EventEmitter
         this._actionPath = actionPath;
         
         this._config = {};
-        this._configPath = upath.join(serverPath, "config.json");
+        this._configPath = upath.join(serverPath, "../config.json");
         this._configurator = null;
         this._pipelineConfig = {};
-        this._pipelineConfigPath = upath.join(serverPath, "config-pipeline.json");
+        this._pipelineConfigPath = upath.join(serverPath, "../config-pipeline.json");
         this._pipelineConfigurator = null;
         
         // Path watcher instances for new images
@@ -212,16 +214,29 @@ export default class Server extends EventEmitter
             for(const watcherConfig of this._config.watchers) 
             {
                 const watchDefaultType = watcherConfig.defaultType;
-                const watchPathRoot = upath.normalize(watcherConfig.path);
+                const watchPathRoot = watcherConfig.path;
                 const watchPaths = watcherConfig.extensions.map(ext => {
-                    return upath.join(watchPathRoot, "*." + ext)
+                    return path.join(watchPathRoot, "*." + ext)
                 });
+                if(isUncPath(watchPathRoot)) {
+                    console.error(`Watching network paths is problematic. Only local directories supported at this time.`);
+                    throw Error(`Watching network paths not supported.`);
+                }
+                if(!fs.existsSync(watchPathRoot)) {
+                    console.error(`Watch path: ${watchPathRoot} does not exist.`);
+                    throw Error(`Watch path: ${watchPathRoot} does not exist.`);
+                }
+                
                 const watcher = chokidar.watch(watchPaths, {
                     ignored: /^\.|Output|Error|Archive|Processed/, 
-                    depth: 0
+                    depth: 0,
+                    awaitWriteFinish: {
+                        stabilityThreshold: 2000,
+                        pollInterval: 500
+                    }
                 })
-                .on("add", path => {
-                    this.processImageAtPath(path, watchDefaultType);
+                .on("add", newFilePath => {
+                    this.processImageAtPath(newFilePath, watchDefaultType);
                 });
 
                 console.log(`Watcher set for ${watchPaths.toString()}`);
@@ -286,24 +301,22 @@ export default class Server extends EventEmitter
      */
     async processImageAtPath(path, defaultType)
     {
-        path = upath.normalize(path);
         const imageName = upath.basename(path);
-        const reader = new Image.Reader(path, { type: defaultType });
         console.log(`Processing: ${imageName} Full Path: ${path} Default Type: ${defaultType}`);
+        const reader = new Image.Reader(path, { type: defaultType });
 
         try {
             await reader.readProcessingData();
             await reader.readMetadata();
+            // TODO: Allow Server to run independent of CEP Panel process? Communicate via IPC?
+            //      Node code would run in Server process and JSX would run in CEP Panel process.
+            const image = reader.getImage();
+            this.pushToPipeline(image);
         } catch(e) {
             const image = reader.getImage();
             this.moveImageToErrored(image, e.toString());
             return;
         }
-
-        // TODO: Allow Server to run independent of CEP Panel process? Communicate via IPC?
-        //      Node code would run in Server process and JSX would run in CEP Panel process.
-        const image = reader.getImage();
-        this.pushToPipeline(image);
     }
     pushToPipeline(image)
     {
