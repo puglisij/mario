@@ -30,6 +30,7 @@ export default {
      */
     activated() {
         this.autoScroll();
+        this.onLogs();
     },
     deactivated() {
         this.destroy();
