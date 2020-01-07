@@ -24,7 +24,7 @@ product.makeRGB = function makeRGB()
         action.convertToColorProfile("RGB");
         universal.saveAsPSDToArchiveDirectory(
             "RGB" 
-            + view.archiveSubdirectory ? "/" + view.archiveSubdirectory : ""
+            + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
         );
         action.revert();
         action.closeDocument();

@@ -28,7 +28,7 @@ product.makeCMYK = function makeCMYK()
         action.convertToColorProfile("CMYK");
         universal.saveAsPSDToArchiveDirectory(
             "CMYK"
-            + view.archiveSubdirectory ? "/" + view.archiveSubdirectory : ""
+            + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
         );
         action.revert();
         action.closeDocument();

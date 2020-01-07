@@ -15,7 +15,9 @@ product.makeWebTIF = function makeWebTIF()
 
     universal.private.eachAdditionalView(function(view)
     {
-        product.maskOrPath();
+        product.maskOrPath({
+            koMethod: view.koMethod
+        });
 
         // Add border 
         app.preferences.rulerUnits = Units.PIXELS;

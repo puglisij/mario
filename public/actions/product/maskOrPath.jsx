@@ -19,6 +19,7 @@ product.maskOrPath = function maskOrPath(options)
         case "masked":
             _maskActions(); break;
         default:
+            throw new Error("Invalid 'koMethod' of " + koMethod);
             return;
     }
 
@@ -59,6 +60,7 @@ product.maskOrPath = function maskOrPath(options)
     function _maskActions() 
     {
         action.removeHiddenLayers();
+        action.hideBackgroundLayer();
         try {
             activeDocument.mergeVisibleLayers()
             activeDocument.activeLayer.rasterize(RasterizeType.ENTIRELAYER);
