@@ -8,7 +8,7 @@ product.makeRGB = function makeRGB()
     universal.private.eachAdditionalView(function(view)
     {
         product.maskOrPath({
-            isMasked: view.isMasked
+            koMethod: view.koMethod
         });
 
         // Add border 

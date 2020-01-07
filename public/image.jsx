@@ -6,6 +6,7 @@ function ImageForProcessing(json)
 {
     this._imagePath   = json.imagePath;
     this._packagePath = json.packagePath;
+    this._sourcePath  = json.sourcePath;
 
     this._type       = json.type;     // e.g. Product
     // External (stored outside file) metadata necessary for processing
@@ -23,6 +24,9 @@ ImageForProcessing.prototype.getImagePath = function() {
 };
 ImageForProcessing.prototype.getPackagePath = function() {
     return this._packagePath;
+};
+ImageForProcessing.prototype.getSourcePath = function() {
+    return this._sourcePath;
 };
 /**
 * Return property in data which matches the given key

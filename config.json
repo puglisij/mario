@@ -1,1 +1,1 @@
-{"pauseAfterEveryPipeline":false,"pauseAfterEveryAction":true,"pauseAfterEveryImage":false,"pauseOnExceptions":false,"watchers":[{"id":0,"path":"C:/Mounts/mario-test-files/_process","extensions":["json"],"defaultType":"None"}]}
+{"pauseAfterEveryPipeline":false,"pauseAfterEveryAction":false,"pauseAfterEveryImage":false,"pauseOnExceptions":false,"defaultProcessingDirectory":"C:/mario/_process","watchers":[{"id":0,"path":"C:/Mounts/mario-test-files/_process","extensions":["json"],"defaultType":"None"}]}

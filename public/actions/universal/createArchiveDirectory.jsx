@@ -5,7 +5,13 @@
 */
 universal.createArchiveDirectory = function createArchiveDirectory(archiveName)
 {
-    var archiveDirectoryRoot = IMAGE.data("archiveDirectory") || activeDocument.path + "/../Archive";
-    var archiveDirectory = new Folder(archiveDirectoryRoot + "/" + archiveName.toLowerCase());
-    return action.createDirectory(archiveDirectory);
+    var archiveDirectory= IMAGE.data("archiveDirectory") || "../Archive";
+        archiveDirectory = archiveDirectory + "/" + archiveName.toLowerCase();
+
+    var currentDir = Folder.current;
+    Folder.current = new Folder(IMAGE.getSourcePath());
+    var folder = new Folder(archiveDirectory);
+    Folder.current = currentDir;
+
+    return action.createDirectory(folder);
 }

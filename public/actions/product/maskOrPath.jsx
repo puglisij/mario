@@ -2,21 +2,24 @@
 * Knocks out an iamge using Masking or Pathing, based on the data field "masked"
 * Image is trimmed by alpha 
 * @param {object} options 
-* @param {boolean} options.isMasked 
+* @param {string} options.koMethod either "masked", "path", or "no_ko" 
 */
 product.maskOrPath = function maskOrPath(options)
 {
     options = options || {};
 
-    var isMasked = !_.isUndefined(options.isMasked) ? options.isMasked : null;
-    if(!_.isBoolean(isMasked)) {
-        throw new Error("Missing parameter 'isMasked'");
+    var koMethod = !_.isUndefined(options.koMethod) ? options.koMethod : "path";
+    if(!_.isString(koMethod)) {
+        throw new Error("Invalid parameter 'koMethod'. Expected a string");
     }
-    
-    if(isMasked) { //|| _.hasKeyword("masked")) {
-        _maskActions();
-    } else {
-        _pathActions("Path 1");
+
+    switch(koMethod) {
+        case "path": 
+            _pathActions("Path 1"); break;
+        case "masked":
+            _maskActions(); break;
+        default:
+            return;
     }
 
     try{

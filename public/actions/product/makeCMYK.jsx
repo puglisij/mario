@@ -8,12 +8,12 @@ product.makeCMYK = function makeCMYK()
     universal.private.eachAdditionalView(function(view)
     {
         product.maskOrPath({
-            isMasked: view.isMasked
+            koMethod: view.koMethod
         });
         universal.resizeImageByTargetScale({
             currentScale: IMAGE.data("currentScale"), 
             targetScale: IMAGE.data("cmykTargetScale")
-        });
+        }); 
         
         // Add border
         app.preferences.rulerUnits = Units.PIXELS;

@@ -226,7 +226,7 @@ export default class Server extends EventEmitter
                     console.error(`Watch path: ${watchPathRoot} does not exist.`);
                     throw Error(`Watch path: ${watchPathRoot} does not exist.`);
                 }
-                
+                // TODO: Allow watch paths to be mapped to specific pipelines
                 const watcher = chokidar.watch(watchPaths, {
                     ignored: /^\.|Output|Error|Archive|Processed/, 
                     depth: 0,
@@ -299,11 +299,12 @@ export default class Server extends EventEmitter
     /**
      * Read metadata, and notify CEP pipeline image is ready for processing 
      */
-    async processImageAtPath(path, defaultType)
+    async processImageAtPath(filePath, defaultType)
     {
-        const imageName = upath.basename(path);
-        console.log(`Processing: ${imageName} Full Path: ${path} Default Type: ${defaultType}`);
-        const reader = new Image.Reader(path, { type: defaultType });
+        const sourceDirectory = upath.dirname(filePath);
+        const fileName = upath.basename(filePath);
+        console.log(`Added to Queue: ${fileName} Full Path: ${filePath} Default Type: ${defaultType}`);
+        const reader = new Image.Reader(sourceDirectory, filePath, { type: defaultType });
 
         try {
             await reader.readProcessingData();
@@ -322,6 +323,7 @@ export default class Server extends EventEmitter
     {
         this._pipelineQueue.push(image);
         if(!this._isPipelinesRunningMutex) {
+            console.log(`Running images through pipelines.`);
             this.runPipelines();
         }
     }
@@ -415,7 +417,8 @@ export default class Server extends EventEmitter
                         if(result === "EXIT") break;
                         if(this.isStopped()) break;
                     }
-                    console.log(`Pipeline ${pipeline.name} completed for image: ${image.imagePath}`);
+                    
+                    console.log(`Pipeline ${pipeline.name} completed for image: ${image.imagePath || image.dataPath}`);
                     await this.runJsx(`closeAll();`);
                     await this.pauseCheck(this._config.pauseAfterEveryPipeline);
                     if(this.isStopped()) break;
