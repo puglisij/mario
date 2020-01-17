@@ -4,12 +4,12 @@
 * @param {object} options 
 * @param {string} options.w the width unit e.g. "300px" 
 * @param {string} options.h the height unit  
-* @param {ResampleMethod|String} [options.method = ResampleMethod.BILINEAR] the ResampleMethod enumeration value e.g. "BILINEAR"
+* @param {ResampleMethod|String} [options.method = ResampleMethod.BICUBIC] the ResampleMethod enumeration value e.g. "BILINEAR"
 */
 action.resizeImage = function resizeImage(options)
 {
     if(options.method === undefined) {
-        var method = ResampleMethod.BILINEAR;
+        var method = ResampleMethod.BICUBIC;
     } else {
         var method = typeof(options.method) === "string" ? ResampleMethod[options.method.toUpperCase()] : options.method;
     }

@@ -36,14 +36,12 @@ product.maskOrPath = function maskOrPath(options)
         action.setColorChannel_8Bit();
 
         // Set background to layer
-        if (activeDocument.layers[0].isBackgroundLayer == true) 
-            activeDocument.layers[0].isBackgroundLayer = false;
+        activeDocument.layers[0].isBackgroundLayer = false;
+
         try {
-            // Set selection to "Path 1"
             activeDocument.pathItems.getByName(pathName).makeSelection(0, true, SelectionType.REPLACE);
-        } catch(err) {
-            // has no Path
-            return false;
+        } catch(e) {
+            throw new Error(e + "\nCould not select path: " + pathName);
         }
 
         try {
@@ -53,8 +51,6 @@ product.maskOrPath = function maskOrPath(options)
             //Delete selection
             activeDocument.selection.deselect();
         } catch(err) {}
-
-        return true;
     }
 
     function _maskActions() 

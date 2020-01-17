@@ -11,8 +11,8 @@ product.makeCMYK = function makeCMYK()
             koMethod: view.koMethod
         });
         universal.resizeImageByTargetScale({
-            currentScale: IMAGE.data("currentScale"), 
-            targetScale: IMAGE.data("cmykTargetScale")
+            currentScale: view.currentScale, 
+            targetScale: view.cmykTargetScale
         }); 
         
         // Add border
@@ -27,8 +27,7 @@ product.makeCMYK = function makeCMYK()
 
         action.convertToColorProfile("CMYK");
         universal.saveAsPSDToArchiveDirectory(
-            "CMYK"
-            + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
+            "CMYK" + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
         );
         action.revert();
         action.closeDocument();

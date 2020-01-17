@@ -8,14 +8,16 @@ action.scaleLayerByPercent = function scaleLayerByPercent(percentageX, percentag
 {
     $.writeln("ScaleLayerByPercent()");
 
-    percentageX = _.isUndefined(percentageX) ? 100 : percentageX;
-    percentageY = _.isUndefined(percentageY) ? 100 : percentageY;
-    
+    percentageY = _.isUndefined(percentageY) ? percentageX : percentageY;
+
+    if(!_.isNumber(percentageX) || !_.isNumber(percentageY)) {
+        throw new Error("Scale must be defined and must be a number.");
+    }
     if(percentageX == percentageY == 100) {
         return;
     }
     var scaleX = UnitValue(percentageX, "%");
-    var scaleY = UnitValue(percentageY || percentageX, "%");
+    var scaleY = UnitValue(percentageY, "%");
 
     try {
         var idTrnf = charIDToTypeID( "Trnf" ); // transform

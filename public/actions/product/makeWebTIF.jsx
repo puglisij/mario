@@ -18,7 +18,6 @@ product.makeWebTIF = function makeWebTIF()
         product.maskOrPath({
             koMethod: view.koMethod
         });
-
         // Add border 
         app.preferences.rulerUnits = Units.PIXELS;
         app.preferences.typeUnits = TypeUnits.PIXELS;
@@ -45,15 +44,14 @@ product.makeWebTIF = function makeWebTIF()
         if(view.isFromArchives) {
             action.setLayerIconColor(LayerIconColor.Violet);
         }
-
         // Trim transparent area around the image
         activeDocument.trim(TrimType.TRANSPARENT);
 
         universal.resizeLayerByTargetScale({
-            currentScale: IMAGE.data("currentScale"),
-            targetScale: IMAGE.data("webTifTargetScale")
+            currentScale: view.currentScale,
+            targetScale: view.webTifTargetScale
         })
-        
+
         product.dropShadow();
         action.unsharpMask({
             amountPercent: 40,
@@ -78,7 +76,7 @@ product.makeWebTIF = function makeWebTIF()
             duplicateView.close(SaveOptions.DONOTSAVECHANGES);
             activeDocument = tif;
         }
-        
+
         product.trimAndResizeCanvas();
     });
 }

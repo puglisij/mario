@@ -79,7 +79,7 @@ For example, an action at /public/actions/foo/bar.jsx  will be defined as foo.ba
 Action functions can either receive a single primitive value, or an options object with key/value pairs. 
 
 Conventions: 
-- Actions that have no business specific logic or data references will be defined in the 
+- Actions that have <b>no business specific logic or data references</b> will be defined in the 
   root /actions directory. For example, action.saveDocument() which just saves the active document. 
   These types of actions can be thought of as 'Augmenting' Photoshop functionality which isnt availble 
   via their existing jsx API. For example, adding a drop shadow to a layer. 

@@ -11,4 +11,4 @@ product.trimAndResizeCanvas = function trimAndResizeCanvas()
             activeDocument.resizeCanvas('300px', '300px')
         }
     }
-}
+} 
