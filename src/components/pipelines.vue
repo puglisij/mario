@@ -182,7 +182,7 @@ export default {
         },
         validateFor(forTypes) {
             let forTypesArray = forTypes.split(','); 
-                forTypesArray = forTypesArray.map(ext => ext.replace(/[^a-z0-9_]/gi, ''));
+                forTypesArray = forTypesArray.map(ext => ext.replace(/[^a-z0-9_\-]/gi, ''));
                 forTypesArray = forTypesArray.filter(ext => ext && ext.length > 0);
             return forTypesArray;
         },

@@ -10,10 +10,14 @@ product.makeCMYK = function makeCMYK()
         product.maskOrPath({
             koMethod: view.koMethod
         });
-        universal.resizeImageByTargetScale({
-            currentScale: view.currentScale, 
-            targetScale: view.cmykTargetScale
-        }); 
+        
+        if(!_.isNull(view.currentScale) && !_.isNull(view.cmykTargetScale)) 
+        {
+            universal.resizeImageByTargetScale({
+                currentScale: view.currentScale, 
+                targetScale: view.cmykTargetScale
+            }); 
+        }
         
         // Add border
         app.preferences.rulerUnits = Units.PIXELS;

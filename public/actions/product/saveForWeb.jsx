@@ -6,15 +6,17 @@
 */
 product.saveForWeb = function saveForWeb(options) 
 {
-    var sku = IMAGE.data("sku");
-    if(!sku) {
-        throw new Error("Image data missing sku. Sku required for file name.");
-    }
+    // var sku = IMAGE.data("sku");
+    // if(!sku) {
+    //     throw new Error("Image data missing sku. Sku required for file name.");
+    // }
+    var sku = _.getDocumentNameWithoutExtension();
     if(_.isUndefined(options.fileName)) {
         throw new Error("fileName is undefined");
     }
 
-    var fileName = IMAGE.parameters(options.fileName);
+    //var fileName = IMAGE.parameters(options.fileName);
+    var fileName = _.mustache(options.fileName, { sku: sku });
     var outputDirectory = universal.createOutputDirectory();
     var file = new File(outputDirectory + "/" + fileName);
 

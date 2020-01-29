@@ -3,7 +3,7 @@
 */
 action.hideBackgroundLayer = function hideBackgroundLayer()
 {
-    if(activeDocument.backgroundLayer) {
+    try {
         activeDocument.backgroundLayer.visible = false;
-    }
+    } catch(e) {}
 }

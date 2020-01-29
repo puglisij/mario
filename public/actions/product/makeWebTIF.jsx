@@ -50,7 +50,7 @@ product.makeWebTIF = function makeWebTIF()
         universal.resizeLayerByTargetScale({
             currentScale: view.currentScale,
             targetScale: view.webTifTargetScale
-        })
+        });
 
         product.dropShadow();
         action.unsharpMask({

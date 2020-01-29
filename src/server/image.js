@@ -10,6 +10,7 @@ export default class Image
 {
     constructor() 
     {
+        // TODO: Get rid of "imagePath" and allow "packagePath" to support either an image or folder path
         // the working/primary input image. For example, a template that will be built up using other images.
         this.imagePath = "";
         // the zip or folder location containing other images used in the image process

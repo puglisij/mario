@@ -402,7 +402,11 @@ export default class Server extends EventEmitter
 
                 for(const pipeline of pipelines) 
                 {
-                    if(pipeline.disabled) continue;
+                    if(pipeline.disabled) {
+                        console.log(`Skipping disabled pipeline ${pipeline.name}`);
+                        continue;
+                    }
+                    
                     console.log(`Pipeline ${pipeline.name} started for image: ${image.imagePath}`);
                     this.emit("pipelinestart", image.type);
                     
