@@ -23,25 +23,26 @@ export default {
     },
     created() 
     {
-        logger.on("logs", this.onLogs);
+        this.activate();
     },
     /**
      * The <keep-alive> equivalent to mounted()
      */
     activated() {
-        this.autoScroll();
-        this.onLogs();
+        this.activate();
     },
     deactivated() {
         this.destroy();
-    },
-    mounted() {
-        this.autoScroll();
     },
     beforeDestroy() {
         this.destroy();
     },
     methods: {
+        activate() {
+            logger.on("logs", this.onLogs);
+            this.autoScroll();
+            this.onLogs();
+        },
         destroy() {
             logger.removeListener('logs', this.onLogs); 
         },

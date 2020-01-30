@@ -15,6 +15,40 @@ var _ = {
     {
         return (fullName || app.activeDocument.name).match(/^[^.]+/).toString();
     },
+    /**
+    * Converts the given UnitValue to appropriate charID and Number values necessary to add to an ActionDescriptor
+    * @param {Number|UnitValue} unitValue any type of supported unit: px, pt, pc, cm, mm, in, etc
+    * @param {Number} [documentResolution] resolution of the reference document for this value, in pixels per inch. If no value is given, the activeDocument resolution is used.
+    */
+    unitValueToActionDescriptorValue: function(unitValue, documentResolution)
+    {
+        // Set reference Resolution (Document resolution is always in pixels per inch)
+        var resolution = documentResolution || activeDocument.resolution;
+        var originalBaseUnit = UnitValue.baseUnit; 
+        UnitValue.baseUnit = UnitValue(1 / resolution, "in");
+
+        var theUnit = UnitValue(unitValue);
+        var result;
+        if(theUnit.type == "px") {
+            result = {
+                value: theUnit.value, 
+                charID: "#Pxl" // pixel 
+            };
+        } else if(theUnit.type == "%") {
+            result = {
+                value: theUnit.value, 
+                charID: "#Prc" // percentUnit
+            };
+        } else {
+            result = {
+                value: theUnit.as("pt"), // Convert value to points ( which is inches / 72 )
+                charID: "#Rlt" // distanceUnit (points)
+            };
+        }
+        // Restore reference Resolution
+        UnitValue.baseUnit = originalBaseUnit;
+        return result;
+    },
     saveUnits: function() 
     {
         var rulerUnits = app.preferences.rulerUnits;

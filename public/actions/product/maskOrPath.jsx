@@ -55,8 +55,8 @@ product.maskOrPath = function maskOrPath(options)
 
     function _maskActions() 
     {
-        action.removeHiddenLayers();
         action.hideBackgroundLayer();
+        action.removeHiddenLayers();
         try {
             activeDocument.mergeVisibleLayers()
             activeDocument.activeLayer.rasterize(RasterizeType.ENTIRELAYER);

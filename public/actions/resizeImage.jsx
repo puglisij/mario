@@ -39,38 +39,8 @@ action.resizeImage = function resizeImage(options)
     var desc11 = new ActionDescriptor();
 
     // Parse/Calculate size units 
-    var width = convertUnit(options.w);
-    var height = convertUnit(options.h || options.w);
-    
-    function convertUnit(val, resolution) 
-    {
-        // Set reference Resolution (Document resolution is always in pixels per inch)
-        var resolution = resolution || activeDocument.resolution;
-        var originalBaseUnit = UnitValue.baseUnit; 
-        UnitValue.baseUnit = UnitValue(1 / resolution, "in");
-
-        var theUnit = UnitValue(val);
-        var result;
-        if(theUnit.type == "px") {
-            result = {
-                value: theUnit.value, 
-                charID: "#Pxl" // pixel 
-            };
-        } else if(theUnit.type == "%") {
-            result = {
-                value: theUnit.value, 
-                charID: "#Prc" // percentUnit
-            };
-        } else {
-            result = {
-                value: theUnit.as("pt"), // Convert value to points ( which is inches / 72 )
-                charID: "#Rlt" // distanceUnit (points)
-            };
-        }
-        // Restore reference Resolution
-        UnitValue.baseUnit = originalBaseUnit;
-        return result;
-    }
+    var width = _.unitValueToActionDescriptorValue(options.w);
+    var height = _.unitValueToActionDescriptorValue(options.h || options.w);
 
     var idWdth = charIDToTypeID( "Wdth" );
     var idPxl = charIDToTypeID( width.charID ); // pixel 
