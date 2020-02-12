@@ -50,6 +50,7 @@ import debounce from 'debounce';
 /* local modules */
 import global from '../global';
 
+// TODO: Remove hardcoded path
 const SCRIPT_LOG_PATH = "C:/Users/puglisij/Desktop/ScriptingListenerJS.log";
 
 export default {
