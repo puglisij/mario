@@ -10,6 +10,11 @@ import VueRenderPlugin from "rete-vue-render-plugin";
 
 export default {
     // TODO Rete.js editor
+    name: "pipeline-editor", 
+    mounted() {
+        const numSocket = new Rete.Socket('Number value');
+        
+    }
 }
 </script>
 
