@@ -1,21 +1,39 @@
 <template>
-    <form id="watchers-form"
-        @submit="onConfigurationSubmit"
-        novalidate="true"
-    >
+    <div id="configuration">
         <h2>Watchers</h2>
-        <watcher class="watcher" 
-            v-for="(watcher, index) in configuration.watchers" :key="watcher.id"
-            v-model="configuration.watchers[index]"
-            @changed="markForSave"
-            @delete="onDeleteWatcher(watcher.id)"
+        <form id="watchers-form"
+            @submit="onConfigurationSubmit"
+            novalidate="true"
         >
-        </watcher>
-        <div class="controls">
-            <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
-            <button class="topcoat-button--large" type="button" @click="onAddNewWatcher">Add Watcher</button>
-        </div>
-    </form>
+            <watcher class="watcher" 
+                v-for="(watcher, index) in configuration.watchers" :key="watcher.id"
+                v-model="configuration.watchers[index]"
+                @changed="markForSave"
+                @delete="onDeleteWatcher(watcher.id)"
+            >
+            </watcher>
+            <div class="controls">
+                <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
+                <button class="topcoat-button--large" type="button" @click="onAddNewWatcher">Add Watcher</button>
+            </div>
+        </form>
+
+        <h2>Settings</h2> 
+        <form id="settings-form">
+            <input class="topcoat-text-input" 
+                type="text" 
+                placeholder="/path/to/jsx/actions" 
+                title="The path to the folder to where .jsx Adobe action files are stored. These will be made available in the pipeline editor."
+                v-model="configuration.pathToActions"
+            />
+            <p>
+                Extendscript Action Nodes last built: MM/DD/YYYY @ 12:00AM
+            </p> 
+            <div class="controls">
+                <button class="topcoat-button--large" type="button" @click="onRebuildActionNodes">Rebuild Action Nodes</button>
+            </div>
+        </form>
+    </div>
 </template>
 
 <script>
@@ -70,11 +88,18 @@ export default {
             event.preventDefault();
             this.$emit('update:watchers', this.configuration.watchers);
             this.needSaved = false;
+        },
+        onRebuildActionNodes(event)
+        {
+            // Run JSX Rete Node Builder
         }
     }
 }
 </script>
 
 <style scoped>
-
+    form {
+        margin-left: 1em;
+        margin-bottom: 20px;
+    }
 </style>

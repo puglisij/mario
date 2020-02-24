@@ -90,7 +90,7 @@ export default {
     .watcher {
         border: none;
         border-bottom: 1px solid #333;
-        padding: .5em;
+        padding: .5em .5em .5em 0;
     }
     .watcher:last-of-type {
         margin-bottom: .5em;

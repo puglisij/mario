@@ -58,7 +58,7 @@
         <div class="pipeline-editor" v-if="isEditorOpen">
             <h3 class="pipeline-editor-header">Editing: {{ pipelineBeingEdited.name }}</h3>
             <div class="pipeline-editor-board">
-                <draggable 
+                <!-- <draggable 
                     v-model="pipelineBeingEdited.externalActions"
                     draggable=".action"
                     handle=".action-handle"
@@ -73,7 +73,8 @@
                         @changed="onActionChange(index, $event)"
                         @delete="onActionDelete(index)"
                     />
-                </draggable>
+                </draggable> -->
+                <pipeline-editor />
             </div> 
             <div class="controls">
                 <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
@@ -97,6 +98,7 @@ import draggable from 'vuedraggable'
 /* local modules */
 import checkbox from "./checkbox.vue";
 import pipelineAction from "./pipeline-action.vue";
+import pipelineEditor from "./pipeline-editor.vue";
 import _ from "../utils";
 
 // TODO Use Rete.js for visual node based editor. 
@@ -107,7 +109,8 @@ export default {
     components: {
         checkbox,
         draggable,
-        pipelineAction
+        pipelineAction,
+        pipelineEditor
     },
     props: {
         configuration: Object

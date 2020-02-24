@@ -125,7 +125,7 @@ body {
 }
 
 h1, h2, h3 {
-    margin: 0 0 0.5em 0;
+    margin: 0 0 1em 0;
 }
 h1 {
     font-size: 20px;
