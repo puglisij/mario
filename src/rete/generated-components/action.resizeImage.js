@@ -23,18 +23,8 @@ export class ActionResizeImageComponent extends Component
         super("action.resizeImage");
     }
 
-    builder(node) {
-        // Rules for parameters given in JSDoc comment
-        //  - dont use if it has no description
-        //  - default to 'text' type if no type is given 
-        //  - if parameter receives more than one type of primitive, default to type 'text'?  (e.g. Number|String)
-        // show parameter if
-        //      - its required
-        //      - its optional and has a default value and default value is defined
-        // hide parameter if
-        //      - its optional and has no default value or default value is not defined
-        // 
-        // parameters are also inputs (to allow programmable values)
+    builder(node) 
+    {
         var inpWidth = new Input("w", "Width", Socket.input, false);
         var inpHeight = new Input("h", "Height", Socket.input, false);
 

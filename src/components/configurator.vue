@@ -91,7 +91,11 @@ export default {
         },
         onRebuildActionNodes(event)
         {
-            // Run JSX Rete Node Builder
+            // Run JSX Rete Node Builder (via "event" for decoupling ?)
+            // if success
+            //      modal "Success"
+            // else 
+            //      modal "There was an issue... What do you want to do? Revert | Retry"
         }
     }
 }

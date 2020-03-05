@@ -18,6 +18,12 @@
 </template>
 
 <script>
+/**
+ * Render Rete control for a JSX action node function parameter
+ * NOTES:
+ *      - Deemphasize parameter/control if its optional
+ *      - Enum 'type' renders as a <select> dropdown
+ */
 export default {
     props: ['initial', 'readonly', 'required', 'emitter', 'ikey', 'type', 'change', 'getData', 'putData'],
     data() {

@@ -31,7 +31,7 @@
 * @param {bool} [options.constrain = true] true to constrain proportion aspect ratio
 * @param {number} [options.resolution] the pixels per inch density. default is active document resolution
 * @param {number} [options.reduceNoise] the integer percentage noise value for noise reduction (only valid for XResampleMethod.PRESERVEDETAILS and XResampleMethod.PRESERVEDETAILS2)
-* @param {XResampleMethod|String} [options.method = XResampleMethod.BICUBICSMOOTHGRADIENTS] the resampling method enumeration value e.g. XResampleMethod.BILINEAR
+* @param {XResampleMethod} [options.method = XResampleMethod.BICUBICSMOOTHGRADIENTS] the resampling method enumeration value e.g. XResampleMethod.BILINEAR
 */
 action.resizeImage = function resizeImage(options)
 {
@@ -72,7 +72,9 @@ action.resizeImage = function resizeImage(options)
     desc11.putEnumerated( idIntr, idIntp, idInterpolation );
     executeAction( idImgS, desc11, DialogModes.NO );
 }
-
+/**
+* @enum {number}
+*/
 XResampleMethod = {
     AUTOMATIC: stringIDToTypeID( "automaticInterpolation" ),
     BICUBICSHARPER: stringIDToTypeID( "bicubicSharper" ),

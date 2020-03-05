@@ -154,23 +154,24 @@ export default {
     #rete {
         height: 400px;
         width: 800px;
-    }
-    .node.node {
-        background: linear-gradient(#555 0%, #333333 100%);
-        border-color: #6a6a6a;
-        border-width: 1px;
 
-        &.selected { 
-            background: rgba(130, 153, 255, 0.8);
-            border-color: transparent;
+        .node{
+            background: linear-gradient(#555 0%, #333333 100%);
+            border-color: #6a6a6a;
+            border-width: 1px;
+
+            &.selected { 
+                background: rgba(130, 153, 255, 0.8);
+                border-color: transparent;
+            }
         }
-    }
-    .connection .main-path {
-        stroke: #adadf7;
-        stroke-width: 3px;
-    }
-    .socket.socket {
-        background: #adadf7;
-        border: none;
+        .connection .main-path {
+            stroke: #adadf7;
+            stroke-width: 3px;
+        }
+        .socket {
+            background: #adadf7;
+            border: none;
+        }
     }
 </style>

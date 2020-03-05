@@ -174,6 +174,32 @@ var _ = {
     },
     isNull: function isNull(val) {
         return val === null;
+    },
+    /**
+    * The given value is believed to be an enumerated value under these conditions
+    *   - its an object
+    *   - does not have inherited properties
+    *   - each property is of type (string, number, boolean, object)
+    * Otherwise Returns false
+    */
+    inferIsEnum: function(val) {
+        // TODO doesnt yet work on Adobe built-in enums (e.g. AnchorPosition)
+        if(typeof val !== "object") {
+            return false;
+        }
+
+        var values = [];
+        for(var p in val) {
+            if(!val.hasOwnProperty(p)) {
+                return false;
+            }
+            var pType = typeof val[p];
+            if(!["string", "number", "boolean"].includes(pType)) {
+                return false;
+            }
+            values.push(p);
+        }
+        return values;
     }
 }
 
