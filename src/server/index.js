@@ -144,6 +144,14 @@ export default class Server extends EventEmitter
         await this.runJsx(actionScript);
         console.log("Loaded actions."); 
 
+        // const importString = ActionFileImportStringBuilder.buildJsxImportString();
+        // HostInterface.runJsx(importString);
+
+        // 1) Read actions directory for action jsx files 
+        // 2) Generate list of ActionDescriptors from files 
+        // 3) Generate Rete Components from ActionDescriptors
+        // 4) Vue Editor will load available Components list dynamically
+
         //-----------------
         // Setup routes
         //-----------------

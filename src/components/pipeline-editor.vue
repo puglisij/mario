@@ -32,7 +32,8 @@ export default {
         cs() { return global.cs; }
     },
     methods: {
-        runAction(psActionName, actionParameters)
+        // Temporary: Delete me
+        runAction(psActionName, actionParameters) 
         {
             const psActionParameters = JSON.stringify(actionParameters);
             console.log(`Running Action: ${psActionName}(${psActionParameters})`);
@@ -45,7 +46,8 @@ export default {
                 }
             }())`);
         },
-        runJsx(jsxString)
+        // Temporary: Delete me
+        runJsx(jsxString) 
         {
             return new Promise((resolve, reject) => 
             {

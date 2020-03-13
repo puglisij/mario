@@ -175,9 +175,9 @@ export class ActionDescriptorToReteComponentGenerator
     /**
      * Generates a Rete Component class for each action, and writes as a .js file to the appropriate directory
      * @param {ActionDescriptor[]} actionDescriptors 
-     * @param {string} targetDirectory the absolute path to the output directory
+     * @param {string} outputDirectory the absolute path to the output directory
      */
-    generateReteComponents(actionDescriptors, targetDirectory)
+    generateReteComponents(actionDescriptors, outputDirectory)
     {
         for(let i = 0; i < actionDescriptors.length; ++i)
         {
@@ -188,23 +188,27 @@ export class ActionDescriptorToReteComponentGenerator
     _generateReteComponentFileContents(actionDescriptor)
     {
         return this._templatize(
+            actionDescriptor.name,
             this._templatizeConstructor(actionDescriptor),
             this._templatizeBuilder(actionDescriptor), 
             this._templatizeWorker(actionDescriptor)
         );
     }
-    _templatize(name, templatizedConstructor, templatizedBuilderFunction, templatizedWorkerFunction)
+    _templatize(actionName, templatizedConstructor, templatizedBuilder, templatizedWorker)
     {
+        // First letter caps
+        actionName = actionName[0].toUpperCase() + actionName.substring(1);
+
         return `
         import { Component, Input, Output } from 'rete';
         import Socket from '../sockets';
         import { InputControl } from '../controls/input/index';
 
-        class ActionResizeImageComponent extends Component 
+        class ${actionName}Component extends Component 
         {
-            ${templatizedConstructorFunction}
-            ${templatizedBuilderFunction}
-            ${templatizedWorkerFunction}
+            ${templatizedConstructor}
+            ${templatizedBuilder}
+            ${templatizedWorker}
         }
         `;
     }
@@ -282,7 +286,7 @@ export class HostInterface
      * @param {number|string|boolean|object|array} parameters 
      * @returns {Promise}
      */
-    runByNameWithParameters(actionName, parameters)
+    runActionWithParameters(actionName, parameters)
     {
         const parametersJson = JSON.stringify(parameters);
         console.log(`Running Action: ${actionName}`);
@@ -296,7 +300,7 @@ export class HostInterface
         }())`);
     }
     /**
-     * Run the given jsx code on the Adobe host
+     * Run the given raw jsx code on the Adobe host
      * @param {string} jsx 
      * @returns {Promise}
      */
