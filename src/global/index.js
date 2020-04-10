@@ -2,14 +2,14 @@ import fs from 'fs';
 import upath from 'upath';
 
 
-const cs = new CSInterface();
-const extensionPath = upath.normalize(cs.getSystemPath(SystemPath.EXTENSION));
-const hostPath = upath.join(extensionPath, process.env.VUE_APP_HOST_DIR);
-const hostActionPath = upath.join(hostPath, "actions");
+const appInstallPath = upath.normalize(new CSInterface().getSystemPath(SystemPath.EXTENSION));
+const appWorkingPath = upath.join(appInstallPath, process.env.VUE_APP_HOST_DIR);
+const appDefaultLogPath = upath.join(appWorkingPath, "logs");
+const appBuiltinActionsPath = upath.join(appWorkingPath, "actions");
 
 export default {
-    cs,
-    extensionPath, 
-    hostPath, 
-    hostActionPath
+    appInstallPath, 
+    appWorkingPath,
+    appDefaultLogPath,
+    appBuiltinActionsPath
 }

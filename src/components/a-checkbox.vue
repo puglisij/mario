@@ -8,7 +8,7 @@
 
 <script>
 export default {
-    name: "checkbox",
+    name: "ACheckbox",
     model: {
         prop: "checked",
         event: "change"

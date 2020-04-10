@@ -1,7 +1,6 @@
 <template>
   <div>
         <h1 v-bind:style="{ color: statusColor }">Mario</h1>
-        <!-- <div class="mario stand"></div> -->
 
         <section class="main-content">
             <div class="activity" v-bind:style="{ color: statusColor }" v-if="isPipelineActive">
@@ -50,14 +49,9 @@
             </keep-alive>
             <configurator 
                 v-if="currentTabComponent == 'configurator'" 
-                v-bind:configuration="configuration"
-                @update:watchers="onWatchersConfiguration"
             ></configurator>
             <pipelines
                 v-if="currentTabComponent == 'pipelines' && areConfigurationsLoaded"
-                v-bind:configuration="pipelineConfiguration"
-                @changed="onPipelinesConfiguration"
-                @runwithdefaults="onPipelineRunWithDefaults"
             ></pipelines>
         </section>
   </div>
@@ -67,21 +61,15 @@
 /* local modules */
 import checkbox from "./checkbox.vue";
 import startStop from "./start-stop.vue";
-// import jsx from "./jsx.vue";
-// import configurator from "./configurator.vue";
-// import pipelines from "./pipelines.vue";
-import global from "../global";
 import Server from "../server";
 
 
 export default {
-    name: "server",
+    name: "TheServer",
     components: {
         checkbox,
         startStop,
-        jsx: () => import("./jsx.vue"),
-        configurator: () => import("./configurator.vue"),
-        pipelines: () => import("./pipelines.vue")
+        
     },
     data: () => ({
         tabs: ["jsx", "the-console", "configurator", "pipelines"],
@@ -111,7 +99,7 @@ export default {
     },
     created() 
     {
-        this.server = new Server(global.hostPath, global.hostActionPath);
+        this.server = new Server();
         this.server.init();
         this.server.on("init", this.onInitComplete);
         this.server.on("state", this.onStateChange);
@@ -158,10 +146,12 @@ export default {
             this.server && this.server.stop();
         }, 
         onInitComplete() {
-            const configClone = this.server.getConfiguration();
+            const configClone = this.server.getGeneralConfiguration();
             this.configuration = configClone;
+
             const pipelineConfigClone = this.server.getPipelineConfiguration();
             this.pipelineConfiguration = pipelineConfigClone;
+            
             this.areConfigurationsLoaded = true;
             this.$emit("loaded");
         },
@@ -183,17 +173,16 @@ export default {
         },
         onConfigurationCheckbox(isChecked, name)
         {
-            this.server.setConfiguration(name, isChecked);
+            this.server.setGeneralConfiguration(name, isChecked);
         },
-        onWatchersConfiguration(newWatchers)
+        onGeneralConfiguration(configuration)
         {
-            this.configuration.watchers = newWatchers;
-            this.server.setConfiguration("watchers", newWatchers);
+            this.server.setGeneralConfiguration(configuration);
             console.log("Watchers updated.");
         },
         onPipelinesConfiguration(newPipelines)
         {
-            this.server.setPipelineConfiguration("pipelines", newPipelines);
+            this.server.setPipelineConfiguration(newPipelines);
             console.log("Pipelines updated.");
         }, 
         onPipelineRunWithDefaults(pipeline) {

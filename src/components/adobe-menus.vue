@@ -10,7 +10,7 @@
 
 // Access this component anywhere via this.app.menus (this.$root.$children[0].menus)
 export default {
-  name: "adobe-menus",
+  name: "AdobeMenus",
   data: () => ({
     // this.app.menus.context
     context: {

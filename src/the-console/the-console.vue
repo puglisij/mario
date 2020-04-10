@@ -14,7 +14,7 @@
 import logger from "./logger";
 
 export default {
-    name: "the-console",
+    name: "TheConsole",
     data() {
         return {
             output: "",

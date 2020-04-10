@@ -103,12 +103,13 @@ import _ from "../utils";
 //      At which point it may be necessary to move this into its own lib (non Vue) and import
 
 export default {
-    name: "configurator",
+    name: "ThePipelines",
     components: {
         checkbox,
         draggable,
         pipelineAction
     },
+    // TODO: shouldnt accept props, since its specific to the app, and not the context within the app
     props: {
         configuration: Object
     }, 
@@ -244,8 +245,7 @@ export default {
         },
         onRunPipelineWithDefaults(id)
         {
-            const pipeline = _.simpleDeepClone(this.getPipeline(id));
-            this.$emit("runwithdefaults", pipeline);
+            this.$emit("runwithdefaults", id);
         },
         onToggleEditor(id) 
         {

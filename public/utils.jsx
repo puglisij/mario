@@ -177,11 +177,10 @@ var _ = {
     }
 }
 
-
-
-function c2s(c) { return typeIDToStringID(charIDToTypeID(c)) }
+function c2s(c) { return app.typeIDToStringID(app.charIDToTypeID(c)) }
 function s2t(s) { return app.stringIDToTypeID(s) }
 function c2t(c) { return app.charIDToTypeID(c) }
+function t2s(t) { return app.typeIDToStringID(t) }
 
 /**
 * Cross-platform path joining. Works similar to node.js  path.join(). 
@@ -259,5 +258,13 @@ function actionDescriptorToJSON(actionDescriptor)
     convertDesc, DialogModes.NO );
     return jsonDesc.getString( s2t("json") );
 }
+
+// Export as globals
+this._ = _;
+this.s2t = s2t;
+this.c2t = c2t;
+this.c2s = c2s;
+this.t2s = t2s;
+this.actionDescriptorToJSON = actionDescriptorToJSON;
 
 "";

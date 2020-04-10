@@ -1,4 +1,7 @@
-
+/**
+ * Basic object deep cloning using JSON parse & stringify
+ * @param {object|array} obj 
+ */
 function simpleDeepClone(obj)
 {
     return JSON.parse(JSON.stringify(obj));

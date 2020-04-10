@@ -31,7 +31,7 @@ const defaultOptions = {
 };
 
 export default {
-    name: 'a-dialog',
+    name: 'ADialog',
     data: () => ({
         isOpen: false,
         options: defaultOptions

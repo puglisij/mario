@@ -1,95 +1,60 @@
 <template>
   <div id="app">
     <a-dialog name="confirm"></a-dialog>
-    <!-- Utility component to handle context and flyout menus -->
-    <menus />
-    <server v-on:loaded="onServerLoaded"/>
+    <adobe-menus />
+
+    <tabs @changed="onTabChanged" :initial-tab="currentTabComponent">
+        <tab title="the-console">Console</tab>
+        <tab title="the-jsx-runner">Jsx</tab>
+        <!-- <tab title="the-configurator">Configuration</tab>
+        <tab title="the-pipelines">Pipelines</tab> -->
+    </tabs>
+
+    <section class="tab-content">
+        <keep-alive exclude="ThePipelines, TheConfigurator">
+            <component :is="currentTabComponent"></component>
+        </keep-alive>
+    </section>
   </div>
 </template>
 
 <script>
-/* npm modules  (Alternatively use cep_node.require) */ 
-import upath from 'upath';
+/* Can also use cep_node.require */
+/* npm modules */ 
+import upath from 'upath'; 
 
 /* local modules */
-import appGlobal from "./global";
+import store from './store';
 import themeManager from "./themeManager";
+import Tabs from './components/tabs';
+import Tab from './components/tab';
 
 export default {
     name: "app",
     components: {
-        menus: () => import("./components/menus.vue"),
-        server: () => import("./components/server.vue")
+        Tabs, 
+        Tab,
+        AdobeMenus: () => import("./components/adobe-menus.vue"),
+        TheJsxRunner: () => import("./components/the-jsx-runner.vue"),
+        //TheServer: () => import("./components/the-server.vue"),
+        //TheConfigurator: () => import("./components/the-configurator.vue"),
+        //ThePipelines: () => import("./components/the-pipelines.vue")
     },
     data: () => {
-        return {}
+        return {
+            currentTabComponent: store.general.currentTab
+        }
     },
-    computed: {
-        cs() { return appGlobal.cs; }
-    },
-    /**  
-     * about to be initialized. data is not yet reactive 
-     */
-    beforeCreate() {},
-    /**  
-     * events and data observation setup. not yet in native DOM. access data here, not in mounting hooks 
-     */
-    created() {
-        // Jsx Environment Setup
-        this.importJSX("utils.jsx");
-        this.importJSX("polyfil.jsx");
-        this.importJSX("image.jsx"); 
-
-        console.log(`App mounted.\n
-            Extension Path: ${appGlobal.extensionPath}\n
-            Host Path: ${appGlobal.hostPath}\n
-            Host Action Path: ${appGlobal.hostActionPath}`);
-    },
-    /**  
-     * right before render happens. template compiled and virtual DOM update by vue.  
-     */
-    beforeMount() {},
-    /**  
-     * $el added and native DOM updated. do modify DOM for integration of non-Vue libraries here.
-     */
     mounted() {
         themeManager.init();
+        this.hideLoadingSpinner();
     },
-    /**  
-     * data has changed and update cycle starting. do get data before actually is rendered. 
-     */
-    beforeUpdate() {},
-    /**  
-     * data changed and native DOM updated. do access DOM after property changes here. 
-     */
-    updated() {},
-    /**  
-     * about to teardown. still fully present and functional. do cleanup events, and subscriptions 
-     */
-    beforeDestroy() {},
-    /**  
-     * nothing left on your component. do last minute cleanups, etc. 
-     */
-    destroyed() {},
     methods: {
-        importJSX(fileName) {
-            let importPath = upath.join(appGlobal.hostPath, fileName);
-            this.cs.evalScript('try{ var file = File("' + importPath + '").fsName; $.evalFile(file); }catch(e){ alert("File: " + file + " Import Exception: " + e); }', result => {
-                console.log("Jsx File Imported: " + importPath + " Result: " + result);
-            });
+        onTabChanged(tabTitle) {
+            store.general.currentTab = tabTitle;
+            this.currentTabComponent = tabTitle;
         },
-        dispatchEvent(name, data) {
-            var event = new CSEvent(name, "APPLICATION");
-                event.data = data;
-            this.cs.dispatchEvent(event);
-        },
-        onYes() {
-            console.log("modal yes");
-        },
-        onCancel() {
-            console.log("modal cancel");
-        }, 
-        onServerLoaded() {
+        hideLoadingSpinner() {
             let spinnerEl = document.getElementById("loading");
             if (spinnerEl) 
                 spinnerEl.style.display = "none";
@@ -102,6 +67,7 @@ export default {
 /* Various helper styles to match application theme */
 @import url("http://fonts.googleapis.com/css?family=Source+Sans+Pro:300");
 @import url("http://fonts.googleapis.com/css?family=Source+Code+Pro");
+@import "./styles/columns";
 
 html, body {
     margin: 0;
@@ -116,8 +82,8 @@ body {
         color: #181919;
     }
     &.dark {
-        color: #F0F1F1;
-        background: #4A4D4E;
+        color: $dark-text-color;
+        background: $dark-bg;
     }
     * {
         box-sizing: border-box;
@@ -145,13 +111,28 @@ h4 {
     font-weight: 400;
 }
 
+#app {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.tab-content {
+    flex-grow: 1;
+    flex-shrink: 1;
+    padding: .5em;
+
+    @at-root .dark & {
+        border: 1px solid $dark-section-border;
+    }
+    @at-root .light & {
+        border: 1px solid $light-section-border;
+    }
+}
 
 .controls {
     margin: .5em 0;
 }
-
-
-
 
 
 #app::-webkit-scrollbar {

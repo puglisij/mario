@@ -32,7 +32,7 @@ import _ from "../utils";
 import checkbox from "./checkbox.vue";
 
 export default {
-    name: "watcher",
+    name: "image-watcher",
     components: {
         checkbox
     },

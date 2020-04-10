@@ -154,6 +154,10 @@ at /public/polyfil.jsx which is imported when Mario is opened. )
 
 ## Glossary & Conventions
 
+### Misc
+
+***Vue Components*** should never perform file system operations 
+
 ### IMAGE 
 
 Refers to an image ready for processing/being processed. Pipelines dont require a 

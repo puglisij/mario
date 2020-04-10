@@ -6,6 +6,15 @@ function closeAll()
     }
 }
 
+function importJsx(jsxFilePath)
+{
+    try{ 
+        var file = new File(jsxFilePath).fsName; 
+        return $.evalFile(file); 
+    } catch(e) {  
+        alert("File: " + file + " Jsx Import Exception: " + e); 
+    }
+}
 
 function importAction(actionFilePath, actionName)
 {

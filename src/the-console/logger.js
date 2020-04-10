@@ -12,7 +12,8 @@ class Logger extends EventEmitter
         this.initialized = false;
         this.options = {
             logDirectory: "./",
-            logFileEnabled: false
+            logFileEnabled: false,
+            logFilePersistForDays: 7 // number of files/days to keep
         };
         this.originalConsoleMethods = {};
         this.logWriteStream = null;
@@ -29,8 +30,10 @@ class Logger extends EventEmitter
         if(this.initialized)
             return;
         this.initialized = true;
+        this.emit("initializing");
 
         this.options = Object.assign(this.options, options || {});
+        this._cleanupFiles();
         this._createFileStream();
 
         // Override default console logging methods
@@ -50,6 +53,7 @@ class Logger extends EventEmitter
             };
         }.bind(this));
 
+        this.emit("initialized");
         console.log("Logger initialized");
     }
     _write(method, args)
@@ -78,6 +82,23 @@ class Logger extends EventEmitter
     {
         this.logWriteStream && this.logWriteStream.end();
         this.logWriteStream = null;
+    }
+    /**
+     * Erase old log files 
+     */
+    _cleanupFiles()
+    {
+        const paths = fs.readdirSync(this.options.logDirectory);
+        const logFilenames = paths.filter(name => name.endsWith(".logs"));
+              logFilenames.sort(); // sort by date
+        const logPaths = logFilenames.map(name => upath.join(this.options.logDirectory, name));
+        const howManyToDelete = Math.max(logPaths.length - this.options.logFilePersistForDays, 0);
+        for(let i = 0; i < howManyToDelete; ++i) 
+        {
+            fs.unlink(logPaths[i], err => {
+                if(err) console.error("Could not delete log file. ", err);
+            });
+        }
     }
     /**
      * Clear the buffered logs

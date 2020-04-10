@@ -16,6 +16,7 @@
     "async": "^3.1.0",
     "body-parser": "^1.18.2",
     "chokidar": "^3.3.0",
+    "conf": "^6.2.1",
     "core-js": "^2.6.5",
     "debounce": "^1.2.0",
     "es6-promisify": "^6.0.2",
@@ -29,6 +30,7 @@
     "rete-vue-render-plugin": "^0.5.0",
     "upath": "^1.2.0",
     "vue": "^2.6.10",
+    "vue-router": "^3.1.6",
     "vuedraggable": "^2.23.2",
     "vuelidate": "^0.7.4"
   },

@@ -1,19 +1,29 @@
 <template>
-    <form id="watchers-form"
+    <form id="configuration-form"
         @submit="onConfigurationSubmit"
         novalidate="true"
     >
         <h2>Watchers</h2>
         <watcher class="watcher" 
-            v-for="(watcher, index) in configuration.watchers" :key="watcher.id"
+            v-for="(watcher, index) in configuration.watchers" 
+            :key="watcher.id"
             v-model="configuration.watchers[index]"
             @changed="markForSave"
             @delete="onDeleteWatcher(watcher.id)"
         >
         </watcher>
+        <div class="controls">            
+            <button class="topcoat-button--large" type="button" @click="onAddNewWatcher">Add Watcher</button>
+        </div>
+        <label>
+            <input class="topcoat-text-input" type="text" placeholder="/my/custom/jsx/actions" 
+                title="The path to the directory containing custom extendscript actions"
+                v-model="configuration.pathToUserActions"
+                @change="markForSave"
+            />
+        </label>
         <div class="controls">
             <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
-            <button class="topcoat-button--large" type="button" @click="onAddNewWatcher">Add Watcher</button>
         </div>
     </form>
 </template>
@@ -22,12 +32,15 @@
 import _ from "../utils";
 import watcher from "./watcher.vue";
 
-
+/**
+ * General Application Configuration
+ */
 export default {
-    name: "configurator",
+    name: "TheConfigurator",
     components: {
         watcher
     },
+    // TODO: shouldnt accept props, since its specific to the app, and not the context within the app
     props: {
         configuration: Object
     }, 
@@ -65,12 +78,15 @@ export default {
                 }
             })
         },
+
         onConfigurationSubmit(event)
         {
             event.preventDefault();
-            this.$emit('update:watchers', this.configuration.watchers);
+            this.$emit('changed', this.configuration);
             this.needSaved = false;
         }
+
+        // TODO Implement Import/Export Configuration
     }
 }
 </script>

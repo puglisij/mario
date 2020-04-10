@@ -19,6 +19,16 @@ module.exports = {
         //new BundleAnalyzerPlugin()
     ]
   },
+  css: {
+    loaderOptions: {
+      sass: {
+        prependData: `
+        @import "@/styles/_variables.scss";
+        @import "@/styles/_mixins.scss";
+        `
+      }
+    }
+  },
   chainWebpack: config => {
     config.module
     .rule('node')

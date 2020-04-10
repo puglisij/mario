@@ -13,8 +13,9 @@ import EventEmitter from "events";
 
 /* local modules */
 import Image from './image';
-import ServerConfiguration from './serverConfiguration';
 import _ from '../utils';
+import store from '../store';
+import global from '../global';
 
 const ServerState = {
     UNINITIALIZED: 0,
@@ -34,20 +35,14 @@ const app = express();
  *  - Directory watching for image or json(data) files to process 
  *  - Configurable watchers, and pipelines
  */
-export default class Server extends EventEmitter
+class Server extends EventEmitter
 {
-    constructor(serverPath, actionPath) 
+    constructor() 
     {
         super();
-        this._httpServer = null;
-        this._actionPath = actionPath;
-        
+
+        // Local copy of general configuration for faster reference
         this._config = {};
-        this._configPath = upath.join(serverPath, "../config.json");
-        this._configurator = null;
-        this._pipelineConfig = {};
-        this._pipelineConfigPath = upath.join(serverPath, "../config-pipeline.json");
-        this._pipelineConfigurator = null;
         
         // Path watcher instances for new images
         this._fileWatchers = [];
@@ -55,22 +50,29 @@ export default class Server extends EventEmitter
         this._pipelinesMap = {};
         // Flag indicating configuration has changed and pipeline mapping needs reloaded
         this._needToReloadPipelines = true;
+        // Flag indicating user actions need reloading (i.e. the path changed)
+        this._needToReloadActions = true;
         // Images waiting for processing
         this._pipelineQueue = [];
 
-        this.cs = new CSInterface();     
-        this.cs.addEventListener("log", event => {
-            console.log("Jsx Event: " + event.data);
-        });
+        this._httpServer = null;    
+        this._initialized = false;
         this._isPipelinesRunningMutex = false;
         this._serverState = ServerState.UNINITIALIZED;
+    }
+    init() 
+    {
+        if(this._initialized) return;
+        this._initialized = true;
+
     }
     get pipelinesMap() 
     {
         if (this._needToReloadPipelines) 
         {
+            const pipelineConfig = this.getPipelineConfiguration();
             this._pipelinesMap = {};
-            for(const pipeline of this._pipelineConfig.pipelines)
+            for(const pipeline of pipelineConfig.pipelines)
             {
                 for(const forType of pipeline.for) {
                     _.getOrDefine(this._pipelinesMap, forType.toLowerCase(), []).push(pipeline);
@@ -84,38 +86,22 @@ export default class Server extends EventEmitter
     {
         this._pipelinesMap = val;
     }
-    _loadConfiguration() 
-    {
-        this._configurator = new ServerConfiguration();
-        this._config = this._configurator.load(this._configPath);
-        if(!this._config.watchers) {
-            throw new Error("Server config missing 'watchers'.");
-        }
-        console.log("Loaded server config: ");
-        console.dir(this._config);
-    }
-    _loadPipelineConfiguration()
-    {
-        this._pipelineConfigurator = new ServerConfiguration();
-        this._pipelineConfig = this._pipelineConfigurator.load(this._pipelineConfigPath);
-        if(!this._pipelineConfig.pipelines) {
-            throw new Error("Server pipeline config missing 'pipelines'.");
-        }
-    }
-    getConfiguration() {
-        return this._configurator.clone();
+    getGeneralConfiguration() {
+        return store.general; 
     }
     getPipelineConfiguration() {
-        return this._pipelineConfigurator.clone();
+        return store.pipelines; 
     }
-    setConfiguration(key, value) 
+    setGeneralConfiguration(key, value) 
     {
-        this._configurator.set(key, value);
+        store.general.set(key, value);
+        this._config[key] = value;
+        this._needToReloadActions = (key === "pathToUserActions");
         console.log(`Configuration ${key} changed to ${value}`);
     }
     setPipelineConfiguration(key, value) 
     {
-        this._pipelineConfigurator.set(key, value);
+        store.pipelines.set(key, value);
         this._needToReloadPipelines = true;
         console.log(`Pipeline Configuration ${key} changed to ${value}`);
     }
@@ -128,21 +114,16 @@ export default class Server extends EventEmitter
     get _state() {
         return this._serverState;
     }
-    set _state(state) {
+    set _state(state) 
+    {
         this._serverState = state;
         this.emit("state", state);
     }
     async init() 
     {
-        this._loadConfiguration();
-        this._loadPipelineConfiguration();
+        this._config = this.getGeneralConfiguration();
 
-        //-----------------
-        // Load Actions 
-        //-----------------
-        let actionScript = this.loadActionPaths(this._actionPath, "action");
-        await this.runJsx(actionScript);
-        console.log("Loaded actions."); 
+        //await this.loadActions(); 
 
         //-----------------
         // Setup routes
@@ -153,11 +134,11 @@ export default class Server extends EventEmitter
                 JSON.stringify(this.pipelinesMap[req.params.type.toLowerCase()], null, 4)
             );
         });
-        app.get('/activedocument', (req, res) => {
-            this.cs.evalScript("_.getDocumentPath()", function(activeDocumentPath) {
-                res.status(200).send("Active Document: " + activeDocumentPath);
-            });
-        });
+        // app.get('/activedocument', (req, res) => {
+        //     this.cs.evalScript("_.getDocumentPath()", function(activeDocumentPath) {
+        //         res.status(200).send("Active Document: " + activeDocumentPath);
+        //     });
+        // });
         app.get('/status', (req, res) => {
             // search for files matching parameters 
             res.status(200).json({
@@ -448,15 +429,30 @@ export default class Server extends EventEmitter
         this._isPipelinesRunningMutex = false;
         console.log("Pipeline queue finished.");
     }
+    async loadActions()
+    {
+        await this.loadActionPaths(global.appBuiltinActionsPath, "action");
+        console.log("Loaded built-in actions."); 
+
+        await this.loadActionPaths(this._config.pathToUserActions, "action");
+        console.log("Loaded user actions."); 
+    }
     /**
-     * Reads all jsx files in the given directory recursively, and builds an import JSX string for execution.
+     * Reads all jsx files in the given directory recursively, and builds an import JSX string and executes.
      * Each new directory encountered becomes a nested namespace.
      * @param {string} pathToActions the current path to the jsx action files
      * @param {string} defaultNamespace The default namespace for actions in the root path 
+     * @returns {Promise}
      */
     loadActionPaths(pathToActions, defaultNamespace)
     {
-        return this.loadActionPath(pathToActions, "", defaultNamespace); 
+        if(!fs.existsSync(pathToActions)) {
+            console.warn(`Actions path not found for ${pathToActions}`);
+            return Promise.resolve(null);
+        }
+
+        const actionScript = this.loadActionPath(pathToActions, "", defaultNamespace); 
+        return this.runJsx(actionScript);
     }
     loadActionPath(pathToActions, namespace, defaultNamespace)
     {
@@ -558,3 +554,5 @@ export default class Server extends EventEmitter
         this.emit("stats" )
     }
 }
+
+export default new Server();
