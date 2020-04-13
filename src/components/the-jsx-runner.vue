@@ -1,19 +1,17 @@
 <template>
     <div class="jsx">
         <h2>ExtendScript</h2>
-        <div class="columns is-mobile">
-            <div class="column is-half">
-                <button class="topcoat-button--large full-width" 
+        <div class="columns is-mobile is-multiline">
+            <div class="column is-full">
+                <button class="topcoat-button--large" 
                     @click="toggleScriptListener" 
                     >
                     Toggle ScriptListener {{ isScriptListening ? 'Off' : 'On'}}
                     </button>
-            </div>
-            <div class="column is-half">
-                <button class="topcoat-button--large full-width" 
-                    @click="clearScriptListener"
+                <button class="topcoat-button--large" 
+                    @click="toggleScriptListener" 
                     >
-                    Clear ScriptListener Logs
+                    Toggle ScriptListener {{ isScriptListening ? 'Off' : 'On'}}
                     </button>
             </div>
             <div class="column is-full">
@@ -23,8 +21,6 @@
                     Convert to Javascript Comment? 
                 </a-checkbox>
             </div>
-        </div>
-        <div class="columns is-mobile">
             <label class="column is-half">
                 <input 
                     class="topcoat-text-input--large full-width" 
@@ -113,6 +109,10 @@ export default {
         this.destroyScriptListener();
     },
     methods: {
+        // TODO:
+        // - Check if ScriptListener is installed
+        // - When ScriptListener Watcher is turned on, "Clear" button clears the file
+        // - Only show "Toggle ScriptListener Watching" button when ScriptListener is installed and On
         clearJsxResult() {
             this.jsxResult = "";
         },
@@ -155,14 +155,19 @@ export default {
     .full-width {
         width: 100%;
     }
-    .code {
-        button {
-            margin-right: .5rem;
+    .jsx {
+        label {
+            margin: 0;
         }
-    }
-    .result {
-        background: rgba(0,0,0,0.2);
-        margin-top: 1rem;
-        padding: 1rem;
+        .code {
+            button {
+                margin-right: .5rem;
+            }
+        }
+        .result {
+            background: rgba(0,0,0,0.2);
+            margin-top: 1rem;
+            padding: 1rem;
+        }
     }
 </style>

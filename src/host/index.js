@@ -99,24 +99,24 @@ class Host
         }())`);
     }
     /*---------------------
-        Script Listener
+        Script Listener  (TODO: Move to its own class)
     ---------------------*/
     initScriptListener()
     {
         // Determine if ScriptListener is on 
         // Folder.desktop
-        const listenerLogsPath =  upath.join(os.homedir(), "Desktop", "ScriptingListenerJS.log");
-        const scriptWatcher = chokidar.watch(listenerLogsPath, {
-            awaitWriteFinish: {
-                pollInterval: 100,
-                stabilityThreshold: 2000
-            }
-        });
-        scriptWatcher.on("change", debounce(this.readScriptListenerLog, 1000));
-        //...
-        scriptWatcher.removeAllListeners();
-        scriptWatcher.close();
-        //...
+        // const listenerLogsPath =  upath.join(os.homedir(), "Desktop", "ScriptingListenerJS.log");
+        // const scriptWatcher = chokidar.watch(listenerLogsPath, {
+        //     awaitWriteFinish: {
+        //         pollInterval: 100,
+        //         stabilityThreshold: 2000
+        //     }
+        // });
+        // scriptWatcher.on("change", debounce(this.readScriptListenerLog, 1000));
+        // //...
+        // scriptWatcher.removeAllListeners();
+        // scriptWatcher.close();
+        // //...
         
     }
     clearScriptListenerLogs() 
