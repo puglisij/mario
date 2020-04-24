@@ -57,15 +57,15 @@
 </template>
 
 <script> 
-import pipelineActionParameter from "./pipeline-action-parameter.vue";
+import APipelineActionParameter from "./a-pipeline-action-parameter.vue";
 import _ from "../utils";
 
 const SINGLE_NONAME_PARAMETER = "SINGLE";
 
 export default {
-    name: "pipeline-action",
+    name: "APipelineAction",
     components: {
-        pipelineActionParameter
+        APipelineActionParameter
     },
     model: {
         prop: "action", 

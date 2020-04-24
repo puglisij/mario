@@ -29,7 +29,7 @@
 
 <script>
 import _ from "../utils";
-import checkbox from "./checkbox.vue";
+import ACheckbox from "./a-checkbox.vue";
 
 const TYPE_STRING = "String";
 const TYPE_NUMBER = "Number";
@@ -42,9 +42,9 @@ const TYPES = [
 ];
 
 export default { 
-    name: 'pipeline-action-parameter',
+    name: 'APipelineActionParameter',
     components: {
-        checkbox
+        ACheckbox
     },
     data() {
         const type = this.getType(this.value);

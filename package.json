@@ -29,10 +29,10 @@
     "rete-connection-plugin": "^0.9.0",
     "rete-vue-render-plugin": "^0.5.0",
     "upath": "^1.2.0",
+    "vee-validate": "^3.3.0",
     "vue": "^2.6.10",
     "vue-router": "^3.1.6",
-    "vuedraggable": "^2.23.2",
-    "vuelidate": "^0.7.4"
+    "vuedraggable": "^2.23.2"
   },
   "devDependencies": {
     "@babel/preset-flow": "^7.0.0",

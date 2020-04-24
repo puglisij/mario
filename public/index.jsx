@@ -95,3 +95,8 @@ JsxEvents.dispatch = function(type, data)
     }
 };
 JsxEvents.init();
+
+
+function noop() {
+    return true;
+}

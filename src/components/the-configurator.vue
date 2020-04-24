@@ -1,36 +1,73 @@
 <template>
-    <form id="configuration-form"
-        @submit="onConfigurationSubmit"
-        novalidate="true"
+    <validation-observer 
+        ref="observer"
+        slim
+        v-slot="{ handleSubmit }"
     >
-        <h2>Watchers</h2>
-        <watcher class="watcher" 
-            v-for="(watcher, index) in configuration.watchers" 
-            :key="watcher.id"
-            v-model="configuration.watchers[index]"
-            @changed="markForSave"
-            @delete="onDeleteWatcher(watcher.id)"
+        <form 
+            class="configurator"
+            novalidate="true"
+            @keydown.enter.prevent
+            @submit.prevent="handleSubmit(onConfigurationSubmit)"
         >
-        </watcher>
-        <div class="controls">            
-            <button class="topcoat-button--large" type="button" @click="onAddNewWatcher">Add Watcher</button>
-        </div>
-        <label>
-            <input class="topcoat-text-input" type="text" placeholder="/my/custom/jsx/actions" 
-                title="The path to the directory containing custom extendscript actions"
-                v-model="configuration.pathToUserActions"
-                @change="markForSave"
-            />
-        </label>
-        <div class="controls">
-            <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
-        </div>
-    </form>
+            <h2 class="tab-title">Configuration</h2>
+            <section class="section-content">
+                <label>
+                    <div class="label">Custom Actions Folder</div>
+                    <validation-provider 
+                        class="flex" 
+                        rules="pathexists" 
+                        v-slot="v"
+                    >
+                        <a-folder-dialog-button v-model="pathToUserActions"></a-folder-dialog-button>
+                        <input 
+                            class="topcoat-text-input full-width ml1" 
+                            type="text" 
+                            placeholder="/my/custom/jsx/actions" 
+                            title="The path to the directory containing custom extendscript actions"
+                            v-model="pathToUserActions"
+                            @change="onPathToUserActions"
+                        />
+                        <span class="topcoat-notification error" v-if="v.errors.length">{{ v.errors[0] }}</span>
+                    </validation-provider>
+                </label>
+            </section>
+            <h3 class="section-title">File Watchers</h3>
+            <section class="section-content">
+                <a-watcher
+                    v-for="(watcher, index) in fileWatchers"
+                    :key="watcher.id"
+                    :watchers="fileWatchers"
+                    v-model="fileWatchers[index]"
+                    @changed="onWatcherChange"
+                    @delete="onDeleteWatcher"
+                ></a-watcher>
+            </section>
+            <div class="configurator-buttons">
+                <button 
+                    class="topcoat-button--large" 
+                    type="button"
+                    @click.prevent="onAddNewWatcher"
+                >Add File Watcher</button>
+                <button 
+                    class="topcoat-button--large"
+                    type="submit" 
+                    v-show="needSaved" 
+                    ref="save"
+                >Save</button>
+            </div>
+        </form>
+    </validation-observer>
 </template>
 
 <script>
+import { ValidationProvider, ValidationObserver } from "vee-validate";
+
 import _ from "../utils";
-import watcher from "./watcher.vue";
+import store from "../store"; 
+import AFolderDialogButton from "./a-folder-dialog-button.vue";
+import ACheckbox from "./a-checkbox.vue";
+import AWatcher from "./a-watcher.vue";
 
 /**
  * General Application Configuration
@@ -38,59 +75,60 @@ import watcher from "./watcher.vue";
 export default {
     name: "TheConfigurator",
     components: {
-        watcher
+        ValidationObserver,
+        ValidationProvider,
+        AFolderDialogButton,
+        ACheckbox,
+        AWatcher,
     },
-    // TODO: shouldnt accept props, since its specific to the app, and not the context within the app
-    props: {
-        configuration: Object
-    }, 
-    data: () => ({
-        // TODO either persist this or store dirty flag in parent component
-        needSaved: false
-    }),
+    data: () => {
+        return {
+            needSaved: false, 
+            pathToUserActions: store.general.pathToUserActions,
+            fileWatchers: _.simpleDeepClone(store.general.fileWatchers)
+        }
+    },
     methods: {
         markForSave: function(el) {
             this.needSaved = true;
         },
-        getWatcher: function(id) {
-            return this.configuration.watchers.find(w => w.id == id);
+        onPathToUserActions(event)
+        {
+            this.markForSave();
+        },
+        onWatcherChange(watcher)
+        {
+            this.markForSave();
         },
         onAddNewWatcher(event)
         { 
-            event.preventDefault();
             let watcher = {
                 id: _.guid(),
+                name: "",
                 path: "",
+                useProcessedPath: true,
+                processedPath: "",
                 extensions: ""
             };
-            this.configuration.watchers.push(watcher);
-            this.markForSave();
+            this.fileWatchers.push(watcher);
         },
         onDeleteWatcher(id)
         {
-            event.preventDefault();
             this.$dialog.open({
                 name: "confirm",
                 onYes: () => {
-                    const watchers = this.configuration.watchers.filter(w => w.id != id);
-                    this.configuration.watchers = watchers;
+                    this.fileWatchers = this.fileWatchers.filter(w => w.id != id);
                     this.markForSave();
                 }
             })
         },
-
         onConfigurationSubmit(event)
         {
-            event.preventDefault();
-            this.$emit('changed', this.configuration);
+            store.general.pathToUserActions = this.pathToUserActions;
+            store.general.fileWatchers = this.fileWatchers;
+            this.$emit('changed');
             this.needSaved = false;
         }
-
-        // TODO Implement Import/Export Configuration
     }
 }
 </script>
-
-<style scoped>
-
-</style>

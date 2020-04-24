@@ -32,8 +32,5 @@ export default {
 </script>
 
 <style scoped>
-    label {
-        display: block;
-        margin: 5px 0;
-    }
+
 </style>

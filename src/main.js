@@ -1,27 +1,30 @@
 import Vue from 'vue';
-import VueRouter from 'vue-router';
-import Vuelidate from 'vuelidate';
 import App from './app.vue';
 import Dialog from './dialog';
-import TheConsole from './the-console';
 import Host from './host';
+import HostScriptListener from './host/hostScriptListener';
+import Logger from './console';
 import Server from './server';
+import Validation from './validation';
 
 
 const create = () => {
-    Host.init();
+    Logger.init();
     Server.init();
+    Host.init();
+    HostScriptListener.init();
 };
 const destroy = () => {
-    Host.close();
-    Server.close();
+    Server.destroy();
+    Host.destroy();
+    HostScriptListener.destroy();
+    Logger.destroy();
 };
 
 Vue.config.productionTip = false;
 Vue.config.devtools = true;
 Vue.use(Dialog);
-Vue.use(TheConsole);
-Vue.use(Vuelidate);
+
 
 window.vue = new Vue({
     render: h => h(App),
@@ -41,3 +44,17 @@ window.addEventListener("beforeunload", destroy);
     beforeDestroy - about to teardown. still fully present and functional. do cleanup events, and subscriptions 
     destroyed - nothing left on your component. do last minute cleanups, etc. 
 */
+
+
+// Vue.directive("print", {
+//     bind: function(el, binding, vnode) {
+//         var s = JSON.stringify
+//         el.innerHTML =
+//         'name: '       + s(binding.name) + '<br>' +
+//         'value: '      + s(binding.value) + '<br>' +
+//         'expression: ' + s(binding.expression) + '<br>' +
+//         'argument: '   + s(binding.arg) + '<br>' +
+//         'modifiers: '  + s(binding.modifiers) + '<br>' +
+//         'vnode keys: ' + Object.keys(vnode).join(', ')
+//     }
+// });

@@ -243,7 +243,7 @@ class Server extends EventEmitter
         });
         this._state = ServerState.STOPPED;
     }
-    close() 
+    destroy() 
     {
         console.log(`Server closing...`);
         this.stop();

@@ -10,6 +10,10 @@ const general = new Conf({
     configName: "general",
     // See: http://json-schema.org/draft/2019-09/json-schema-validation.html
     schema: {
+        checkIsScriptListenerActiveOnStart: {
+            type: "boolean", 
+            default: true
+        },
         pauseAfterEveryPipeline: {
             type: "boolean",
             default: false
@@ -26,17 +30,26 @@ const general = new Conf({
             type: "boolean",
             default: false
         },
-        logDirectory: {
+        logDirectory: { 
             type: "string",
             default: ""
         },
         pathToUserActions: {
             type: "string",
             default: ""
-        },
-        watchers: {
+        }, 
+        fileWatchers: {
             type: "array",
-            default: []
+            default: [
+                // {
+                //  id: ""
+                //  name: "",
+                //  path: "",
+                //  useProcessedPath: true
+                //  processedPath: "",
+                //  extensions: ""
+                // }
+            ]
         },
         currentTab: {
             type: "string",
@@ -55,7 +68,15 @@ const pipelines = new Conf({
     schema: {
         pipelines: {
             type: "array",
-            default: []
+            default: [
+                // {
+                //   id: "",
+                //   name: "",
+                //   watcherNames: "", 
+                //   disabled: false,
+                //   actions: []
+                // }
+            ]
         }
     }
 });
@@ -78,21 +99,22 @@ const ConfigurationProxy = (confInstance, configurationObject, events) => {
         set(target, property, value) 
         {
             if(typeof target[property] !== typeof value) {
-                throw new Error("Attempt to set configuration with different type. This should not happen.");
+                throw new Error("Attempt to set configuration property " + property + " with different type. This should not happen.");
             } else {
                 Reflect.set(...arguments);
                 confInstance.set(property, value);
                 events.emit("change", property);
+                console.log("Configuration updated. " + property + " -> " + value);
                 return true;
             }
         },
         defineProperty(target, property, attributes) {
             if(!Reflect.has(target, property)) {
-                throw new Error("Attempt to define new property on configuration object. This should not happen.");
+                throw new Error("Attempt to define new property " + property + " on configuration object. This should not happen.");
             }
         },
         deleteProperty() {
-            throw new Error("Attempt to delete properties from configuration object. This should not happen.");
+            throw new Error("Attempt to delete property "  + property + " from configuration object. This should not happen.");
         }
 	};
 

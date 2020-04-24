@@ -1,258 +1,177 @@
 <template>
-    <div>
-        <form id="pipelines-form"
-            @submit="onConfigurationSubmit"
-            novalidate="true"
-        >
-            <h2>Pipelines</h2>
-            <draggable 
-                v-model="local.pipelines"
-                group="pipelines" 
-                @change="onPipelinePositionChange"
-            >
-                <div class="pipeline clearfix"
-                    v-for="pipeline in local.pipelines"
-                    v-show="!isEditorOpen || (isEditorOpen && pipelineBeingEdited.id === pipeline.id)"
-                    :key="pipeline.id"
-                >
-                    <label>
-                        <input class="topcoat-text-input" type="text" 
-                            title="A name for the pipeline. Only used for reference."
-                            placeholder="my-pipeline-name"
-                            :value="pipeline.name"
-                            @change="onPipelineName($event, pipeline)"
-                        />
-                    </label>
-                    <label>
-                        <input class="topcoat-text-input" type="text" 
-                            title="The 'type'(s) of image processes that will flow through this pipeline, as determined by watcher default type or json 'type' property. Case insensitive."
-                            placeholder="my-type-1, my-type-2"
-                            :value="pipeline.for"
-                            @change="onPipelineFor($event, pipeline)"
-                        />
-                    </label>
-                    <checkbox 
-                        v-model="pipeline.disabled" 
-                        @change="onPipeline">
-                        Disabled 
-                    </checkbox>
+    <div class="pipelines">
+        <h2 class="tab-title">Pipelines</h2>
+        
+        <a-checkbox v-model="pauseAfterEveryPipeline" @change="markForSave">
+            Pause processing after every Pipeline?
+        </a-checkbox>
+        <a-checkbox v-model="pauseAfterEveryAction" @change="markForSave">
+            Pause processing after every Pipeline Action?
+        </a-checkbox>
+        <a-checkbox v-model="pauseAfterEveryImage" @change="markForSave">
+            Pause processing after every Image?
+        </a-checkbox>
+        <a-checkbox v-model="pauseOnExceptions" @change="markForSave">
+            Pause processing on errors?
+        </a-checkbox>
 
-                    <button class="topcoat-icon-button--quiet" type="button"
-                        @click="onToggleEditor(pipeline.id);"
-                    >{{ isEditorOpen ? "Close" : "Open" }} Editor</button>
-                    <!-- <span class="button-divider">|</span>
-                    <button class="topcoat-icon-button--quiet" type="button"
-                        @click="onRunPipelineWithDefaults(pipeline.id);"
-                    >Run with Defaults</button> -->
-                    <button class="pipeline-delete topcoat-icon-button--quiet" type="button"
-                        title="Delete this pipeline"
-                        @click="onDeletePipeline(pipeline.id);"
-                    >X</button>
+        <h3 class="section-title">Pipelines</h3>
+        <validation-observer 
+            ref="observer"
+            slim
+            v-slot="{ handleSubmit }"
+        >
+            <form 
+                novalidate="true"
+                @keydown.enter.prevent
+                @submit.prevent="handleSubmit(onConfigurationSubmit)"
+            >
+                <draggable 
+                    v-model="pipelines"
+                    group="pipelines" 
+                    @change="markForSave"
+                >
+                    <a-pipeline
+                        v-for="(pipeline, index) in pipelines"
+                        v-show="!isEditorOpen || (isEditorOpen && pipelineBeingEdited.id === pipeline.id)"
+                        v-model="pipelines[index]"
+                        :key="pipeline.id"
+                        @delete="onPipelineDelete"
+                        @edit="onPipelineEdit"
+                        @play="onPipelinePlay"
+                    >
+                    </a-pipeline>
+                </draggable>
+                <div class="pipeline-buttons" v-if="!isEditorOpen">
+                    <button class="topcoat-button--large" type="button" @click="onPipelineAdd">Add Pipline</button>
+                    <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
                 </div>
-            </draggable>
-            <div class="controls" v-if="!isEditorOpen">
-                <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
-                <button class="topcoat-button--large" type="button" @click="onAddNewPipeline">Add Pipline</button>
-            </div>
-        </form>
+            </form>
+        </validation-observer>
+
         <div class="pipeline-editor" v-if="isEditorOpen">
             <h3 class="pipeline-editor-header">Editing: {{ pipelineBeingEdited.name }}</h3>
             <div class="pipeline-editor-board">
                 <draggable 
-                    v-model="pipelineBeingEdited.externalActions"
+                    v-model="pipelineBeingEdited.actions"
                     draggable=".action"
                     handle=".action-handle"
                     group="actions"
                     @change="onActionPositionChange"
                 >
                     <pipeline-action 
-                        v-for="(action, index) in pipelineBeingEdited.externalActions" 
-                        v-model="pipelineBeingEdited.externalActions[index]"
+                        v-for="(action, index) in pipelineBeingEdited.actions" 
+                        v-model="pipelineBeingEdited.actions[index]"
                         :key="action.id"
-                        @select-new="onActionSelectNew(index)"
-                        @changed="onActionChange(index, $event)"
-                        @delete="onActionDelete(index)"
+                        @select-new="onActionSelectNew"
+                        @changed="onActionChange"
+                        @delete="onActionDelete"
                     />
                 </draggable>
             </div> 
-            <div class="controls">
-                <button class="topcoat-button--large" type="submit" v-show="needSaved" @click="onSave">Save</button>
+            <div class="pipeline-buttons">
                 <button class="topcoat-button--large" type="button" @click="onActionAdd">Add Action</button>
+                <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
             </div>
-            <h3 class="pipeline-editor-header">Default JSON</h3>
-            <textarea class="pipeline-editor-defaults topcoat-textarea" 
-                :value="pipelineBeingEditedDefaults"
-                @change="onDefaultsChange"
-                cols="45"
-            ></textarea>
-            <p class="error" v-if="pipelineDefaultsError">{{pipelineDefaultsError}}</p> 
         </div>
     </div>
 </template>
 
 <script>
-/* npm modules */
-import draggable from 'vuedraggable'
+import { ValidationObserver } from "vee-validate";
+import Draggable from 'vuedraggable'
 
-/* local modules */
-import checkbox from "./checkbox.vue";
-import pipelineAction from "./pipeline-action.vue";
 import _ from "../utils";
+import store from "../store"; 
+import ACheckbox from "./a-checkbox.vue";
+import APipeline from "./a-pipeline.vue";
+import APipelineAction from "./a-pipeline-action.vue";
 
-// TODO Use Rete.js for visual node based editor. 
-//      At which point it may be necessary to move this into its own lib (non Vue) and import
 
 export default {
     name: "ThePipelines",
     components: {
-        checkbox,
-        draggable,
-        pipelineAction
+        ValidationObserver,
+        Draggable,
+        ACheckbox,
+        APipeline,
+        APipelineAction
     },
-    // TODO: shouldnt accept props, since its specific to the app, and not the context within the app
-    props: {
-        configuration: Object
-    }, 
     data() {
         return {
-            local: this.toLocalConfiguration(this.configuration),
             needSaved: false,
-            pipelineBeingEdited: {}, 
-            pipelineDefaultsError: ""
+            pauseAfterEveryPipeline: store.general.pauseAfterEveryPipeline,
+            pauseAfterEveryAction: store.general.pauseAfterEveryAction,
+            pauseAfterEveryImage: store.general.pauseAfterEveryImage,
+            pauseOnExceptions: store.general.pauseOnExceptions,
+            pipelines: this.toLocalPipelines(store.pipelines.pipelines),
+            pipelineBeingEdited: {}
         };
     },
     computed: {
-        pipelineBeingEditedDefaults() 
-        {
-            let defaults = this.pipelineBeingEdited.defaults;
-            if(!this.pipelineBeingEdited.defaults || _.isEmptyObject(this.pipelineBeingEdited.defaults)) 
-            {
-                defaults = {
-                    type: this.pipelineBeingEdited.for, 
-                    image: "", 
-                    package: ""
-                };
-            }
-            this.pipelineDefaultsError = "";
-            return JSON.stringify(defaults, null, 4);
-        },
         isEditorOpen() {
             return !_.isEmptyObject(this.pipelineBeingEdited); 
         }
     },
-    validations: {
-
-    },
     methods: {
-        toLocalConfiguration(configuration)
-        {
-            // TODO Shouldn't be modifying prop directly
-            //  Update to use .sync or clone configuration
-            for(const pipeline of configuration.pipelines) 
-            {
-                if(!pipeline.id) {
-                    pipeline.id = _.guid();
-                }
-                if(!pipeline.externalActions) {
-                    this.$set(pipeline, 'externalActions', []);
-                }
-                for(const action of pipeline.externalActions) 
-                {
-                    if(!action.id) {
-                        action.id = _.guid();
-                    }
-                }
-            }
-            return configuration;
-        },
-        onSave()
-        {
-            if(this.needSaved)
-                this.$emit("changed", this.local.pipelines);
-            this.needSaved = false;
-        },
-        markDirty() 
+        markForSave() 
         {
             this.needSaved = true;
+        },
+        toLocalPipelines(value)
+        {
+            const pipelines = _.simpleDeepClone(value);
+            // Ensure id's
+            for(const pipeline of pipelines) {
+                pipeline.id = pipeline.id || _.guid();
+                for(const action of pipeline.actions) {
+                    action.id = action.id || _.guid();
+                }
+            }
+            return pipelines;
+        },
+        onConfigurationSubmit()
+        {
+            this.needSaved = false;
+            store.pipelines.pipelines = this.pipelines;
         },
         /*---------------
             Pipelines
         ---------------*/
         getPipeline: function(id) {
-            return this.local.pipelines.find(x => x.id == id);
+            return this.pipelines.find(x => x.id == id);
         },
-        validateFor(forTypes) {
-            let forTypesArray = forTypes.split(','); 
-                forTypesArray = forTypesArray.map(ext => ext.replace(/[^a-z0-9_\-]/gi, ''));
-                forTypesArray = forTypesArray.filter(ext => ext && ext.length > 0);
-            return forTypesArray;
-        },
-        onPipeline()
+        onPipelineAdd()
         {
-            this.markDirty();
-        },
-        onPipelineName(event, pipeline) 
-        {
-            pipeline.name = event.target.value;
-            this.markDirty();
-        },
-        onPipelineFor(event, pipeline) 
-        {
-            pipeline.for = this.validateFor(event.target.value);
-            this.markDirty();
-        },
-        onAddNewPipeline()
-        {
-            const id = _.guid();
-            this.local.pipelines.push({
-                id,
-                for: "", 
-                name: "Pipeline-Name",
-                externalActions: []
+            this.pipelines.push({
+                id: _.guid(),
+                name: "",
+                watcherNames: "", 
+                disabled: false,
+                actions: []
             });
-            this.markDirty();
+            this.markForSave();
         },
-        onDeletePipeline(id)
+        onPipelineEdit(id)
+        {
+            this.openEditor(id);
+        },
+        onPipelinePlay(id)
+        {
+
+        },
+        onPipelineDelete(id)
         {
             this.$dialog.open({
                 name: "confirm",
-                onYes: () => 
-                {
+                onYes: () => {
                     if(this.isEditorOpen && this.pipelineBeingEdited.id === id) {
                         this.closeEditor();
                     }
-                    const index = this.local.pipelines.findIndex(x => x.id == id);
-                    this.$delete(this.local.pipelines, index);
+                    this.pipelines = this.pipelines.filter(x => x.id != id);
+                    this.markForSave();
                 }
             });
-            this.markDirty();
-        },
-        onPipelinePositionChange(event) 
-        {
-            this.markDirty();
-        },
-        onDefaultsChange(event) 
-        {
-            try {
-                const defaults = JSON.parse(event.target.value);
-                      defaults.type = defaults.type || this.pipelineBeingEdited.type;
-                this.pipelineBeingEdited.defaults = defaults;
-                this.pipelineDefaultsError = "";
-                this.markDirty();
-            } catch(e) {
-                this.pipelineDefaultsError = e.toString();
-            }
-        },
-        onRunPipelineWithDefaults(id)
-        {
-            this.$emit("runwithdefaults", id);
-        },
-        onToggleEditor(id) 
-        {
-            if(!this.isEditorOpen) 
-                this.openEditor(id);
-            else 
-                this.closeEditor();
         },
         openEditor(id)
         {
@@ -268,7 +187,8 @@ export default {
         ---------------*/ 
         onActionAdd(event)
         {
-            this.pipelineBeingEdited.externalActions.push({
+            this.pipelineBeingEdited.actions.push({
+                id: _.guid(),
                 action: ""
             });
         },
@@ -278,68 +198,23 @@ export default {
         },
         onActionChange(index, action) 
         {
-            this.markDirty();
+            this.markForSave();
         },
         onActionDelete(index)
         {
             this.$dialog.open({
                 name: "confirm",
                 onYes: () => {
-                    this.pipelineBeingEdited.externalActions.splice(index, 1);
-                    this.markDirty();
+
+                    this.pipelineBeingEdited.actions.splice(index, 1);
+                    this.markForSave();
                 }
             });
         },
         onActionPositionChange(event) 
         {
-            this.markDirty();
-        },
-        onConfigurationSubmit(event) 
-        {
-            event.preventDefault();
+            this.markForSave();
         }
     }
 }
 </script>
-
-<style scoped lang="scss">
-
-    .pipeline {
-        border: none;
-        border-bottom: 1px solid #333;
-        margin-bottom: .5em;
-        padding: .5em;
-
-        input[type=text] {
-            display: inline-block;
-            margin: .25em 0;
-            width: 90%;
-        }
-        &-delete {
-            float: right;
-        }
-    }
-    .button-divider {
-        margin: 0 .5em;
-    }
-    
-    .pipeline-editor {
-        background: rgba(0,0,0,0.1);
-        border-radius: 5px;
-        padding: .5em;
-    }
-    .pipeline-editor-header {
-        margin: 0;
-        padding: .5em;
-    }
-    .pipeline-editor-board {
-        position: relative;
-    }
-    .pipeline-editor-defaults {
-        height: 400px;
-        width: 100%;
-    }
-    .error {
-        color: red;
-    }
-</style>

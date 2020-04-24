@@ -1,6 +1,8 @@
 import upath from "upath";
 import fs from "fs";
 import { EventEmitter } from "events";
+import global from '../global';
+import store from '../store';
 
 const CONSOLE_METHODS = ["log", "warn", "error"];
 
@@ -20,19 +22,17 @@ class Logger extends EventEmitter
         this.logBuffer = [];
         this.maxBufferSize = 64;
     }
-    /**
-     * Initialize logging with the given options
-     * @param {object} [options]
-     * @param {String} [options.logDirectory = "./"] the directory location where log files are written
-     */
-    init(options) 
+    init() 
     {
         if(this.initialized)
             return;
         this.initialized = true;
         this.emit("initializing");
 
-        this.options = Object.assign(this.options, options || {});
+        this.options = {
+            logDirectory: store.general.logDirectory || global.appDefaultLogPath, 
+            logFileEnabled: true
+        };
         this._cleanupFiles();
         this._createFileStream();
 
@@ -118,9 +118,9 @@ class Logger extends EventEmitter
     /**
      * Should be called to release internal resources
      */
-    close() 
+    destroy() 
     {
-        console.log("Logger closed.");
+        console.log("Logger destroyed.");
 
         if(!this.initialized) 
             return;

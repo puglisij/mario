@@ -1,32 +1,42 @@
 <template>
     <div class="jsx">
-        <h2>ExtendScript</h2>
+        <h2 class="tab-title">ExtendScript</h2>
+        
         <div class="columns is-mobile is-multiline">
+            <div class="column is-full scriptlistener">
+                <button class="topcoat-button--large" 
+                    v-if="isScriptListenerInstalled"
+                    @click="toggleScriptListener" 
+                    >
+                    ScriptListener {{ isScriptListenerActive ? 'Off' : 'On'}}
+                    </button>
+                <!-- <button class="topcoat-button--large" 
+                    @click="toggleScriptListenerReader" 
+                    >
+                    ScriptListener Logs Reader {{ isScriptListenerActive ? 'Off' : 'On'}}
+                    </button> -->
+            </div>
             <div class="column is-full">
-                <button class="topcoat-button--large" 
-                    @click="toggleScriptListener" 
+                <a-checkbox 
+                    v-model="checkIsScriptListenerActiveOnStart" 
                     >
-                    Toggle ScriptListener {{ isScriptListening ? 'Off' : 'On'}}
-                    </button>
-                <button class="topcoat-button--large" 
-                    @click="toggleScriptListener" 
-                    >
-                    Toggle ScriptListener {{ isScriptListening ? 'Off' : 'On'}}
-                    </button>
+                    Check if ScriptListener is Active on Startup?
+                </a-checkbox>
             </div>
             <div class="column is-full">
                 <a-checkbox 
                     v-model="convertIdAsComment" 
                     >
-                    Convert to Javascript Comment? 
+                    Convert CharID to Javascript Comment? 
                 </a-checkbox>
             </div>
             <label class="column is-half">
                 <input 
                     class="topcoat-text-input--large full-width" 
                     type="text" 
-                    ref="charId" 
+                    maxlength="4"
                     placeholder="CharID" 
+                    ref="charId" 
                     v-model="charId" 
                     @change="calculateStringId" 
                     @focus="$event.target.select()"
@@ -36,8 +46,8 @@
                 <input 
                     class="topcoat-text-input--large full-width" 
                     type="text" 
-                    ref="stringId" 
                     placeholder="StringID" 
+                    ref="stringId" 
                     v-model="stringId" 
                     @change="calculateCharId" 
                     @focus="$event.target.select()"
@@ -82,6 +92,8 @@ import debounce from 'debounce';
 
 /* local modules */
 import host from '../host';
+import store from '../store';
+import hostScriptListener from '../host/hostScriptListener';
 import ACheckbox from "./a-checkbox.vue";
 
 export default {
@@ -93,20 +105,41 @@ export default {
         return {
             charId: "",
             stringId: "",
-            convertIdAsComment: true,  // TODO: Get from Settings
+            convertIdAsComment: true,  
             jsxText: "",
             jsxResult: "",
-            isScriptListening: false,
-            scriptWatcher: null 
+            isScriptListenerInstalled: false,
+            isScriptListenerActive: false
         }
     },
     computed: {
         haveInput() {
             return this.jsxText.length > 0;
+        }, 
+        checkIsScriptListenerActiveOnStart: {
+            get() {
+                return store.general.checkIsScriptListenerActiveOnStart;
+            },
+            set(v) {
+                store.general.checkIsScriptListenerActiveOnStart = v;
+            }
         }
     },
-    beforeDestroy() {
-        this.destroyScriptListener();
+    mounted() {
+        if(this.checkIsScriptListenerActiveOnStart) 
+        {
+            console.log("Checking ScriptListenerStatus...");
+            hostScriptListener.isScriptListenerActive()
+            .then(isListening => {
+                console.log("ScriptListener Status Active: " + isListening);
+                this.isScriptListenerActive = isListening;
+            });
+        }
+        hostScriptListener.isScriptListenerIstalled()
+        .then(isInstalled => {
+            console.log("ScriptListener Installed: " + isInstalled);
+            this.isScriptListenerInstalled = isInstalled;
+        });
     },
     methods: {
         // TODO:
@@ -128,8 +161,12 @@ export default {
         },
         async toggleScriptListener() 
         {
-            this.isScriptListening = !this.isScriptListening;
-            host.toggleScriptListener(this.isScriptListening);
+            this.isScriptListenerActive = !this.isScriptListenerActive;
+            hostScriptListener.toggleScriptListener(this.isScriptListenerActive);
+        },
+        async toggleScriptListenerReader()
+        {
+            // TODO
         },
         async calculateStringId() {
             const result = await host.convertCharToStringId(this.charId);
@@ -140,7 +177,7 @@ export default {
             });
         },
         async calculateCharId() {
-            const result = await host.convertStringToCharId(this.charId);
+            const result = await host.convertStringToCharId(this.stringId);
             this.charId = result;
             this.$nextTick(() => {
                 this.$refs.charId.focus();
@@ -152,14 +189,12 @@ export default {
 </script>
 
 <style lang="scss">
-    .full-width {
-        width: 100%;
-    }
     .jsx {
         label {
             margin: 0;
         }
-        .code {
+        .code, 
+        .scriptlistener {
             button {
                 margin-right: .5rem;
             }
