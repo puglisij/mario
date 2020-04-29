@@ -1,23 +1,26 @@
-import dialog from './a-dialog.vue';
+import ADialogRoot from './a-dialog-root.vue';
 import {events} from './events';
 
 const Plugin = {
     install (Vue, globalOptions = {}) 
     {
-      Vue.prototype.$dialog = {
-        open (options) {
-            events.$emit('open', options)
-            // TODO return Promise for onYes, onCancel to support await pattern
-            // TODO Could instead use the Window() api to create dialogs on JSX side
-        },
-  
-        close (name) {
-            events.$emit('close', name)
-        }
-      }
-  
-      Vue.component('ADialog', dialog)
+        Vue.prototype.$dialog = {
+            /**
+             * Opens a simple message confirmation dialog
+             * @param {string} message message to display
+             * @param {function} onYes callback for Yes answer
+             * @param {function} onCancel callback for Cancel answer
+             */
+            openConfirm(options) {
+                events.$emit('openconfirm', options);
+            },
+            open (options) {
+                events.$emit('open', options);
+            }
+        };
+
+        Vue.component('ADialogRoot', ADialogRoot)
     }
-  }
+}
   
-  export default Plugin
+export default Plugin

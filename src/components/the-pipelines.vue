@@ -169,8 +169,9 @@ export default {
         },
         onPipelineDelete(id)
         {
-            this.$dialog.open({
+            this.$dialog.openConfirm({
                 name: "confirm",
+                message: "Delete this pipeline?",
                 onYes: () => {
                     if(this.isEditorOpen && this.pipelineBeingEdited.id === id) {
                         this.closeEditor();
@@ -188,7 +189,7 @@ export default {
                 this.closeEditor();
             //    return;
             // }
-            // this.$dialog.open({
+            // this.$dialog.openConfirm({
             //     name: "confirm",
             //     message: "Close editor without saving changes?",
             //     onYes: () => {
@@ -216,8 +217,9 @@ export default {
         },
         onActionDelete(id)
         {
-            this.$dialog.open({
+            this.$dialog.openConfirm({
                 name: "confirm",
+                message: "Delete this action?",
                 onYes: () => {
                     const actions = this.pipelineBeingEdited.actions.filter(a => a.id !== id);
                     this.pipelineBeingEdited.actions = actions;

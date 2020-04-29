@@ -1,14 +1,16 @@
 <template>
   <div id="app">
-    <a-dialog name="confirm" />
+    <a-dialog-root />
     <adobe-menus />
-
+    
     <tabs @changed="onTabChanged" :initial-tab="currentTabComponent">
         <tab title="the-console">Console</tab>
         <tab title="the-jsx-runner">Jsx</tab>
         <tab title="the-configurator">Configuration</tab>
         <tab title="the-pipelines">Pipelines</tab>
     </tabs>
+
+    <start-stop />
 
     <section class="tab-content">
         <keep-alive exclude="ThePipelines, TheConfigurator">
@@ -28,10 +30,12 @@ import store from './store';
 import themeManager from "./themeManager";
 import Tabs from './components/tabs';
 import Tab from './components/tab';
+import StartStop from './components/start-stop.vue';
 
 export default {
     name: "app",
     components: {
+        StartStop,
         Tabs, 
         Tab,
         AdobeMenus: () => import("./components/adobe-menus.vue"),

@@ -114,8 +114,9 @@ export default {
         },
         onDeleteWatcher(id)
         {
-            this.$dialog.open({
+            this.$dialog.openConfirm({
                 name: "confirm",
+                message: "Delete this file watcher?",
                 onYes: () => {
                     this.fileWatchers = this.fileWatchers.filter(w => w.id != id);
                     this.markForSave();
