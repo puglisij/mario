@@ -6,35 +6,32 @@
             :class="{show: showParameters}" 
             :title="(showParameters ? 'Hide' : 'Show') + ' Parameters'"
             @click="toggleParameters"><i>&#128065;</i></span>
-        <!-- data --> 
+
         <div class="action-data">
-            <!-- name -->
             <div class="action-name">
-                <input class="topcoat-text-input" type="text" placeholder="the action string (e.g. 'action.saveDocument')"
+                <input class="topcoat-text-input mr1" 
+                    type="text" 
+                    placeholder="the action name (e.g. 'action.saveDocument')"
                     title="The action function name as given in the jsx. Case sensitive."
-                    :value="localAction.action"
+                    v-model="localAction.action"
                     @change="onActionName"
                 />
-                <button class="action-select topcoat-icon-button--quiet" 
-                    type="button" 
-                    title="Select an existing action"
-                    @click="onActionSelectNew">&#128447;</button>
-                <button class="action-delete topcoat-icon-button--quiet" 
+                <button class="topcoat-button--large--quiet" 
                     type="button" 
                     title="Delete this action"
                     @click="onActionDelete">X</button>
             </div>
-            <!-- parameters -->
+
             <div class="action-parameters" v-if="showParameters">
                 <h3>Parameters</h3>
-                <pipeline-action-parameter
+                <a-pipeline-action-parameter
                     v-for="(parameter, parameterId) in localAction.parameters" 
                     :key="parameterId"
                     :id="parameterId"
                     :name="parameter.name"
                     :value="parameter.value"
                     :disableName="hasSingleParameter"
-                    @changed="onParameterChanged"
+                    @change="onParameterChange"
                     @delete="onParameterDelete"
                 />
                 <button class="topcoat-button" type="button" 
@@ -57,8 +54,8 @@
 </template>
 
 <script> 
-import APipelineActionParameter from "./a-pipeline-action-parameter.vue";
 import _ from "../utils";
+import APipelineActionParameter from "./a-pipeline-action-parameter.vue";
 
 const SINGLE_NONAME_PARAMETER = "SINGLE";
 
@@ -69,7 +66,7 @@ export default {
     },
     model: {
         prop: "action", 
-        event: "changed"
+        event: "change"
     },
     props: {
         action: Object
@@ -90,6 +87,44 @@ export default {
         }
     },
     methods: {
+        emitChange() {
+            const rawAction = this.toRawAction(this.localAction);
+            this.$emit("change", rawAction);
+        },
+        /** 
+            Local Action Example: 
+            {
+                action: "action.convertToColorProfile"
+                parameters: {
+                    "id-0": {
+                        "name": "colorSpace"
+                        "value": "RGB"
+                    }
+                }
+            }
+        */
+        toLocalAction(rawAction) 
+        {
+            const { action, parameters } = rawAction;
+            const rawParameters = (
+                       _.isBoolean(parameters) 
+                    || _.isNumber(parameters) 
+                    || _.isString(parameters)
+                    || _.isNull(parameters)) ? { [SINGLE_NONAME_PARAMETER]: parameters } : parameters;
+
+            const localAction = {
+                action: action, 
+                parameters: {}
+            };
+            for(const [name, value] of Object.entries(rawParameters || {})) {
+                const parameterId = _.guid();
+                localAction.parameters[parameterId] = {
+                    name, 
+                    value
+                };
+            }
+            return localAction;
+        },
         /** 
             Raw Action Example:
             {
@@ -101,78 +136,40 @@ export default {
         */
         toRawAction(localAction) 
         {
-            let rawAction = {
+            const rawAction = {
+                id: this.action.id,
                 action: localAction.action
             };
-            if(this.hasParameters) {
+            if(this.hasParameters) 
+            {
                 if(this.hasSingleParameter) {
                     rawAction.parameters = _.first(localAction.parameters).value;
-                }
-                else 
-                {
+                } else {
                     rawAction.parameters = {};
                     for(const [parameterId, parameter] of Object.entries(localAction.parameters)) {
                         rawAction.parameters[parameter.name] = parameter.value;
                     }
                 }
             }
-            return Object.assign({}, this.action, rawAction);
+            return rawAction;
         },
-        /** 
-            Local Action Example: 
-            {
-                "id-0": {
-                    "name": "colorSpace"
-                    "value": "RGB"
-                }
-            }
-        */
-        toLocalAction(rawAction) 
-        {
-            const localAction = {
-                action: rawAction.action, 
-                parameters: {}
-            };
-            let rawParameters = {};
-            if(_.isObject(rawAction.parameters)) {
-                rawParameters = rawAction.parameters;
-            } else if (_.isBoolean(rawAction.parameters) 
-                    || _.isNumber(rawAction.parameters) 
-                    || _.isString(rawAction.parameters)
-                    || _.isNull(rawAction.parameters)) {
-                rawParameters = {
-                    [SINGLE_NONAME_PARAMETER]: rawAction.parameters
-                };
-            } 
-            for(const [parameterName, parameterValue] of Object.entries(rawParameters)) {
-                const parameterId = _.guid();
-                localAction.parameters[parameterId] = {
-                    name: parameterName, 
-                    value: parameterValue
-                };
-            }
-            return localAction;
-        },
-        emitChange()
-        {
-            const rawAction = this.toRawAction(this.localAction);
-            this.$emit("changed", rawAction);
-        },
-        onActionName(event)
-        {
-            this.localAction.action = event.target.value;
+        onActionName() {
             this.emitChange();
         },
-        onActionSelectNew(event) {
-            this.$emit("select-new");
-        },
-        onActionDelete(index) {
-           this.$emit("delete");
+        onActionDelete() {
+           this.$emit("delete", this.action.id);
+           this.emitChange();
         },
         toggleParameters() {
             this.showParameters = !this.showParameters;
         }, 
-        onParameterAddSingle(event)
+        onParameterChange(id, name, value) 
+        {
+            this.localAction.parameters[id].name = name;
+            this.localAction.parameters[id].value = value;
+            this.emitChange();
+        },
+        onParameterAddSingle()
         {
             const parameterId = _.guid();
             this.$set(this.localAction.parameters, parameterId, {
@@ -181,7 +178,7 @@ export default {
             });
             this.emitChange();
         },
-        onParameterAddMultiple(event) 
+        onParameterAddMultiple() 
         {
             const parameterId = _.guid();
             this.$set(this.localAction.parameters, parameterId, {
@@ -190,16 +187,9 @@ export default {
             });
             this.emitChange();
         },
-        onParameterChanged(id, name, value) 
-        {
-            this.localAction.parameters[id].name = name;
-            this.localAction.parameters[id].value = value;
-
-            this.emitChange();
-        }, 
         onParameterDelete(id) {
+            console.log("Deleting parameter: " + id);
             this.$delete(this.localAction.parameters, id);
-
             this.emitChange();
         } 
     }
@@ -210,35 +200,27 @@ export default {
     /*
         -----------------------------------------------
         | Handle | Expand | Data                      |
-        |        |        | Name (Name | Select | X)  |
+        |        |        | Name (Name | X)  |
         |        |        | Parameters                |
         _______________________________________________
     */
     .action {
         align-items: flex-start;
-        border-bottom: 1px solid #333;
         display: flex;
         flex-wrap: nowrap;
         justify-content: flex-start;
-        padding: .25em;
-        width: 100%;
-
-        &:last-of-type {
-            margin-bottom: .5em;
-        }
     }
 
-
+    .action-handle,
+    .action-expand {
+        padding-left: $column-gap * 2;
+        padding-right: $column-gap * 2;
+    }
     .action-handle {
         cursor: row-resize;
-        margin: 0 .5em 0 0;
     }
     .action-expand {
         cursor: pointer;
-        height: 100%;
-        margin: 0 .5em 0 0;
-        width: 20px;
-
         i {
             opacity: .2;
         }
@@ -248,47 +230,34 @@ export default {
     }
 
     .action-data {
+        display: block;
         flex-grow: 1;
 
-        .action-name, 
-        .action-parameters {
+        .action-name {
             display: flex;
             width: 100%;
-        }
-        .action-name {
             input[type=text] {
                 flex-grow: 1;
             }
-            .action-delete {
-                margin: 0 0 0 .5em;
-            }
         }
         .action-parameters {
+            display: flex;
             flex-direction: column;
-            margin: .25em 0 0 0;
+            width: 100%;
 
             h3 {
-                margin: .25em 0;
+                margin: $column-gap 0;
             }
         }
         .action-parameter {
-            display: block;
-            letter-spacing: -1em;
-            margin: 0 0 .25em 0;
+            display: flex;
+            margin-bottom: $column-gap;
 
-            select,
-            input, 
-            label, 
-            button {
-                display: inline-block;
-            }
-            select, 
-            button {
-                width: 10%;
-            }
             &__input {
-                margin: 0 1%;
-                width: 38%;
+                flex-grow: 1;
+            }
+            input {
+                width: 100%;
             }
         }
     }

@@ -3,9 +3,7 @@
     <div class="modal-backdrop" v-show="isOpen">
       <div class="modal" v-bind:style="{ height: height || options.height, width: width || options.width }">
         <section class="modal-body">
-            <slot>
-                Are you sure?
-            </slot>
+            {{ options.message }}
         </section>
         <footer class="modal-footer">
           <slot name="footer">
@@ -26,6 +24,7 @@
 import {events} from './events';
 
 const defaultOptions = {
+    message: "Are you sure?",
     height: "auto",
     width: "80%"
 };

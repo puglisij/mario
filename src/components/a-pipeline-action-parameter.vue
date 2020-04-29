@@ -1,26 +1,32 @@
 <template>
     <div class="action-parameter">
-        <select v-model="type" @change="onType">
+        <select class="topcoat-text-input mr2" 
+            v-model="type" 
+            @change="onType"
+        >
             <option v-for="typeName in types" :key="typeName" :value="typeName">{{ typeName }}</option>
         </select> 
-        <input class="action-parameter__input topcoat-text-input" type="text" 
-            placeholder="name"
-            v-model="localName"
-            @change="onName"
-            :disabled="disableName"
-        />
-        <checkbox class="action-parameter__input" name="check" 
+        <div class="action-parameter__input mr2">
+            <input class="topcoat-text-input" type="text" 
+                placeholder="name"
+                v-model="localName"
+                :disabled="disableName"
+            />
+        </div>
+        <a-checkbox class="action-parameter__input mr2"
             v-show="isBoolean"
             :checked="localValue"
             @change="onCheckboxValue" 
         />
-        <input class="action-parameter__input topcoat-text-input" type="text" name="text" 
-            placeholder="value"
-            v-show="!isBoolean"
-            :value="localValue"
-            @change="onTextValue"
-        />
-        <button class="topcoat-icon-button--quiet" 
+        <div class="action-parameter__input mr2">
+            <input class="topcoat-text-input" type="text" 
+                placeholder="value"
+                v-show="!isBoolean"
+                :value="localValue"
+                @change="onTextValue"
+            />
+        </div>
+        <button class="topcoat-button--large--quiet" 
             type="button" 
             title="Delete this parameter"
             @click="onDelete">X</button>
@@ -46,9 +52,18 @@ export default {
     components: {
         ACheckbox
     },
+    props: {
+        id: {
+            type: String,
+            required: true
+        },
+        disableName: Boolean, 
+        name: String,
+        value: null
+    }, 
     data() {
         const type = this.getType(this.value);
-        console.log(`parameter data() type: ${type} rawValue: ${this.value}`);
+        console.log(`parameter data() type: ${type} name: ${this.name} rawValue: ${this.value}`);
 
         return {
             type: type, 
@@ -56,15 +71,6 @@ export default {
             localName: this.name,
         }
     },
-    props: {
-        id:  {
-            type: String, 
-            required: true
-        },
-        disableName: Boolean, 
-        name: String, 
-        value: null
-    }, 
     computed: {
         types() {
             return TYPES;
@@ -73,7 +79,14 @@ export default {
         isNumber() { return this.type === TYPE_NUMBER; },
         isString() { return this.type === TYPE_STRING; }
     },
+    watch: {
+        localName: function() { this.emitChange(); },
+        localValue: function() { this.emitChange(); }
+    },
     methods: {
+        emitChange() {
+            this.$emit("change", this.id, this.localName, this.localValue);
+        },
         /**
          * Keep the original type
          */
@@ -90,31 +103,6 @@ export default {
             }
             return TYPE_STRING;
         },
-        /**
-         * Auto detect and convert the type
-         */
-        autoType(value)
-        {
-            if (_.isBoolean(value) || (_.isString(value) && (value.toLowerCase() === "true" || value.toLowerCase() === "false"))) {
-                console.log("autoType() Boolean");
-                return {
-                    type: TYPE_BOOLEAN,
-                    value: _.isString(value) ? JSON.parse(value.toLowerCase()) : value
-                };
-            } else if(_.isNumber(value) || !(value === "" || value === null || isNaN(value))) {
-                console.log("autoType() Number");
-                return {
-                    type: TYPE_NUMBER,
-                    value: Number(value)
-                };
-            } else {
-                console.log("autoType() String");
-                return {
-                    type: TYPE_STRING,
-                    value: _.isString(value) ? value : "" + value
-                };
-            }
-        },  
         forceType(value) 
         {
             if(this.isBoolean) {
@@ -127,36 +115,21 @@ export default {
                 return "" + value;
             }
         },
-        emitChange()
-        {
-            this.$emit('changed', this.id, this.localName, this.localValue);
-        },
-        onType(event)
+        onType()
         {
             this.localValue = this.forceType(this.localValue);
-            this.emitChange();
         },
         onCheckboxValue(isChecked) 
         {
             this.localValue = isChecked;
-            this.emitChange();
         },
-        onTextValue(event)
+        onTextValue()
         {
             this.localValue = this.forceType(event.target.value);
-            this.emitChange();
         },
-        onName(event) 
-        {
-            this.emitChange();
-        },
-        onDelete(event) {
+        onDelete() {
             this.$emit('delete', this.id);
         }
     }
 }
 </script>
-
-<style>
-
-</style>

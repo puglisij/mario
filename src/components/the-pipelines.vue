@@ -1,92 +1,88 @@
 <template>
-    <div class="pipelines">
-        <h2 class="tab-title">Pipelines</h2>
-        
-        <a-checkbox v-model="pauseAfterEveryPipeline" @change="markForSave">
-            Pause processing after every Pipeline?
-        </a-checkbox>
-        <a-checkbox v-model="pauseAfterEveryAction" @change="markForSave">
-            Pause processing after every Pipeline Action?
-        </a-checkbox>
-        <a-checkbox v-model="pauseAfterEveryImage" @change="markForSave">
-            Pause processing after every Image?
-        </a-checkbox>
-        <a-checkbox v-model="pauseOnExceptions" @change="markForSave">
-            Pause processing on errors?
-        </a-checkbox>
-
-        <h3 class="section-title">Pipelines</h3>
-        <validation-observer 
-            ref="observer"
-            slim
-            v-slot="{ handleSubmit }"
+    <validation-observer 
+        ref="observer"
+        slim
+        v-slot="{ handleSubmit }"
+    >
+        <form 
+            class="pipelines"
+            novalidate="true"
+            @keydown.enter.prevent
+            @submit.prevent="handleSubmit(onConfigurationSubmit)"
         >
-            <form 
-                novalidate="true"
-                @keydown.enter.prevent
-                @submit.prevent="handleSubmit(onConfigurationSubmit)"
-            >
+            <h2 class="tab-title">Pipelines</h2>
+
+            <a-checkbox v-model="pauseAfterEveryPipeline">
+                Pause processing after every Pipeline?
+            </a-checkbox>
+            <a-checkbox v-model="pauseAfterEveryAction">
+                Pause processing after every Pipeline Action?
+            </a-checkbox>
+            <a-checkbox v-model="pauseAfterEveryImage">
+                Pause processing after every Image?
+            </a-checkbox>
+            <a-checkbox v-model="pauseOnExceptions">
+                Pause processing on errors?
+            </a-checkbox>
+
+            <div v-if="!isEditorOpen">
+                <h3 class="section-title">Pipelines</h3>
                 <draggable 
                     v-model="pipelines"
                     group="pipelines" 
-                    @change="markForSave"
                 >
                     <a-pipeline
-                        v-for="(pipeline, index) in pipelines"
-                        v-show="!isEditorOpen || (isEditorOpen && pipelineBeingEdited.id === pipeline.id)"
-                        v-model="pipelines[index]"
+                        v-for="pipeline in pipelines"
                         :key="pipeline.id"
+                        :id.sync="pipeline.id"
+                        :name.sync="pipeline.name"
+                        :watcherNames.sync="pipeline.watcherNames"
+                        :disabled.sync="pipeline.disabled"
                         @delete="onPipelineDelete"
                         @edit="onPipelineEdit"
                         @play="onPipelinePlay"
-                    >
-                    </a-pipeline>
+                    />
                 </draggable>
-                <div class="pipeline-buttons" v-if="!isEditorOpen">
-                    <button class="topcoat-button--large" type="button" @click="onPipelineAdd">Add Pipline</button>
-                    <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
-                </div>
-            </form>
-        </validation-observer>
+            </div>
 
-        <div class="pipeline-editor" v-if="isEditorOpen">
-            <h3 class="pipeline-editor-header">Editing: {{ pipelineBeingEdited.name }}</h3>
-            <div class="pipeline-editor-board">
+            <div v-else>
+                <h3 class="section-title">Actions Editor</h3>
+                <p class="text-highlight mt0">Editing: {{ pipelineBeingEdited.name }}</p>
+
                 <draggable 
                     v-model="pipelineBeingEdited.actions"
                     draggable=".action"
                     handle=".action-handle"
                     group="actions"
-                    @change="onActionPositionChange"
                 >
-                    <pipeline-action 
+                    <a-pipeline-action 
                         v-for="(action, index) in pipelineBeingEdited.actions" 
                         v-model="pipelineBeingEdited.actions[index]"
                         :key="action.id"
-                        @select-new="onActionSelectNew"
-                        @changed="onActionChange"
                         @delete="onActionDelete"
                     />
                 </draggable>
-            </div> 
+            </div>
+
             <div class="pipeline-buttons">
-                <button class="topcoat-button--large" type="button" @click="onActionAdd">Add Action</button>
+                <button class="topcoat-button--large" type="button" @click="onPipelineAdd" v-show="!isEditorOpen">Add Pipline</button>
+                <button class="topcoat-button--large" type="button" @click="onActionAdd" v-show="isEditorOpen">Add Action</button>
+                <button class="topcoat-button--large" type="button" @click="onEditorClose" v-show="isEditorOpen">Close</button>
                 <button class="topcoat-button--large" type="submit" v-show="needSaved">Save</button>
             </div>
-        </div>
-    </div>
+        </form>
+    </validation-observer>
 </template>
 
 <script>
 import { ValidationObserver } from "vee-validate";
-import Draggable from 'vuedraggable'
+import Draggable from 'vuedraggable';
 
 import _ from "../utils";
 import store from "../store"; 
 import ACheckbox from "./a-checkbox.vue";
 import APipeline from "./a-pipeline.vue";
 import APipelineAction from "./a-pipeline-action.vue";
-
 
 export default {
     name: "ThePipelines",
@@ -99,12 +95,12 @@ export default {
     },
     data() {
         return {
-            needSaved: false,
             pauseAfterEveryPipeline: store.general.pauseAfterEveryPipeline,
             pauseAfterEveryAction: store.general.pauseAfterEveryAction,
             pauseAfterEveryImage: store.general.pauseAfterEveryImage,
             pauseOnExceptions: store.general.pauseOnExceptions,
             pipelines: this.toLocalPipelines(store.pipelines.pipelines),
+            needSaved: false,
             pipelineBeingEdited: {}
         };
     },
@@ -113,11 +109,15 @@ export default {
             return !_.isEmptyObject(this.pipelineBeingEdited); 
         }
     },
+    watch: {
+        pipelines: {
+            deep: true,
+            handler: function(value) {
+                this.needSaved = true;
+            }
+        }
+    },
     methods: {
-        markForSave() 
-        {
-            this.needSaved = true;
-        },
         toLocalPipelines(value)
         {
             const pipelines = _.simpleDeepClone(value);
@@ -132,8 +132,12 @@ export default {
         },
         onConfigurationSubmit()
         {
-            this.needSaved = false;
+            store.general.pauseAfterEveryPipeline = this.pauseAfterEveryPipeline;
+            store.general.pauseAfterEveryAction = this.pauseAfterEveryAction;
+            store.general.pauseAfterEveryImage = this.pauseAfterEveryImage;
+            store.general.pauseOnExceptions = this.pauseOnExceptions;
             store.pipelines.pipelines = this.pipelines;
+            this.needSaved = false;
         },
         /*---------------
             Pipelines
@@ -150,15 +154,18 @@ export default {
                 disabled: false,
                 actions: []
             });
-            this.markForSave();
         },
         onPipelineEdit(id)
         {
             this.openEditor(id);
         },
-        onPipelinePlay(id)
+        async onPipelinePlay(id)
         {
-
+            const isValid = await this.$refs.observer.validate();
+            
+            // don't allow Play unless validated
+            // open dialog (Choose folder, or Use Open files)
+            // Server.playPipeline(id, options);
         },
         onPipelineDelete(id)
         {
@@ -168,10 +175,26 @@ export default {
                     if(this.isEditorOpen && this.pipelineBeingEdited.id === id) {
                         this.closeEditor();
                     }
-                    this.pipelines = this.pipelines.filter(x => x.id != id);
-                    this.markForSave();
+                    this.pipelines = this.pipelines.filter(x => x.id !== id);
                 }
             });
+        },
+        /*---------------
+            Editor
+        ---------------*/
+        onEditorClose() 
+        {
+            // if(!this.needSaved) {
+                this.closeEditor();
+            //    return;
+            // }
+            // this.$dialog.open({
+            //     name: "confirm",
+            //     message: "Close editor without saving changes?",
+            //     onYes: () => {
+            //         this.closeEditor();
+            //     }
+            // });
         },
         openEditor(id)
         {
@@ -182,38 +205,24 @@ export default {
         {
             this.pipelineBeingEdited = {};
         },
-        /*---------------
-            Actions  
-        ---------------*/ 
         onActionAdd(event)
         {
+            // TODO: Action name should be selected from a list and non-editable
+            // TODO: Action parameters should be fixed/baked-in and only values editable
             this.pipelineBeingEdited.actions.push({
                 id: _.guid(),
                 action: ""
             });
         },
-        onActionSelectNew(index)
-        {
-            console.log(`Action ${index} select new.`); 
-        },
-        onActionChange(index, action) 
-        {
-            this.markForSave();
-        },
-        onActionDelete(index)
+        onActionDelete(id)
         {
             this.$dialog.open({
                 name: "confirm",
                 onYes: () => {
-
-                    this.pipelineBeingEdited.actions.splice(index, 1);
-                    this.markForSave();
+                    const actions = this.pipelineBeingEdited.actions.filter(a => a.id !== id);
+                    this.pipelineBeingEdited.actions = actions;
                 }
             });
-        },
-        onActionPositionChange(event) 
-        {
-            this.markForSave();
         }
     }
 }

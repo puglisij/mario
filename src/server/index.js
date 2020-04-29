@@ -510,7 +510,7 @@ class Server extends EventEmitter
     /**
      * Run the Photoshop JSX pipeline action function by the given name, with the given parameters
      * @param {string} actionName the jsx action function name (e.g. action.saveDocument)
-     * @param {string} actionParameters the jsx action function parameters, either a primitive or object
+     * @param {any} actionParameters the jsx action function parameters, either a primitive or object
      * @returns {Promise}
      */
     runAction(psActionName, actionParameters)

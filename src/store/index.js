@@ -41,6 +41,7 @@ const general = new Conf({
         fileWatchers: {
             type: "array",
             default: [
+                // TODO: Add Schema validation
                 // {
                 //  id: ""
                 //  name: "",
@@ -69,6 +70,7 @@ const pipelines = new Conf({
         pipelines: {
             type: "array",
             default: [
+                // TODO: Add Schema validation
                 // {
                 //   id: "",
                 //   name: "",
@@ -86,14 +88,15 @@ const pipelines = new Conf({
 /**
  * Object Proxy for monitorying configuration changes 
  */
-const ConfigurationProxy = (confInstance, configurationObject, events) => {
+const ConfigurationProxy = (configurationInstance, configurationObject, events) => {
 	const handler = {
 		get(target, property, receiver) {
 			try {
                 // Also Proxy nested properties
 				return new Proxy(target[property], handler);
 			} catch (err) {
-				return Reflect.get(...arguments);
+                const value = Reflect.get(target, property);
+                return value;
 			}
         },
         set(target, property, value) 
@@ -101,8 +104,8 @@ const ConfigurationProxy = (confInstance, configurationObject, events) => {
             if(typeof target[property] !== typeof value) {
                 throw new Error("Attempt to set configuration property " + property + " with different type. This should not happen.");
             } else {
-                Reflect.set(...arguments);
-                confInstance.set(property, value);
+                Reflect.set(target, property, value);
+                configurationInstance.set(property, value);
                 events.emit("change", property);
                 console.log("Configuration updated. " + property + " -> " + value);
                 return true;

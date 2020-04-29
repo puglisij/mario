@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <a-dialog name="confirm"></a-dialog>
+    <a-dialog name="confirm" />
     <adobe-menus />
 
     <tabs @changed="onTabChanged" :initial-tab="currentTabComponent">
@@ -70,6 +70,7 @@ export default {
 @import "./styles/columns";
 
 
+
 html, body {
     font-size: 14px;
     margin: 0;
@@ -113,6 +114,10 @@ h4 {
     font-size: 12px; 
     font-weight: 400;
 }
+.dark .text-highlight {
+    color: $dark-text-highlight-color;
+}
+
 
 #app {
     display: flex;
@@ -171,6 +176,9 @@ body::-webkit-scrollbar {
   display: none;
 }
 
+//-------------------
+// Utilities
+//-------------------
 @mixin clearfix() {
   &::after {
     display: block;
@@ -268,7 +276,8 @@ label {
 
 
 .watcher,
-.pipeline {
+.pipeline,
+.action {
     border: none;
     border-bottom: 1px solid #333;
     padding: ($column-gap * 2);
@@ -280,11 +289,10 @@ label {
         display: block;
         margin-bottom: $column-gap;
     }
+    &:last-of-type {
+        margin-bottom: ($column-gap * 2);
+    }
 }
-.watcher:last-of-type {
-    margin-bottom: ($column-gap * 2);
-}
-
 
 .configurator-buttons,
 .pipeline-buttons {
