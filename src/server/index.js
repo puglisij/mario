@@ -12,47 +12,44 @@ import EventEmitter from "events";
 
 
 /* local modules */
+import ServerState from './state';
+import ImageProvider from './imageProvider';
 import Image from './image';
 import _ from '../utils';
 import store from '../store';
 import global from '../global';
 
-const ServerState = {
-    UNINITIALIZED: 0,
-    STOPPED: 1, 
-    PAUSED: 2,
-    RUNNING: 3
-};
 const port = 3001;
 const app = express();
 
+class PipelineTap
+{
+    /**
+     * Data object containing with information for pipeline execution
+     * @param {string} pipelineNames 
+     * @param {string} source 
+     */
+    constructor(pipelineNames, source)
+    {
+        this.pipelineNames = pipelineNames;
+        this.source = source;
+    }
+}
+
 /**
- * Server manages Node REST Api, and File watching. 
- * Processes new Image (loads their data) jobs in preparation for Pipeline.
+ * Server manages Node REST API, and Js API for managing pipelines. 
  * Server is not CEP panel aware
- * Features:
- *  - Simple REST api
- *  - Directory watching for image or json(data) files to process 
- *  - Configurable watchers, and pipelines
  */
 class Server extends EventEmitter
 {
     constructor() 
     {
         super();
-
-        // Local copy of general configuration for faster reference
-        this._config = {};
         
         // Path watcher instances for new images
         this._fileWatchers = [];
-        // Pipelines mapping type => pipelines
-        this._pipelinesMap = {};
-        // Flag indicating configuration has changed and pipeline mapping needs reloaded
-        this._needToReloadPipelines = true;
-        // Flag indicating user actions need reloading (i.e. the path changed)
-        this._needToReloadActions = true;
         // Images waiting for processing
+        // TODO: Display Queue on Front-End?
         this._pipelineQueue = [];
 
         this._httpServer = null;    
@@ -64,52 +61,21 @@ class Server extends EventEmitter
     {
         if(this._initialized) return;
         this._initialized = true;
-
     }
-    get pipelinesMap() 
-    {
-        if (this._needToReloadPipelines) 
-        {
-            const pipelineConfig = this.getPipelineConfiguration();
-            this._pipelinesMap = {};
-            for(const pipeline of pipelineConfig.pipelines)
-            {
-                for(const forType of pipeline.for) {
-                    _.getOrDefine(this._pipelinesMap, forType.toLowerCase(), []).push(pipeline);
-                }
-            }
-            this._needToReloadPipelines = false;
-        }
-        return this._pipelinesMap;
+    get _config() {
+        return store.general;
     }
-    set pipelinesMap(val) 
-    {
-        this._pipelinesMap = val;
-    }
-    getGeneralConfiguration() {
-        return store.general; 
-    }
-    getPipelineConfiguration() {
-        return store.pipelines; 
-    }
-    setGeneralConfiguration(key, value) 
-    {
-        store.general.set(key, value);
-        this._config[key] = value;
-        this._needToReloadActions = (key === "pathToUserActions");
-        console.log(`Configuration ${key} changed to ${value}`);
-    }
-    setPipelineConfiguration(key, value) 
-    {
-        store.pipelines.set(key, value);
-        this._needToReloadPipelines = true;
-        console.log(`Pipeline Configuration ${key} changed to ${value}`);
+    get _pipelineConfig() {
+        return store.pipelines;
     }
     isPaused() {
         return this._state === ServerState.PAUSED;
     }
     isStopped() {
         return this._state === ServerState.STOPPED || this._state === ServerState.UNINITIALIZED;
+    }
+    getState() {
+        return this._serverState;
     }
     get _state() {
         return this._serverState;
@@ -121,17 +87,15 @@ class Server extends EventEmitter
     }
     async init() 
     {
-        this._config = this.getGeneralConfiguration();
-
         //await this.loadActions(); 
 
         //-----------------
         // Setup routes
         //-----------------
-        app.get('/pipeline/:type/configuration', (req, res) => {
+        app.get('/pipeline/:name/configuration', (req, res) => {
             res.header("Content-Type", "application/json");
             res.send(
-                JSON.stringify(this.pipelinesMap[req.params.type.toLowerCase()], null, 4)
+                JSON.stringify(this.pipelinesMap[req.params.name.toLowerCase()], null, 4)
             );
         });
         // app.get('/activedocument', (req, res) => {

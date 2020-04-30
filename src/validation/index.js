@@ -1,7 +1,11 @@
 import fs from 'fs';
 import { configure, setInteractionMode, extend } from 'vee-validate';
 
-setInteractionMode("eager");
+setInteractionMode("custom", context => {
+    return {
+        on: ["change", "blur"]
+    }
+});
 
 extend('required', {
     validate (value) {
@@ -14,11 +18,23 @@ extend('required', {
     computesRequired: true
 });
 
-extend('pathexists', {
-    validate(value) {
-        return new Promise(resolve => fs.exists(value, resolve));
+extend('pathexists', { 
+    async validate(value) 
+    {
+        console.log("validating path");
+        const exists = await new Promise(resolve => {
+            fs.access(value, error => {
+                resolve(!error);
+            });
+        });
+        if(exists) {
+            return true;
+        }
+        return {
+            valid: false
+        }
     },
-    message: 'This path does not exist.'
+    message: "path no exist"
 });
 
 extend('custom', {
@@ -28,6 +44,9 @@ extend('custom', {
         return result.valid ? result.valid : result.message;
     }
 });
+
+console.log("Validation imported");
+export default { init: () => {} };
 
 // /**
 //  * Master validation instance. Keeps track of validation components and their validity. 

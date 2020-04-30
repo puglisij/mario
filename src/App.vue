@@ -196,6 +196,9 @@ body::-webkit-scrollbar {
 .flex {
     display: flex;
 }
+.flex-grow {
+    flex-grow: 1;
+}
 .full-width {
     width: 100%;
 }
@@ -278,6 +281,11 @@ label {
     margin-bottom: .25rem;    
 }
 
+
+.main-controls {
+    display: flex;
+    justify-content: center;
+}
 
 .watcher,
 .pipeline,

@@ -4,13 +4,13 @@
             <div class="label">Name</div>
             <validation-provider 
                 :rules="{ required: true, custom: { fn: validateName } }" 
-                v-slot="v"
+                v-slot="{ errors }"
             >
                 <input class="topcoat-text-input full-width" type="text" placeholder="My Watcher Name" 
                     title="This is referenced by Pipelines"
                     v-model="localWatcher.name"
                 />
-                <span class="topcoat-notification error" v-if="v.errors.length">{{ v.errors[0] }}</span>
+                <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
             </validation-provider>
         </label>
 
@@ -19,15 +19,15 @@
             <validation-provider 
                 class="flex" 
                 rules="required|pathexists" 
-                v-slot="v"
+                v-slot="{errors, reset}"
             >
-                <a-folder-dialog-button v-model="localWatcher.path"></a-folder-dialog-button>
-                <input class="topcoat-text-input full-width ml1" type="text" placeholder="/my/watch/folder" 
+                <a-folder-dialog-button :folder.sync="localWatcher.path"></a-folder-dialog-button>
+                <input class="topcoat-text-input flex-grow ml1" type="text" placeholder="/my/watch/folder" 
                     title="The path to the folder to watch for new json files, or images for processing."
                     v-model="localWatcher.path"
-                    @focus="v.reset"
+                    @focus="reset"
                 />
-                <span class="topcoat-notification error" v-if="v.errors.length">{{ v.errors[0] }}</span>
+                <span class="topcoat-notification error" v-show="errors.length">{{ errors[0] }}</span>
             </validation-provider>
         </label>
 
@@ -40,15 +40,15 @@
             <validation-provider 
                 class="flex" 
                 :rules="{ required: localWatcher.useProcessedPath, pathexists: true }" 
-                v-slot="v"
+                v-slot="{errors, reset}"
             >
-                <a-folder-dialog-button v-model="localWatcher.processedPath"></a-folder-dialog-button>
-                <input class="topcoat-text-input full-width ml1" type="text" placeholder="/my/processed/folder" 
+                <a-folder-dialog-button :folder.sync="localWatcher.processedPath"></a-folder-dialog-button>
+                <input class="topcoat-text-input flex-grow ml1" type="text" placeholder="/my/processed/folder" 
                     title="Files in the watch folder will be moved here after pipeline(s) have run."
                     v-model="localWatcher.processedPath"
-                    @focus="v.reset"
+                    @focus="reset"
                 />
-                <span class="topcoat-notification error" v-if="v.errors.length">{{ v.errors[0] }}</span>
+                <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
             </validation-provider>
         </label>
 
@@ -57,14 +57,14 @@
             <validation-provider 
                 class="flex" 
                 rules="required" 
-                v-slot="v"
+                v-slot="{ errors }"
             >
                 <input class="topcoat-text-input full-width" type="text" placeholder="jpg, jpeg, png, psd, tif, etc." 
                     title="Either multiple image extensions, or json (exclusive). A comma delimited list."
                     v-model="localWatcher.extensions"
                     @change="onExtensions"
                 />
-                <span class="topcoat-notification error" v-if="v.errors.length">{{ v.errors[0] }}</span>
+                <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
             </validation-provider>
         </label>
         

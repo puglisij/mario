@@ -1,31 +1,55 @@
 <template>
-    <div class="controls">
-        <button class="topcoat-button--large" 
-            :title="primaryButtonTitle"
-            @click="startPause"
-            v-html="primaryButtonLabel"></button>
-        <button class="topcoat-button--large" 
-            title="Stop all pipelines."
-            v-show="!isStopped" 
-            @click="stop"
-            >&#9724;</button>
+    <div class="main-controls my2">
+        <div v-if="!isUninitialized">
+            <button class="topcoat-button--large" 
+                @click="onStartPause"
+                :title="primaryButtonTitle"
+                v-html="primaryButtonLabel"></button>
+            <button class="topcoat-button--large" 
+                @click="onStop"
+                title="Stop all pipelines."
+                v-show="!isStopped" 
+                >&#9724;</button>
+        </div>
+        <div v-if="isUninitialized">Initializing<wait-dots/></div>
     </div>
 </template>
 
 <script>
+import Server from '../server';
+import ServerState from '../server/state';
+import WaitDots from "./wait-dots.vue";
+
+// TODO: Control panel for file watchers / pipelines
 export default {
     name: 'StartStop',
-    props: {
-        isPaused: {
-            type: Boolean, 
-            default: false
-        },
-        isStopped: {
-            type: Boolean,
-            default: true
+    components: {
+        WaitDots
+    },
+    data() {
+        return {
+            serverState: Server.getState()
         }
     },
+    beforeCreate() 
+    {
+        Server.on("state", state => {
+            this.serverState = state;
+        })
+    },
     computed: {
+        isUninitialized() {
+            return this.serverState == ServerState.UNINITIALIZED;
+        },
+        isRunning() {
+            return this.serverState == ServerState.RUNNING;
+        },
+        isPaused() {
+            return this.serverState == ServerState.PAUSED;
+        },
+        isStopped() {
+            return this.serverState == ServerState.STOPPED;
+        },
         primaryButtonLabel() {
             if(this.isPaused) {
                 return "Resume";
@@ -40,22 +64,18 @@ export default {
                 return "Resume all pipelines.";
             }
             if(this.isStopped) {
-                return "Play all pipelines.";
+                return "Run all pipelines.";
             }
             return "Pause all pipelines.";
         }
     },
     methods: {
-        startPause() {
-            this.$emit(this.isPaused || this.isStopped ? 'start' : 'pause');
+        onStartPause() {
+            Server.start();
         },
-        stop() {
-            this.$emit('stop');
+        onStop() {
+            Server.stop();
         }
     }
 }
 </script>
-
-<style scoped>
-
-</style>

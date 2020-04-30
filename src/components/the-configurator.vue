@@ -15,13 +15,14 @@
                 <label>
                     <div class="label">Custom Actions Folder</div>
                     <validation-provider 
-                        class="flex" 
+                        class="flex"
+                        tag="div"
                         rules="pathexists" 
                         v-slot="v"
                     >
-                        <a-folder-dialog-button v-model="pathToUserActions"></a-folder-dialog-button>
+                        <a-folder-dialog-button :folder.sync="pathToUserActions" @update:folder="onPathToUserActions"></a-folder-dialog-button>
                         <input 
-                            class="topcoat-text-input full-width ml1" 
+                            class="topcoat-text-input flex-grow ml1" 
                             type="text" 
                             placeholder="/my/custom/jsx/actions" 
                             title="The path to the directory containing custom extendscript actions"

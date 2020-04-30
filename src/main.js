@@ -7,7 +7,6 @@ import Logger from './console';
 import Server from './server';
 import Validation from './validation';
 
-
 const create = () => {
     Logger.init();
     Server.init();
