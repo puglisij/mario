@@ -2,9 +2,7 @@
 /* npm modules */
 import path from 'path';
 import upath from 'upath';
-import isUncPath from 'is-unc-path';
 import fs from 'fs';
-import chokidar from 'chokidar';
 import debounce from 'debounce'; 
 import express from 'express';
 import promisify from 'es6-promisify';
@@ -12,8 +10,8 @@ import EventEmitter from "events";
 
 
 /* local modules */
-import ServerState from './state';
-import ImageProvider from './imageProvider';
+import { ServerState } from './enum';
+import { ImageFileProducer } from './imageFileProducer';
 import Image from './image';
 import _ from '../utils';
 import store from '../store';
@@ -22,19 +20,7 @@ import global from '../global';
 const port = 3001;
 const app = express();
 
-class PipelineTap
-{
-    /**
-     * Data object containing with information for pipeline execution
-     * @param {string} pipelineNames 
-     * @param {string} source 
-     */
-    constructor(pipelineNames, source)
-    {
-        this.pipelineNames = pipelineNames;
-        this.source = source;
-    }
-}
+
 
 /**
  * Server manages Node REST API, and Js API for managing pipelines. 
@@ -45,64 +31,24 @@ class Server extends EventEmitter
     constructor() 
     {
         super();
-        
-        // Path watcher instances for new images
-        this._fileWatchers = [];
-        // Images waiting for processing
-        // TODO: Display Queue on Front-End?
-        this._pipelineQueue = [];
-
-        this._httpServer = null;    
         this._initialized = false;
-        this._isPipelinesRunningMutex = false;
-        this._serverState = ServerState.UNINITIALIZED;
-    }
-    init() 
-    {
-        if(this._initialized) return;
-        this._initialized = true;
-    }
-    get _config() {
-        return store.general;
-    }
-    get _pipelineConfig() {
-        return store.pipelines;
-    }
-    isPaused() {
-        return this._state === ServerState.PAUSED;
-    }
-    isStopped() {
-        return this._state === ServerState.STOPPED || this._state === ServerState.UNINITIALIZED;
-    }
-    getState() {
-        return this._serverState;
-    }
-    get _state() {
-        return this._serverState;
-    }
-    set _state(state) 
-    {
-        this._serverState = state;
-        this.emit("state", state);
+        // Express instance
+        this._httpServer = null;
     }
     async init() 
     {
-        //await this.loadActions(); 
+        if(this._initialized) return;
+        this._initialized = true;
 
         //-----------------
-        // Setup routes
+        // Express Routes
         //-----------------
         app.get('/pipeline/:name/configuration', (req, res) => {
             res.header("Content-Type", "application/json");
             res.send(
-                JSON.stringify(this.pipelinesMap[req.params.name.toLowerCase()], null, 4)
+                JSON.stringify(this._pipelineConfig.pipelines.find(p => p.name == req.params.name.toLowerCase()), null, 4)
             );
         });
-        // app.get('/activedocument', (req, res) => {
-        //     this.cs.evalScript("_.getDocumentPath()", function(activeDocumentPath) {
-        //         res.status(200).send("Active Document: " + activeDocumentPath);
-        //     });
-        // });
         app.get('/status', (req, res) => {
             // search for files matching parameters 
             res.status(200).json({
@@ -110,22 +56,10 @@ class Server extends EventEmitter
                 needUserInteraction: false
             });
         });
-        app.post('/process', (req, res) => {
-            // stream image file or zip to processing directory
-            // stream json data to file in processing directory
-            // process
-            res.status(201).json({ success: false });
-        });
-        app.post('/start', (req, res) => {
-            this.start();
+        app.post('/run', (req, res) => {
             res.status(200).json({ success: true });
         });
         app.post('/stop', (req, res) => {
-            this.stop();
-            res.status(200).json({ success: true });
-        });
-        app.post('/restart', (req, res) => {
-            this.restart();
             res.status(200).json({ success: true });
         });
         app.use((req, res, next) => {
@@ -137,70 +71,34 @@ class Server extends EventEmitter
         });
 
         //-----------------
-        // Start server
+        // Create Server
         //-----------------
         this._httpServer = app.listen(port, function() {
             console.log(`Express is listening to http://localhost:${port}`);
         });
 
-        this._state = ServerState.STOPPED;
         this.emit("init");
+        console.log("Server initialized.");
     }
-    async restart()
-    {
-        this.stop(); // TODO: Await this._isPipelinesRunningMutex === false ?
-        this.start();
-    }
-    async start()
+    run()
     {
         if(this.isStopped()) 
         {
-            // Setup file watchers
-            for(const watcherConfig of this._config.watchers) 
-            {
-                const watchDefaultType = watcherConfig.defaultType;
-                const watchPathRoot = watcherConfig.path;
-                const watchPaths = watcherConfig.extensions.map(ext => {
-                    return path.join(watchPathRoot, "*." + ext)
-                });
-                if(isUncPath(watchPathRoot)) {
-                    console.error(`Watching network paths is problematic. Only local directories supported at this time.`);
-                    throw Error(`Watching network paths not supported.`);
-                }
-                if(!fs.existsSync(watchPathRoot)) {
-                    console.error(`Watch path: ${watchPathRoot} does not exist.`);
-                    throw Error(`Watch path: ${watchPathRoot} does not exist.`);
-                }
-                // TODO: Allow watch paths to be mapped to specific pipelines
-                const watcher = chokidar.watch(watchPaths, {
-                    ignored: /^\.|Output|Error|Archive|Processed/, 
-                    depth: 0,
-                    awaitWriteFinish: {
-                        stabilityThreshold: 2000,
-                        pollInterval: 500
-                    }
-                })
-                .on("add", newFilePath => {
-                    this.processImageAtPath(newFilePath, watchDefaultType);
-                });
-
-                console.log(`Watcher set for ${watchPaths.toString()}`);
-                this._fileWatchers.push(watcher);
-            }
-            console.log(`Server initialized.`);
+            
+            
         }
 
         this._state = ServerState.RUNNING;
-        console.log(`Server started.`);
+        console.log(`Server run.`);
     }
     pause()
     {
-        console.log(`Server paused.`);
+        console.log(`Server pause.`);
         this._state = ServerState.PAUSED;
     }
     stop()
     {
-        console.log(`Server stopped.`);
+        console.log(`Server stop.`);
         this._fileWatchers.forEach(watcher => {
             watcher.removeAllListeners();
             watcher.close();
@@ -231,17 +129,6 @@ class Server extends EventEmitter
         }
     }
     /**
-     * Manually shove an image into a pipeline
-     * @param {string|object} json what would ordinarily be read from a json file
-     */
-    async processImageWithJson(json)
-    {
-        const reader = new Image.Reader();
-              reader.readProcessingDataFromJson(json);
-        const image = reader.getImage();
-        this.pushToPipeline(image);
-    }
-    /**
      * Read metadata, and notify CEP pipeline image is ready for processing 
      */
     async processImageAtPath(filePath, defaultType)
@@ -254,8 +141,7 @@ class Server extends EventEmitter
         try {
             await reader.readProcessingData();
             await reader.readMetadata();
-            // TODO: Allow Server to run independent of CEP Panel process? Communicate via IPC?
-            //      Node code would run in Server process and JSX would run in CEP Panel process.
+  
             const image = reader.getImage();
             this.pushToPipeline(image);
         } catch(e) {
@@ -266,8 +152,8 @@ class Server extends EventEmitter
     }
     pushToPipeline(image)
     {
-        this._pipelineQueue.push(image);
-        if(!this._isPipelinesRunningMutex) {
+        this._pipelineImageQ.push(image);
+        if(!this._pipelinesExecutingMutex) {
             console.log(`Running images through pipelines.`);
             this.runPipelines();
         }
@@ -329,11 +215,11 @@ class Server extends EventEmitter
      */
     async runPipelines()
     {
-        this._isPipelinesRunningMutex = true; // mutex
+        this._pipelinesExecutingMutex = true; // mutex
         let image = null;
 
         await this.runJsx(`app.displayDialogs = DialogModes.NO;`);
-        while(image = this._pipelineQueue.pop())
+        while(image = this._pipelineImageQ.pop())
         {
             const pipelines = this.pipelinesMap[image.type.toLowerCase()];
             if(!pipelines) {
@@ -390,7 +276,7 @@ class Server extends EventEmitter
         }
         await this.runJsx(`closeAll(); $.gc();`);
         this.updateMemoryStats();
-        this._isPipelinesRunningMutex = false;
+        this._pipelinesExecutingMutex = false;
         console.log("Pipeline queue finished.");
     }
     async loadActions()

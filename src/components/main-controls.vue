@@ -2,7 +2,7 @@
     <div class="main-controls my2">
         <div v-if="!isUninitialized">
             <button class="topcoat-button--large" 
-                @click="onStartPause"
+                @click="onRunPause"
                 :title="primaryButtonTitle"
                 v-html="primaryButtonLabel"></button>
             <button class="topcoat-button--large" 
@@ -17,12 +17,12 @@
 
 <script>
 import Server from '../server';
-import ServerState from '../server/state';
+import { ServerState } from '../server/enum';
 import WaitDots from "./wait-dots.vue";
 
 // TODO: Control panel for file watchers / pipelines
 export default {
-    name: 'StartStop',
+    name: 'MainControls',
     components: {
         WaitDots
     },
@@ -70,8 +70,8 @@ export default {
         }
     },
     methods: {
-        onStartPause() {
-            Server.start();
+        onRunPause() {
+            Server.run();
         },
         onStop() {
             Server.stop();

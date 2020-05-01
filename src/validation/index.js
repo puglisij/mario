@@ -34,7 +34,7 @@ extend('pathexists', {
             valid: false
         }
     },
-    message: "path no exist"
+    message: "Path does not exist"
 });
 
 extend('custom', {

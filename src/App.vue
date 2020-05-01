@@ -10,7 +10,7 @@
         <tab title="the-pipelines">Pipelines</tab>
     </tabs>
 
-    <start-stop />
+    <main-controls />
 
     <section class="tab-content">
         <keep-alive exclude="ThePipelines, TheConfigurator">
@@ -28,14 +28,14 @@ import upath from 'upath';
 /* local modules */
 import store from './store';
 import themeManager from "./themeManager";
-import Tabs from './components/tabs';
-import Tab from './components/tab';
-import StartStop from './components/start-stop.vue';
+import Tabs from './components/tabs.vue';
+import Tab from './components/tab.vue';
+import MainControls from './components/main-controls.vue';
 
 export default {
     name: "app",
     components: {
-        StartStop,
+        MainControls,
         Tabs, 
         Tab,
         AdobeMenus: () => import("./components/adobe-menus.vue"),

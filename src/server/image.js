@@ -36,18 +36,6 @@ export default class Image
     hasDataPath() {
         return !!this.dataPath;
     }
-    /**
-     * Generate a path to store error messaging and files when an error occurs
-     */
-    getErrorDirectory() {
-        return upath.join(this.sourcePath, "Error_" + this.type.toLowerCase());
-    }
-    /**
-     * Generate a path to store files when this image process is complete
-     */
-    getProcessedDirectory() {
-        return upath.join(this.sourcePath, "Processed_" + this.type.toLowerCase());
-    }
     getAllFilePaths(toPath)
     {
         let files = [];
