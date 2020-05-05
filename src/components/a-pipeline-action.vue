@@ -11,9 +11,9 @@
             <div class="action-name">
                 <input class="topcoat-text-input mr1" 
                     type="text" 
-                    placeholder="the action name (e.g. 'action.saveDocument')"
+                    placeholder="the action function name (e.g. 'action.saveDocument')"
                     title="The action function name as given in the jsx. Case sensitive."
-                    v-model="localAction.action"
+                    v-model="localAction.actionName"
                     @change="onActionName"
                 />
                 <button class="topcoat-button--large--quiet" 
@@ -105,7 +105,7 @@ export default {
         */
         toLocalAction(rawAction) 
         {
-            const { action, parameters } = rawAction;
+            const { actionName, parameters } = rawAction;
             const rawParameters = (
                        _.isBoolean(parameters) 
                     || _.isNumber(parameters) 
@@ -113,7 +113,7 @@ export default {
                     || _.isNull(parameters)) ? { [SINGLE_NONAME_PARAMETER]: parameters } : parameters;
 
             const localAction = {
-                action: action, 
+                actionName, 
                 parameters: {}
             };
             for(const [name, value] of Object.entries(rawParameters || {})) {
@@ -138,7 +138,7 @@ export default {
         {
             const rawAction = {
                 id: this.action.id,
-                action: localAction.action
+                actionName: localAction.actionName
             };
             if(this.hasParameters) 
             {

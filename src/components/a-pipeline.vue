@@ -3,7 +3,7 @@
         <label>
             <div class="label">Name</div>
             <validation-provider
-                rules="required" 
+                :rules="{ required: true, custom: { fn: validateName } }" 
                 v-slot="{ errors }"
             >
                 <input class="topcoat-text-input full-width" type="text" 
@@ -82,6 +82,11 @@ export default {
         disabled: {
             type: Boolean,
             required: true
+        },
+        // 
+        pipelines: {
+            type: Array, 
+            required: true
         }
     }, 
     data() {
@@ -97,6 +102,16 @@ export default {
         disabled_:      function(v) { this.$emit("update:disabled", v); },
     },
     methods: {
+        validateName(value)
+        {
+            const name = value.trim();
+            this._name = name;
+            const found = this.pipelines.filter(w => w.name == name).length;
+            return {
+                valid: found === 1, 
+                message: "Pipeline name must be unique"
+            };
+        },
         validateWatcherNames(value) 
         {
             // Remove whitespace

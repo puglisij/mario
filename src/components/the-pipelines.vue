@@ -38,6 +38,7 @@
                         :name.sync="pipeline.name"
                         :watcherNames.sync="pipeline.watcherNames"
                         :disabled.sync="pipeline.disabled"
+                        :pipelines="pipelines"
                         @delete="onPipelineDelete"
                         @edit="onPipelineEdit"
                         @play="onPipelinePlay"
@@ -212,7 +213,7 @@ export default {
             // TODO: Action parameters should be fixed/baked-in and only values editable
             this.pipelineBeingEdited.actions.push({
                 id: _.guid(),
-                action: ""
+                actionName: ""
             });
         },
         onActionDelete(id)

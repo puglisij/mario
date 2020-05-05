@@ -3,25 +3,21 @@ import chokidar from 'chokidar';
 import upath from 'upath';
 import isUncPath from 'is-unc-path';
 import EventEmitter from "events";
+import ImageSourceType from './imageSourceType';
 import host from '../host';
 
-const ImageSourceType = {
-    OPENFILES: 0,
-    DIRECTORY: 1,
-    FILEWATCHER: 2
-};
 
 class ImageSourceValue 
 {
     /**
      * Data object containing path (file or directory) and valid file extensions array for new image(s)
      * @param {string} path 
-     * @param {string|Array} validExtensions 
+     * @param {string[]} validExtensions 
      */
     constructor(path, validExtensions) 
     {
         this.path = path;
-        this.extensions = typeof validExtensions === "string" ? validExtensions.split(",") : validExtensions;
+        this.extensions = validExtensions;
     }
 }
 
@@ -29,31 +25,35 @@ class ImageTap
 {
     /**
      * Data object containing context information for processing new images
-     * @param {string[]} consumers e.g. the receiving pipeline names
      * @param {ImageSourceType} sourceType e.g. ImageSourceType.FILEWATCHER
      * @param {ImageSourceValue} [sourceValue] e.g. { path: "C:/images" }
      */
-    constructor(consumers, sourceType, sourceValue)
+    constructor(sourceType, sourceValue)
     {
-        this.consumers = consumers;
         this.sourceType = sourceType;
         this.sourceValue = sourceValue;
     }
 }
 
+
+let nextProducerId = 0;
 /**
  * Reads images from source described by ImageTap and produces file paths for consumption
  * A producer has a single source.
  * A producer will not automatically deplete when sourcing from a File Watcher
  */
-export class ImageFileProducer extends EventEmitter
+export default class ImageFileProducer extends EventEmitter
 {
     constructor(imageTap) 
     {
         super();
+        this._id = nextProducerId++;
         this._imageTap = imageTap;
         this._fileWatcher = null;
         this._isDepleted = false;
+    }
+    get id() {
+        return this._id;
     }
     produce()
     {
@@ -95,7 +95,7 @@ export class ImageFileProducer extends EventEmitter
         })
         .on("add", newPath => 
         {
-            this.emit("file", newPath);
+            this.emit("files", this._id, [newPath]);
         });
 
         this._fileWatcher = watcher;
@@ -114,8 +114,9 @@ export class ImageFileProducer extends EventEmitter
                 const ext = file.split('.').pop();
                 return extensions.includes(ext);
             });
-            this.emit("files", files);
             this._isDepleted = true;
+            this.emit("files", this._id, files);
+            this.emit("depleted", this._id);
         });
     }
     /**
@@ -125,26 +126,42 @@ export class ImageFileProducer extends EventEmitter
     {
         host.runActionWithParameters("action.getOpenFilePaths")
         .then(files => {
-            this.emit("files", files.split(','));
             this._isDepleted = true;
+            this.emit("files", this._id, files.split(','));
+            this.emit("depleted", this._id);
         });
     }
 }
-ImageFileProducer.withFileWatcher = function(consumers, directory, extensions) 
+/**
+ * Create an ImageFileProducer instance with the given source
+ * @param {string} sourceType one of "DIRECTORY", "FILEWATCHER", or "OPENFILES"
+ * @param {string} sourcePath if source is "DIRECTORY" or "FILEWATCHER"
+ * @param {string[]} sourceExtensions if source is "DIRECTORY" or "FILEWATCHER", an array of valid extensions to read (e.g. "psd", "jpg", etc)
+ */
+ImageFileProducer.with = function(sourceType, sourcePath, sourceExtensions) 
 {
     return new ImageFileProducer(
-        new ImageTap(consumers, ImageSourceType.FILEWATCHER, new ImageSourceValue(directory, extensions))
+        new ImageTap(
+            ImageSourceType.parse(sourceType), 
+            new ImageSourceValue(sourcePath, sourceExtensions)
+        )
     );
-};
-ImageFileProducer.withDirectory = function(consumers, directory, extensions) 
-{
-    return new ImageFileProducer(
-        new ImageTap(consumers, ImageSourceType.DIRECTORY, new ImageSourceValue(directory, validExtensions))
-    );
-};
-ImageFileProducer.withOpenFiles = function(consumers) 
-{
-    return new ImageFileProducer(
-        new ImageTap(consumers, ImageSourceType.OPENFILES, null)
-    );
-};
+}
+// ImageFileProducer.withFileWatcher = function(consumers, directory, extensions) 
+// {
+//     return new ImageFileProducer(
+//         new ImageTap(consumers, ImageSourceType.FILEWATCHER, new ImageSourceValue(directory, extensions))
+//     );
+// };
+// ImageFileProducer.withDirectory = function(consumers, directory, extensions) 
+// {
+//     return new ImageFileProducer(
+//         new ImageTap(consumers, ImageSourceType.DIRECTORY, new ImageSourceValue(directory, extensions))
+//     );
+// };
+// ImageFileProducer.withOpenFiles = function(consumers) 
+// {
+//     return new ImageFileProducer(
+//         new ImageTap(consumers, ImageSourceType.OPENFILES, null)
+//     );
+// };

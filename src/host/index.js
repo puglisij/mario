@@ -76,6 +76,7 @@ class Host
     /*---------------------
         Extend Script
     ---------------------*/
+    // NOTES:
     // ActionReference is what to perform the action on within Photoshop  (e.g. document, marque tool, etc)
     // The Action Manager system keeps track of a large number of Descriptors keys relative to the status of:
     // - The Application
@@ -111,16 +112,16 @@ class Host
     }
     /**
      * Run the ExtendScript action function by the given name
-     * @param {string} actionName 
+     * @param {string} functionName 
      * @param {number|string|boolean|object|array} parameters 
      * @returns {Promise}
      */
-    runActionWithParameters(actionName, parameters)
+    runActionWithParameters(functionName, parameters)
     {
         const parametersJson = JSON.stringify(parameters);
         return this.runJsx(`(function(){
             try {
-                var result = ${actionName}(${parametersJson});
+                var result = ${functionName}(${parametersJson});
                 return result;
             } catch(e) {
                 return e.toString();

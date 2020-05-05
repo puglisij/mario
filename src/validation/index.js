@@ -48,6 +48,27 @@ extend('custom', {
 console.log("Validation imported");
 export default { init: () => {} };
 
+
+// extend("uniq", {
+//     validate: async value => {
+//       const response = await checkEmail(value);
+  
+//       if (response.valid) {
+//         return true;
+//       }
+  
+//       return {
+//         valid: false,
+//         data: {
+//           // this will be used to interpolate the message.
+//           serverMessage: response.errors[0]
+//         }
+//       };
+//     },
+//     // same prop as returned in the `data` object.
+//     message: `{serverMessage}`
+// });
+
 // /**
 //  * Master validation instance. Keeps track of validation components and their validity. 
 //  * Should be imported at root <form> component and instance passed down to child components.

@@ -1,24 +1,32 @@
 <template>
     <div class="main-controls my2">
-        <div v-if="!isUninitialized">
+        <div>
             <button class="topcoat-button--large" 
-                @click="onRunPause"
-                :title="primaryButtonTitle"
-                v-html="primaryButtonLabel"></button>
+                @click="onPipelineRun"
+                title="Activate pipeline file watchers to begin processing."
+                v-show="isPipelineEngineIdle">&#9654;</button>
             <button class="topcoat-button--large" 
-                @click="onStop"
-                title="Stop all pipelines."
-                v-show="!isStopped" 
+                @click="onPipelineResume"
+                title="Resume processing."
+                v-show="isPipelineEnginePaused">Resume</button>
+            <button class="topcoat-button--large" 
+                @click="onPipelinePause"
+                title="Pause processing."
+                v-show="!isPipelineEngineIdle">&#10074;&#10074;</button>
+            <button class="topcoat-button--large" 
+                @click="onPipelineStop"
+                title="Stop all pipelines and file watchers."
+                v-show="!isPipelineEngineIdle" 
                 >&#9724;</button>
         </div>
-        <div v-if="isUninitialized">Initializing<wait-dots/></div>
+        <!-- <div v-if="isInitializing">Initializing<wait-dots/></div> -->
     </div>
 </template>
 
 <script>
 import Server from '../server';
-import { ServerState } from '../server/enum';
-import WaitDots from "./wait-dots.vue";
+import { PipelineEngineState } from '../server/pipelineEngine';
+import WaitDots from './wait-dots.vue';
 
 // TODO: Control panel for file watchers / pipelines
 export default {
@@ -28,53 +36,35 @@ export default {
     },
     data() {
         return {
-            serverState: Server.getState()
+            pipelineEngineState: Server.pipelineEngine.state
         }
     },
-    beforeCreate() 
+    created() 
     {
-        Server.on("state", state => {
-            this.serverState = state;
-        })
+        Server.pipelineEngine.on("state", state => {
+            this.pipelineEngineState = state;
+        });
     },
     computed: {
-        isUninitialized() {
-            return this.serverState == ServerState.UNINITIALIZED;
+        isPipelineEnginePaused() {
+            return this.pipelineEngineState == PipelineEngineState.PAUSED;
         },
-        isRunning() {
-            return this.serverState == ServerState.RUNNING;
-        },
-        isPaused() {
-            return this.serverState == ServerState.PAUSED;
-        },
-        isStopped() {
-            return this.serverState == ServerState.STOPPED;
-        },
-        primaryButtonLabel() {
-            if(this.isPaused) {
-                return "Resume";
-            } 
-            if(this.isStopped) {
-                return "&#9654;";
-            }
-            return "&#10074;&#10074;";
-        },
-        primaryButtonTitle() {
-            if(this.isPaused) {
-                return "Resume all pipelines.";
-            }
-            if(this.isStopped) {
-                return "Run all pipelines.";
-            }
-            return "Pause all pipelines.";
+        isPipelineEngineIdle() {
+            return this.pipelineEngineState == PipelineEngineState.IDLE;
         }
     },
     methods: {
-        onRunPause() {
-            Server.run();
+        onPipelineRun() {
+            Server.pipelineEngine.runAll();
         },
-        onStop() {
-            Server.stop();
+        onPipelineResume() {
+            Server.pipelineEngine.resume();
+        },
+        onPipelinePause() {
+            Server.pipelineEngine.pause();
+        },
+        onPipelineStop() {
+            Server.pipelineEngine.stop();
         }
     }
 }
