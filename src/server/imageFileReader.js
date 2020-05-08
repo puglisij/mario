@@ -14,49 +14,53 @@ export default class ImageFileReader
 
     /**
      * Create a new Image instance, using the image or json file path, if given.
-     * @param {String} [imageInputSource] the image or json file path.
-     * @param {Object} [defaultData] a default json data object with data necessary for processing
+     * @param {String} [imageInputSource] the image or json file path. Path should be absolute.
      */
-    async read(imageInputSource, defaultData)
+    async read(imageInputSource)
     {
-        const image = new Image();
-              image.data = defaultData || {};
-              image.imageInputSource = imageInputSource || image.data.imageInputSource || "";
+        if(!this._isPathDefinedAndAbsolute(imageInputSource)) {
+            throw new Error("Image expected 'imageInputSource' to be an absolute path.");
+        }
 
-        if(this._itExists(source))
+        const image = new Image();
+
+        if(this._isFile(imageInputSource) && this._isJsonFile(imageInputSource)) 
         {
-            // TODO: Cleanup. Not a good practice to pass Image instance around.
-            await this.readAvailableJson(image.imageInputSource, image);
-            await this.readAvailableMetadata(image.imageInputSource, image)
-        }   
+            const dataSource = imageInputSource;
+            const data = await this._readJson(dataSource);
+            const dataSourceDirectory = upath.dirname(dataSource);
+            // Grab new image source path from json, if available
+            imageInputSource = this._ensureAbsolutePath(data.imageInputSource, dataSourceDirectory);
+            image.imageInputSource = imageInputSource;
+            image.imageInputSourceDirectory = upath.dirname(imageInputSource);
+            image.dataSource = dataSource;
+            image.data = data;
+        }
+
+        if(this._isFile(imageInputSource)) {
+            image.metadata = await this._readMetadata(imageInputSource);
+        }
+
         return image;
     }
     /**
      * Reads any json from the given data source, if it is json and it exists.
+     * @returns {object}
      */
-    async readAvailableJson(dataSource, image)
+    async _readJson(dataSource)
     {
-        return new Promise(resolve =>     
-        {
-            if(this._isJsonFile(dataSource)) 
-            {
-                fs.readFile(dataSource, { encoding: 'utf8' }, json => {
-                    // Grab new image source path from json, if available
-                    const sourceDirectory = upath.dirname(dataSource);
-                    image.dataSource = dataSource;
-                    image.data = Object.assign(image.data, json);
-                    image.imageInputSource = ensureAbsolutePath(image.data.imageInputSource, sourceDirectory);
-                });
-            }
+        return new Promise(resolve => {
+            fs.readFile(dataSource, { encoding: 'utf8' }, resolve);
         });
     }
     /**
      * Reads any metadata from the given source, if it is a file
+     * @returns {object}
      */
-    async readAvailableMetadata(imageInputSource, image)
+    async _readMetadata(imageInputSource)
     {
         if(!this._isFile(imageInputSource)) {
-            return new Promise.resolve();
+            return Promise.resolve();
         }
 
         let ep = new exiftool.ExiftoolProcess();
@@ -69,18 +73,20 @@ export default class ImageFileReader
         .then(() => ep.readMetadata(imageInputSource, ['-File:all']))
         .then(metadata => {
             let fileMetadata = metadata.data[0];
-            image.metadata = fileMetadata;
+            return fileMetadata;
         })
         .finally(() => {
             ep.close();
         });
     }
-
-    ensureAbsolutePath(path, targetDirectory) {
+    _isPathDefinedAndAbsolute(path) {
+        return typeof path === "string" && upath.isAbsolute(path);
+    }
+    _ensureAbsolutePath(path, parentDirectory) {
         if(!path) {
             return "";
         }
-        return upath.isAbsolute(path) ? path : upath.join(targetDirectory, path);
+        return upath.isAbsolute(path) ? path : upath.join(parentDirectory, path);
     }
     _itExists(path) {
         return fs.existsSync(path || "");

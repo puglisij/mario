@@ -7,6 +7,20 @@ var _ = {
         if(app.refresh)
             app.refresh();
     }, 
+    /**
+    * Returns true if path is a File
+    * @param {string|Folder|File} path
+    */
+    isFile: function(path) {
+        return new Folder(path) instanceof File;
+    },
+    /**
+    * Returns true if path is a Folder
+    * @param {string|Folder|File} path
+    */
+    isFolder: function(path) {
+        return new Folder(path) instanceof Folder;
+    },
     getDocumentPath: function() 
     {
         return app.activeDocument.fullName.fsName;
@@ -175,7 +189,7 @@ var _ = {
     isNull: function isNull(val) {
         return val === null;
     }
-}
+};
 
 function c2s(c) { return app.typeIDToStringID(app.charIDToTypeID(c)) }
 function s2t(s) { return app.stringIDToTypeID(s) }
@@ -183,61 +197,6 @@ function c2t(c) { return app.charIDToTypeID(c) }
 function t2s(t) { return app.typeIDToStringID(t) }
 function t2c(t) { return app.typeIDToCharID(t) }
 
-/**
-* Cross-platform path joining. Works similar to node.js  path.join(). 
-* If path does not exist, the returned path may be invalid.
-*/
-// function pathJoin()
-// {
-//     if(!arguments.length) {
-//         return null; 
-//     }
-//     function isPathAFile(path) {
-//         return path.match(/\.[^\/:\\]+$/) !== null;
-//     }
-//     function makePathRelative(path) {
-//         return "./" + path.replace(/^\.?[\/\\]/, '');
-//     }
-//     function makePathAbsolute(path) {
-//         var f = new Folder(path);
-//         return f.fsName;
-//     }
-//     var args = Array.prototype.slice.call(arguments);
-//     var firstPart = args.shift();
-//     if(!args.length) 
-//     {
-//         if(isPathAFile(firstPart)) {
-//             return new File(firstPart);
-//         } else {
-//             return new Folder(firstPart);
-//         }
-//     }
-
-//     firstPart = makePathAbsolute(firstPart);
-//     var lastPart = makePathRelative(args.pop());
-//     var currentDir = Folder.current;
-//     Folder.current = new Folder(firstPart);
-
-//     for(var i = 0; i < args.length; ++i) 
-//     {
-//         var pathPart = args[i];
-//         if(typeof pathPart !== "string") {
-//             throw new TypeError("Path must be a string. Received: " + pathPart);
-//         }
-//         pathPart = makePathRelative(pathPart);
-//         Folder.current = new Folder(pathPart);
-//     }
-    
-//     var result;
-//     if(isPathAFile(lastPart)) {
-//         result = new File(lastPart);
-//     } else {
-//         result = new Folder(lastPart);
-//     }
-//     // restore 
-//     Folder.current = currentDir;
-//     return result;
-// }
 
 /**
 * Get JSON Introspection of an ActionDescriptor

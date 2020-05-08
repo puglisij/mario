@@ -3,7 +3,8 @@ import Enum from '../enum';
 const ImageSourceType = new Enum([
     "OPENFILES", 
     "DIRECTORY", 
-    "FILEWATCHER"
+    "FILEWATCHER",
+    "BLANK"
 ]);
 
 export default ImageSourceType

@@ -71,7 +71,6 @@ class Host
                 }
             })
         }, delay);
-        console.log(`Jsx setTimeout(${callbackId}, ${delay}) called.`);
     }
     /*---------------------
         Extend Script

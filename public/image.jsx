@@ -4,11 +4,16 @@
 */
 function ImageForProcessing(json)
 {
-    this._imagePath   = json.imagePath;
-    this._packagePath = json.packagePath;
-    this._sourcePath  = json.sourcePath;
+    if(_.isString(json.imageInputSource) && json.imageInputSource.endsWith(".json")) {
+        throw new Error("ImageForProcessing should not receive imageInputSource as json file.");
+    } 
 
-    this._type       = json.type;     // e.g. Product
+    // An absolute path to an image or directory, or blank
+    this._imageInputSource   = json.imageInputSource;
+    //The parent directory containing imageInputSource, if defined
+    this._imageInputSourceDirectory  = json.imageInputSourceDirectory;
+    // Path to json file from which data was sourced, if available
+    this._dataSource = json.dataSource;
     // External (stored outside file) metadata necessary for processing
     this._data       = json.data;     
     // Metadata (i.e. XMP/EXIF) stored in the image file, if available
@@ -16,17 +21,17 @@ function ImageForProcessing(json)
     // Context store for temporary values during the current image process 
     this._context = {};
 }
-ImageForProcessing.prototype.getType = function() {
-    return this._type;
+/**
+* Returns input source path, either an image file or directory
+*/
+ImageForProcessing.prototype.getInputSource = function() {
+    return this._imageInputSource;
 };
-ImageForProcessing.prototype.getImagePath = function() {
-    return this._imagePath;
-};
-ImageForProcessing.prototype.getPackagePath = function() {
-    return this._packagePath;
-};
-ImageForProcessing.prototype.getSourcePath = function() {
-    return this._sourcePath;
+/**
+* Returns the parent directory containing the input source path
+*/
+ImageForProcessing.prototype.getInputSourceDirectory = function() {
+    return this._imageInputSourceDirectory;
 };
 /**
 * Return property in data which matches the given key

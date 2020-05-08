@@ -15,6 +15,10 @@ export default class Image
          */
         this.imageInputSource = "";
         /**
+         * The parent directory containing imageInputSource
+         */
+        this.imageInputSourceDirectory = "";
+        /**
          * If available, the json data file for the Image process
          */
         this.dataSource = "";
@@ -25,7 +29,7 @@ export default class Image
         /**
          * Internal data (Metadata stored in the file)
          */
-        this.metadata = null; 
+        this.metadata = {}; 
     }
 }
 

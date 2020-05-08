@@ -1,16 +1,13 @@
 
 /* npm modules */
-import path from 'path';
-import upath from 'upath';
-import fs from 'fs';
 import debounce from 'debounce'; 
 import express from 'express';
-import promisify from 'es6-promisify';
 import EventEmitter from "events";
 
 
 /* local modules */
 import { PipelineEngine } from './pipelineEngine';
+import { Actions } from './actions';
 import _ from '../utils';
 import store from '../store';
 import global from '../global';
@@ -25,7 +22,8 @@ export const ServerState = {
 };
 
 /**
- * Server manages Node REST API, and Js API for managing pipelines. 
+ * Backend systems.
+ * Manages Node REST API, and JS API for managing pipelines. 
  * Server is not CEP panel aware
  */
 class Server extends EventEmitter
@@ -39,16 +37,19 @@ class Server extends EventEmitter
         // Express instance
         this._httpServer = null;
         this._pipelineEngine = new PipelineEngine();
+        this._actions = new Actions();
     }
-    async init() 
+    init() 
     {
         if(this._initialized) return;
         this._initialized = true;
 
+        this._pipelineEngine.init();
+        this._actions.init();
         //-----------------
         // Express Routes
         //-----------------
-        // TODO Replace Express with WebSockets?
+        // TODO Replace Express with WebSockets (e.g. sockjs)?
         app.get('/pipeline/:name/configuration', (req, res) => {
             res.header("Content-Type", "application/json");
             res.send(
@@ -95,9 +96,14 @@ class Server extends EventEmitter
         });
         this._pipelineEngine.destroy();
         this._pipelineEngine = null;
+        this._actions.destroy();
+        this._actions = null;
     }
     get pipelineEngine() {
         return this._pipelineEngine;
+    }
+    get actions() {
+        return this._actions;
     }
     get state() {
         return this._state;
@@ -106,6 +112,7 @@ class Server extends EventEmitter
         this._state = value;
         this.emit("state", value);
     }
+    
 }
 
 export default new Server();

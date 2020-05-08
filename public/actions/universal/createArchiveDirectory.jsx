@@ -9,7 +9,7 @@ universal.createArchiveDirectory = function createArchiveDirectory(archiveName)
         archiveDirectory = archiveDirectory + "/" + archiveName.toLowerCase();
 
     var currentDir = Folder.current;
-    Folder.current = new Folder(IMAGE.getSourcePath());
+    Folder.current = new Folder(IMAGE.getInputSourceDirectory());
     var folder = new Folder(archiveDirectory);
     Folder.current = currentDir;
 

@@ -283,8 +283,43 @@ label {
 
 
 .main-controls {
-    display: flex;
-    justify-content: center;
+    z-index: 1;
+
+    &__controls {
+        text-align: center;
+    }
+    &__drawer {
+        background: rgba(0,0,0,0.2);
+        box-shadow: inset 0px 2px 8px 0px rgba(0, 0, 0, 0.2);
+        max-height: 1000px;
+        overflow: hidden;
+        
+        &.v-enter-active,
+        &.v-leave-active {
+            transition: max-height 0.4s;
+        }
+        &.v-enter,
+        &.v-leave-to {
+            max-height: 0;
+        }
+    }
+    &__drawer-toggle {
+        height: 0;
+        text-align: center;
+
+        button {
+            box-shadow: none !important;
+            border: inherit !important;
+        }
+        & span {
+            display: inline-block;
+            margin: 0  $column-gap * 2;
+            transform: rotateZ(90deg);
+        }
+        &.active span {
+            transform: rotateZ(-90deg);
+        }
+    }
 }
 
 .watcher,

@@ -1,16 +1,13 @@
 import EventEmitter from "events";
+import _ from '../utils';
 import store from '../store';
 import host from '../host';
 import Image from './image';
 import ImageFileMover from './imageFileMover';
 import ImageFileReader from './imageFileReader';
 import ImageFileProducer from './imageFileProducer';
-
-export const PipelineEngineState = {
-    IDLE: 1, 
-    PAUSED: 2,
-    PROCESSING: 3
-};
+import ImageSourceType from './imageSourceType';
+import PipelineEngineState from './pipelineEngineState';
 
 export class PipelineEngine extends EventEmitter
 {
@@ -18,12 +15,15 @@ export class PipelineEngine extends EventEmitter
     {
         super();
         this._processingMutex = false; 
-        this._state = PipelineEngineState.IDLE;
+        this._state = PipelineEngineState.STOPPED;
 
         /**
          * Map values are an array containing pipeline names
          */
         this._producerIdToPipelines = new Map();
+        /**
+         * ImageFileProducer instances
+         */
         this._producers = [];
 
         /**
@@ -37,14 +37,32 @@ export class PipelineEngine extends EventEmitter
         this._imageFileReader = new ImageFileReader();
         this._imageFileMover = new ImageFileMover();
     }
+    /**
+     * @returns {Promise}
+     */
+    init() 
+    {
+        return Promise.resolve();
+    }
     destroy()
     {
-        // destroy all producers
         // stop any processing
+        // destroy all producers
+        this._destroyProducers();
+        this.state = PipelineEngineState.STOPPED;
+    }
+    _destroyProducers()
+    {
         const producerIds = this._producers.map(p => p.id);
         for(const producerId of producerIds) {
             this._destroyFileProducer(producerId);
         }
+    }
+    _destroyFileProducer(producerId)
+    {
+        this._producerIdToPipelines.get(producerId).destroy();
+        this._producerIdToPipelines.delete(producerId);
+        this._producers = this._producers.filter(p => p.id !== producerId);
     }
     _addFileProducer(producer, pipelineNames) 
     {
@@ -54,68 +72,128 @@ export class PipelineEngine extends EventEmitter
         producer.on("files", this._onProducerFile);
         producer.on("depleted", this._onProducerDepleted);
         producer.produce();
-    }
-    _destroyFileProducer(producerId)
-    {
-        this._producerIdToPipelines.get(producerId).destroy();
-        this._producerIdToPipelines.delete(producerId);
-        this._producers = this._producers.filter(p => p.id !== producerId);
+
+        console.log("Image File Producer added.");
     }
     /**
      * Run the given pipeline with files from the given source
      * @param {string} pipelineName pipeline name
-     * @param {string} sourceType DIRECTORY, or OPENFILES
+     * @param {string} sourceType FILEWATCHER, DIRECTORY, or OPENFILES
      * @param {string} sourcePath if sourceType is DIRECTORY
      * @param {string} sourceExtensions if sourceType is DIRECTORY
      */
     run(pipelineName, sourceType, sourcePath, sourceExtensions)
     {
-        const producer = ImageFileProducer.with(
+        this._run([pipelineName], sourceType, sourcePath, sourceExtensions);
+    }
+    /**
+     * Run all pipelines with files from the given source
+     * @param {string} sourceType FILEWATCHER, DIRECTORY, OPENFILES, or BLANK
+     * @param {string} sourcePath if sourceType is DIRECTORY
+     * @param {string} sourceExtensions if sourceType is DIRECTORY
+     */
+    runAll(sourceType, sourcePath, sourceExtensions)
+    {
+        this._run(
+            store.pipelines.pipelines.map(p => p.name), 
             sourceType, 
             sourcePath, 
             sourceExtensions
         );
-        this._addFileProducer(producer, [pipelineName]);
     }
-    /**
-     * Run all pipelines with files from configured file watcher sources
-     * Pipelines will run when a new file is detected.
-     */
-    runAll()
+    _run(pipelineNames, sourceType, sourcePath, sourceExtensions) 
     {
-        for(const w of store.general.fileWatchers) 
+        if(!this.isStopped()) {
+            console.log("Pipeline engine is already running.");
+            return;
+        }
+
+        let type = ImageSourceType.parse(sourceType);
+        switch(type)
         {
-            const pipelineNames = this._getConfigurationsByFileWatcherName(w.name).map(p => p.name);
-            const producer = ImageFileProducer.with(
-                "FILEWATCHER", 
-                w.path, 
-                w.extensions
+            case ImageSourceType.FILEWATCHER: 
+                this._runWithFileWatchers(pipelineNames); break;
+            case ImageSourceType.DIRECTORY: 
+                this._runWithDirectory(pipelineNames, sourcePath, sourceExtensions); break;
+            case ImageSourceType.OPENFILES: 
+                this._runWithOpenFiles(pipelineNames); break;
+        }
+        this.state = PipelineEngineState.IDLE;
+    }
+    _runWithFileWatchers(pipelineNames)
+    {
+        // Get all file watchers for given pipelines
+        const watcherNames = pipelineNames.reduce((arr, name) => {
+            const pipeline = this._getConfigurationByPipelineName(name);
+            return arr.concat(pipeline.watcherNames);
+        }, []);
+        // IMPORTANT: We Do Not want multiple producers for the same files
+        // Which would happen if we looped by pipeline and created its producers
+        // since there is a many-to-one relationship between pipelines and file watchers
+        for(const watcherName of watcherNames) 
+        {
+            const fileWatcher = this._getFileWatcherByName(watcherName);
+            const pipelineNames = this._getConfigurationsByFileWatcherName(watcherName).map(p => p.name);
+            const producer = ImageFileProducer.withFileWatcher(
+                fileWatcher.path, 
+                fileWatcher.extensions
             );
             this._addFileProducer(producer, pipelineNames);
         }
     }
+    _runWithDirectory(pipelineNames, directory, extensions) 
+    {
+        const producer = ImageFileProducer.withDirectory(directory, extensions);
+        this._addFileProducer(producer, pipelineNames);
+    }
+    _runWithOpenFiles(pipelineNames) 
+    {
+        const producer = ImageFileProducer.withOpenFiles();
+        this._addFileProducer(producer, pipelineNames);
+    }
     pause() {
         if(this.isProcessing()) {
-            this.state == PipelineEngineState.PAUSED;
+            this.state = PipelineEngineState.PAUSED;
         }
     }
-    resume() 
-    {
+    resume() {
         if(this.isPaused()) {
             this.state = PipelineEngineState.PROCESSING;
         }
     }
     stop() {
-        this.state == PipelineEngineState.IDLE;
+        this._destroyProducers();
+        this.state = PipelineEngineState.STOPPED;
+    }
+    _stopIfNoProducers()
+    {
+        if(this._producers.length === 0) {
+            this.state = PipelineEngineState.STOPPED;
+        }
+    }
+
+
+    _getFileWatcherByName(watcherName)
+    {
+        return store.general.fileWatchers.find(w => w.name === watcherName);
+    }
+    _getFileWatchersByPipelineName(pipelineName)
+    {
+        const pipeline = this._getConfigurationByPipelineName(pipelineName);
+        return store.general.fileWatchers.filter(w => pipeline.watcherNames.includes(w.name));
+    }
+    _getConfigurationByPipelineName(pipelineName) 
+    {
+        return store.pipelines.pipelines.find(p => p.name === pipelineName);
     }
     _getConfigurationsByProducerId(producerId) 
     {
         const pipelineNames = this._producerIdToPipelines.get(producerId);
-        return store.pipelines.filter(p => pipelineNames.includes(p.name));
+        return store.pipelines.pipelines.filter(p => pipelineNames.includes(p.name));
     }
     _getConfigurationsByFileWatcherName(watcherName) 
     {
-        return store.pipelines.filter(p => p.watcherNames.includes(watcherName));
+        return store.pipelines.pipelines.filter(p => p.watcherNames.includes(watcherName));
     }
     _onProducerFile(producerId, files) 
     {
@@ -129,6 +207,7 @@ export class PipelineEngine extends EventEmitter
     _onProducerDepleted(producerId) 
     {
         this._destroyFileProducer(producerId);
+        this._stopIfNoProducers();
     }
     async _process()
     {
@@ -184,12 +263,12 @@ export class PipelineEngine extends EventEmitter
             catch(e)
             {
                 // TODO Use configured errored directory
-                await this.pauseCheck(null, store.general.pauseOnExceptions);
+                await this._pauseCheck(null, store.general.pauseOnExceptions);
                 this._imageFileMover.moveToErrored(image, "./Errored", e.toString());
             }
             finally
             {
-                await this.pauseCheck(null, store.general.pauseAfterEveryImage);
+                await this._pauseCheck(null, store.general.pauseAfterEveryImage);
                 if(this._stopCheck()) break;
             }
         }
@@ -234,7 +313,11 @@ export class PipelineEngine extends EventEmitter
     }
     _stopCheck(actionResult) 
     {
-        if(this.isStopped() || actionResult === "EXIT" || actionResult === "STOP") {
+        if(this.isStopped() || actionResult === "STOP") {
+            this.state = PipelineEngineState.STOPPED;
+            return true;
+        }
+        if(actionResult === "EXIT") {
             this.state = PipelineEngineState.IDLE;
             return true;
         }
@@ -263,8 +346,8 @@ export class PipelineEngine extends EventEmitter
         this._state = value;
         this.emit("state", value);
     }
-    isIdle() { return this.isStopped(); }
-    isStopped() { return this.state == PipelineEngineState.IDLE; }
-    isPaused() { return this.state == PipelineEngineState.PAUSED; }
-    isProcessing() { return this.state == PipelineEngineState.PROCESSING; }
+    isIdle() { return this.state === PipelineEngineState.IDLE; }
+    isStopped() { return this.state === PipelineEngineState.STOPPED; }
+    isPaused() { return this.state === PipelineEngineState.PAUSED; }
+    isProcessing() { return this.state === PipelineEngineState.PROCESSING; }
 }

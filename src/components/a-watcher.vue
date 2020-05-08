@@ -14,43 +14,38 @@
             </validation-provider>
         </label>
 
-        <label>
-            <div class="label">Watch this Folder</div>
-            <validation-provider 
-                class="flex" 
-                rules="required|pathexists" 
-                v-slot="{errors, reset}"
+        <validation-provider 
+            slim
+            rules="required|pathexists" 
+            v-slot="{ errors }"
+        >
+            <a-folder-input
+                title="The path to the folder to watch for new json files, or images for processing."
+                :errors="errors"
+                v-model="localWatcher.path"
             >
-                <a-folder-dialog-button :folder.sync="localWatcher.path"></a-folder-dialog-button>
-                <input class="topcoat-text-input flex-grow ml1" type="text" placeholder="/my/watch/folder" 
-                    title="The path to the folder to watch for new json files, or images for processing."
-                    v-model="localWatcher.path"
-                    @focus="reset"
-                />
-                <span class="topcoat-notification error" v-show="errors.length">{{ errors[0] }}</span>
-            </validation-provider>
-        </label>
+                Watch this Folder
+            </a-folder-input>
+        </validation-provider>
 
         <a-checkbox v-model="localWatcher.useProcessedPath">
             Use Processed Folder?
         </a-checkbox>
 
-        <label v-if="localWatcher.useProcessedPath">
-            <div class="label">Move processed files to this Folder</div>
-            <validation-provider 
-                class="flex" 
-                :rules="{ required: localWatcher.useProcessedPath, pathexists: true }" 
-                v-slot="{errors, reset}"
+        <validation-provider 
+            slim
+            :rules="{ required: localWatcher.useProcessedPath, pathexists: true }" 
+            v-slot="{ errors }"
+            v-if="localWatcher.useProcessedPath"
+        >
+            <a-folder-input
+                title="Files in the watch folder will be moved here after pipeline(s) have run."
+                :errors="errors"
+                v-model="localWatcher.processedPath"
             >
-                <a-folder-dialog-button :folder.sync="localWatcher.processedPath"></a-folder-dialog-button>
-                <input class="topcoat-text-input flex-grow ml1" type="text" placeholder="/my/processed/folder" 
-                    title="Files in the watch folder will be moved here after pipeline(s) have run."
-                    v-model="localWatcher.processedPath"
-                    @focus="reset"
-                />
-                <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
-            </validation-provider>
-        </label>
+                Move processed files to this Folder
+            </a-folder-input>
+        </validation-provider>
 
         <label>
             <div class="label">Watch these Extensions</div>
@@ -59,9 +54,10 @@
                 rules="required" 
                 v-slot="{ errors }"
             >
-                <input class="topcoat-text-input full-width" type="text" placeholder="jpg, jpeg, png, psd, tif, etc." 
+                <a-array-input class="topcoat-text-input full-width" 
+                    placeholder="jpg, jpeg, png, psd, tif, etc." 
                     title="Either multiple image extensions, or json (exclusive). A comma delimited list."
-                    v-model="localWatcher.extensions"
+                    :value="localWatcher.extensions"
                     @change="onExtensions"
                 />
                 <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
@@ -78,15 +74,17 @@
 import { ValidationProvider } from "vee-validate";
 
 import _ from "../utils";
-import AFolderDialogButton from "./a-folder-dialog-button.vue";
+import AFolderInput from "./a-folder-input.vue";
 import ACheckbox from "./a-checkbox.vue";
+import AArrayInput from "./a-array-input.vue";
 
 export default {
     name: "AWatcher",
     components: {
         ValidationProvider,
-        AFolderDialogButton,
-        ACheckbox
+        AFolderInput,
+        ACheckbox,
+        AArrayInput
     },
     model: {
         prop: "watcher", 
@@ -116,31 +114,32 @@ export default {
         }
     },
     methods: {
+        // TODO: Validate that a watcher does not exist already for watched path
+
         validateName(value)
         {
             const name = value.trim();
             this.localWatcher.name = name;
             const found = this.watchers.filter(w => w.name == name).length;
+            // TODO: Warn if Pipelines are referencing last watcher name
             return {
                 valid: found === 1, 
                 message: "Name must be unique"
             };
         },
-        validateExtensions(value) 
+        validateExtensions(extensions) 
         {
             // TODO: Implement better validation
-            let extensions = value.split(','); 
-                extensions = extensions.map(ext => ext.replace(/[^a-z0-9]/g, ''));
-                extensions = extensions.filter(ext => ext && ext.length > 0);
+            extensions = extensions.map(ext => ext.replace(/[^a-z0-9]/g, ''));
+            extensions = extensions.filter(ext => ext && ext.length > 0);
             if(extensions.includes("json")) {
                 return ["json"];
             }
             return extensions;
         },
-        onExtensions(event)
+        onExtensions(extensions)
         {
-            const value = event.target.value;
-            this.localWatcher.extensions = this.validateExtensions(value);
+            this.localWatcher.extensions = this.validateExtensions(extensions);
         },
         onDelete(event)
         {

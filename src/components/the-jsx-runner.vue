@@ -8,7 +8,7 @@
                     v-if="isScriptListenerInstalled"
                     @click="toggleScriptListener" 
                     >
-                    ScriptListener {{ isScriptListenerActive ? 'Off' : 'On'}}
+                    Turn ScriptListener {{ isScriptListenerActive ? 'Off' : 'On'}}
                     </button>
                 <!-- <button class="topcoat-button--large" 
                     @click="toggleScriptListenerReader" 

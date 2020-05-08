@@ -1,76 +1,138 @@
+import upath from 'upath';
+import fs from 'fs';
 import jsdocx from 'jsdocx';
 import EventEmitter from "events";
 
-class Action
+import store from '../store';
+import host from '../host';
+import global from '../global';
+
+/**
+ * Describes a JSX Actions signature in full, including parameters
+ */
+export class ActionDescriptor
 {
     constructor()
     {
         this.name = "";
+        this.path = "";
         this.params = [];
     }
+    /**
+     * @param {JSDocXDescription} jsDocDescription the description object returned by JSDocX
+     */
+    static fromJSDocDescription(jsDocDescription)
+    {
+        // TODO Make this function another class?
+        const description = jsDocDescription.filter(x => x.$kind === "method");
+        const descriptor = new ActionDescriptor();
+              descriptor.name = description.$longname;
+              descriptor.params = description.params; // TODO convert to ActionParameter
+              descriptor.path = description.meta.path;
+        return descriptor;
+    }
 }
-Action.fromJSDocDescription = function(jsdocDescription)
+/**
+ * Describes an (Input) parameter to a JSX Action function
+ */
+export class ActionParameter 
 {
-    const description = jsdocDescription.filter(x => x.$kind === "method");
-    const action = new Action();
-            action.name = description.$longname;
-            action.params = description.params;
-    return action;
-};
+    constructor() 
+    {
+        this.description = "";
+        this.name = "";
+        this.typeNames = [];
+        this.isRequired = false;
+        this.defaultValue = null;
+    }
+}
+
+class ActionParameterCurator
+{
+    constructor(hostInterface)
+    {
+        this.host = hostInterface;
+        this.typeNameToDataCache = {};
+    }
+    typeNameToControlInputType(typeName)
+    {
+        // call jsx functions to get type information
+        // this.host.runJsx('...');
+    }
+}
 
 /**
- * Manages Importing JSX Action files and their metadata
+ * Handles reading JSX action files and their JSDoc descriptions
  */
-class Actions
+class ActionFileDescriptionReader 
 {
-    /**
-     * Reads all jsx files in the given directory recursively, and builds an import JSX string for execution.
-     * Each new directory encountered becomes a nested namespace.
-     * @param {string} pathToActions the current path to the jsx action files
-     * @param {string} defaultNamespace The default namespace for actions in the root path 
-     */
-    constructor(pathToActions, defaultNamespace)
+    constructor(rootPathToActions, defaultNamespace)
     {
-        this._pathToActions = pathToActions;
+        this._rootPathToActions = rootPathToActions;
         this._defaultNamespace = defaultNamespace;
-        this._actionDescriptionCache = {};
+        this._actionToJSDocDescriptionCache = {};
     }
 
-    getPathFromActionName(actionName)
+    /**
+     * Reads the appropriate JSX action file and converts JSDoc to instance of ActionDescriptor
+     * @param {string} actionName 
+     * @returns {ActionDescriptor}
+     */
+    getActionDescriptor(actionName)
     {
-        const nameParts = actionName.split('.');
-        if(nameParts[0] === this._defaultNamespace) {
-
-        }
+        const jsDocDescription = this._readJSDocDescription(actionName);
+        const actionDescriptor = ActionDescriptor.fromJSDocDescription(jsDocDescription);
+        return actionDescriptor;
     }
     /**
-     * Returns an object describing the particulars of the given action
+     * Returns the JSDocX object describing the particulars of the given action
      * @param {string} actionName the action name e.g. action.saveDocument
-     * @returns {object}
+     * @returns {JSDocXDescription}
      */
-    getActionDescription(actionName)
+    _readJSDocDescription(actionName)
     {
-        if(this._actionDescriptionCache[actionName]) {
-            return this._actionDescriptionCache[actionName];
+        if(this._actionToJSDocDescriptionCache[actionName]) {
+            return this._actionToJSDocDescriptionCache[actionName];
         }
 
-        const path = this.getPathFromActionName(actionName);
+        const path = this._getPathFromActionName(actionName);
         return jsdocx.parse(path)
             .then(description => {
-                this._actionDescriptionCache[actionName] = description;
+                this._actionToJSDocDescriptionCache[actionName] = description;
                 return description;
             });
     }
-
-    /**
-     * Reads all jsx files in the directory given during construction and builds an import JSX string for execution.
-     * Each new directory encountered becomes a nested namespace.
-     */
-    loadActionPaths()
+    // TODO Move to its own class? (e.g.  ActionFileNameTranslator)
+    _getFileNameFromActionName(actionName) 
     {
-        return this._loadActionPath(this._pathToActions, "", this._defaultNamespace); 
+        if(actionName.startsWith(this._defaultNamespace + '.'))
+            return actionName.split('.').slice(1).join('.') + ".jsx";
+        else 
+            return actionName + ".jsx";
     }
-    _loadActionPath(pathToActions, namespace, defaultNamespace)
+    _getPathFromActionName(actionName)
+    {
+        const actionFileName = this._getFileNameFromActionName(actionName);
+        return upath.join(this._rootPathToActions, actionFileName);
+    }
+}
+
+/**
+ * Handles reading JSX action files for import into Adobe host
+ */
+class ActionFileImportStringBuilder
+{
+    /**
+     * Reads all jsx files in the given directory and builds an import JSX string for execution.
+     * Each new directory encountered becomes a nested namespace.
+     * @returns {string} the stringified JSX script to run which will import all actions
+     */
+    build(pathToActions, defaultNamespace)
+    {
+        return this._buildJsxImportString(pathToActions, "", defaultNamespace); 
+    }
+    // NOTE: importAction() is expected to be defined on Host JSX side
+    _buildJsxImportString(pathToActions, namespace, defaultNamespace)
     {
         let namespacePrefix = `${defaultNamespace}.`;
         let namespaceDefine = `${defaultNamespace}={};`;
@@ -81,6 +143,7 @@ class Actions
             areInRootPath = false;
         }
         
+        // TODO make async
         return fs.readdirSync(pathToActions)
             .reduce((script, name) => 
             {
@@ -92,9 +155,9 @@ class Actions
                     // if were in the root action directory, we dont want to include the default namespace prefix in
                     // other subdirectory actions
                     if(areInRootPath) 
-                        nextScript = this.loadActionPath(nextPath, name);
+                        nextScript = this._buildJsxImportString(nextPath, name);
                     else 
-                        nextScript = this.loadActionPath(nextPath, namespacePrefix + name);
+                        nextScript = this._buildJsxImportString(nextPath, namespacePrefix + name);
                 } else {
                     nextScript = `importAction("${nextPath}", "${nextActionName}");`;
                 }
@@ -104,4 +167,53 @@ class Actions
     }
 }
 
-export default Actions;
+/**
+ * Primary interface for loading/reloading jsx action files and their JSDoc descriptions
+ */
+export class Actions
+{
+    constructor() 
+    {
+        this._importStringBuilder = new ActionFileImportStringBuilder();
+    }
+    /**
+     * @returns {Promise}
+     */
+    init() 
+    {
+        return this._importAll();
+    }
+    destroy() {}
+
+    /**
+     * Import all JSX function action files
+     */
+    async _importAll()
+    {
+        console.log("Import actions started.");
+
+        await this._import(global.appBuiltinActionsPath);
+        await this._import(store.general.pathToUserActions);
+
+        console.log("Import actions exited.");
+    }
+    _import(importDirectory) 
+    {
+        if(!importDirectory.trim()) {
+            return;
+        }
+        const importString = this._importStringBuilder.build(importDirectory, "action");
+        return host.runJsx(importString);
+    }
+
+    /**
+     * @returns {string[]}
+     */
+    getAllActionNames() {}
+    /**
+     * @param {string} actionName
+     * @returns {ActionDescriptor}  
+     */
+    getActionDescriptorByName(actionName) {}
+
+}

@@ -7,7 +7,7 @@
 */
 universal.private.eachAdditionalView = function eachAdditionalView(cb)
 {
-    var viewsDirectory = IMAGE.getPackagePath();
+    var viewsDirectory = IMAGE.getInputSource();
         viewsDirectory += viewsDirectory ? "/" : "";
     var views = IMAGE.data("packageImages");
     if(!views) {

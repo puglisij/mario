@@ -5,12 +5,12 @@
 */
 universal.createOutputDirectory = function createOutputDirectory() 
 {
-    var subDirectory = "" + IMAGE.data("projectId") || IMAGE.getType();
+    var subDirectory = "" + IMAGE.data("projectId");
     var outputDirectory = IMAGE.data("outputDirectory") || "../Output";
         outputDirectory = outputDirectory + "/" + subDirectory.toLowerCase()
 
     var currentDir = Folder.current;
-    Folder.current = new Folder(IMAGE.getSourcePath());
+    Folder.current = new Folder(IMAGE.getInputSourceDirectory());
     var folder = new Folder(outputDirectory);
     Folder.current = currentDir;
 

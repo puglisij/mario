@@ -41,6 +41,7 @@ let nextProducerId = 0;
  * Reads images from source described by ImageTap and produces file paths for consumption
  * A producer has a single source.
  * A producer will not automatically deplete when sourcing from a File Watcher
+ * IMPORTANT: Multiple producers should not be created for the same set of files
  */
 export default class ImageFileProducer extends EventEmitter
 {
@@ -59,14 +60,16 @@ export default class ImageFileProducer extends EventEmitter
     {
         switch(this._imageTap.sourceType) 
         {
-            case ImageSourceType.FILEWATCHERS: this._sourceFileWatchers(); break;
+            case ImageSourceType.FILEWATCHER: this._sourceFileWatchers(); break;
             case ImageSourceType.DIRECTORY: this._sourceDirectory(); break;
             case ImageSourceType.OPENFILES: this._sourceOpenFiles(); break;
+            case ImageSourceType.BLANK: this._sourceBlank(); break;
             default: throw new Error("Unknown ImageSourceType: " + this._imageTap.sourceType);
         }
     }
     destroy()
     {
+        // ASSERT: Should NOT emit any more files from this point
         if(this._fileWatcher) {
             this._fileWatcher.removeAllListeners();
             this._fileWatcher.close();
@@ -131,37 +134,50 @@ export default class ImageFileProducer extends EventEmitter
             this.emit("depleted", this._id);
         });
     }
+    _sourceBlank()
+    {
+        this._isDepleted = true;
+        this.emit("files", this._id, [""]);
+        this.emit("depleted", this._id);
+    }
 }
 /**
- * Create an ImageFileProducer instance with the given source
- * @param {string} sourceType one of "DIRECTORY", "FILEWATCHER", or "OPENFILES"
- * @param {string} sourcePath if source is "DIRECTORY" or "FILEWATCHER"
- * @param {string[]} sourceExtensions if source is "DIRECTORY" or "FILEWATCHER", an array of valid extensions to read (e.g. "psd", "jpg", etc)
+ * Create an ImageFileProducer instance with a file watcher as its source
+ * @param {string} directory directory which will be watched for new files
+ * @param {string[]} extensions an array of valid extensions to read (e.g. "psd", "jpg", etc)
  */
-ImageFileProducer.with = function(sourceType, sourcePath, sourceExtensions) 
+ImageFileProducer.withFileWatcher = function(directory, extensions) 
 {
     return new ImageFileProducer(
-        new ImageTap(
-            ImageSourceType.parse(sourceType), 
-            new ImageSourceValue(sourcePath, sourceExtensions)
-        )
+        new ImageTap(ImageSourceType.FILEWATCHER, new ImageSourceValue(directory, extensions))
     );
-}
-// ImageFileProducer.withFileWatcher = function(consumers, directory, extensions) 
-// {
-//     return new ImageFileProducer(
-//         new ImageTap(consumers, ImageSourceType.FILEWATCHER, new ImageSourceValue(directory, extensions))
-//     );
-// };
-// ImageFileProducer.withDirectory = function(consumers, directory, extensions) 
-// {
-//     return new ImageFileProducer(
-//         new ImageTap(consumers, ImageSourceType.DIRECTORY, new ImageSourceValue(directory, extensions))
-//     );
-// };
-// ImageFileProducer.withOpenFiles = function(consumers) 
-// {
-//     return new ImageFileProducer(
-//         new ImageTap(consumers, ImageSourceType.OPENFILES, null)
-//     );
-// };
+};
+/**
+ * Create an ImageFileProducer instance with a directory as its source
+ * @param {string} directory directory which will be watched for new files
+ * @param {string[]} extensions an array of valid extensions to read (e.g. "psd", "jpg", etc)
+ */
+ImageFileProducer.withDirectory = function(directory, extensions) 
+{
+    return new ImageFileProducer(
+        new ImageTap(ImageSourceType.DIRECTORY, new ImageSourceValue(directory, extensions))
+    );
+};
+/**
+ * Create an ImageFileProducer instance with files open in Adobe as the source
+ */
+ImageFileProducer.withOpenFiles = function() 
+{
+    return new ImageFileProducer(
+        new ImageTap(ImageSourceType.OPENFILES, null)
+    );
+};
+/**
+ * Create an ImageFileProducer which emits a single empty string for a file path
+ */
+ImageFileProducer.withBlank = function() 
+{
+    return new ImageFileProducer( 
+        new ImageTap(ImageSourceType.BLANK, null)
+    );
+};

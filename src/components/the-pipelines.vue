@@ -39,9 +39,9 @@
                         :watcherNames.sync="pipeline.watcherNames"
                         :disabled.sync="pipeline.disabled"
                         :pipelines="pipelines"
-                        @delete="onPipelineDelete"
-                        @edit="onPipelineEdit"
-                        @play="onPipelinePlay"
+                        @pipeline-delete="onPipelineDelete"
+                        @pipeline-edit="onPipelineEdit"
+                        @pipeline-play="onPipelinePlay"
                     />
                 </draggable>
             </div>
@@ -81,6 +81,7 @@ import Draggable from 'vuedraggable';
 
 import _ from "../utils";
 import store from "../store"; 
+import eventBus from "../eventBus";
 import ACheckbox from "./a-checkbox.vue";
 import APipeline from "./a-pipeline.vue";
 import APipelineAction from "./a-pipeline-action.vue";
@@ -151,7 +152,7 @@ export default {
             this.pipelines.push({
                 id: _.guid(),
                 name: "",
-                watcherNames: "", 
+                watcherNames: [], 
                 disabled: false,
                 actions: []
             });
@@ -163,10 +164,9 @@ export default {
         async onPipelinePlay(id)
         {
             const isValid = await this.$refs.observer.validate();
-            
-            // don't allow Play unless validated
-            // open dialog (Choose folder, or Use Open files)
-            // Server.playPipeline(id, options);
+            if(isValid) {
+                eventBus.$emit("pipeline-play", this.getPipeline(id).name);
+            }
         },
         onPipelineDelete(id)
         {

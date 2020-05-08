@@ -47,14 +47,27 @@ const general = new Conf({
                 //  name: "",
                 //  path: "",
                 //  useProcessedPath: true
-                //  processedPath: "",
-                //  extensions: ""
+                //  processedPath: "", 
+                //  extensions: []
                 // }
             ]
         },
         currentTab: {
             type: "string",
             default: "the-jsx-runner"
+        },
+        isMainDrawerOpen: {
+            type: "boolean", 
+            default: false
+        },
+        // See ImageSourceType enum
+        imageSource: {
+            type: "object", 
+            default: {
+                type: "OPENFILES", 
+                directory: "", 
+                extensions: ""
+            }
         }
     }
 });
@@ -74,7 +87,7 @@ const pipelines = new Conf({
                 // {
                 //   id: "",
                 //   name: "",
-                //   watcherNames: "", 
+                //   watcherNames: [], 
                 //   disabled: false,
                 //   actions: []
                 // }
@@ -86,19 +99,20 @@ const pipelines = new Conf({
 
 
 /**
- * Object Proxy for monitorying configuration changes 
+ * Note that 'conf' does not monitor property changes on configuration object returned by .store property
+ * Note Conf.store returns a new object each time
+ * So we use our own Proxy here
  */
 const ConfigurationProxy = (configurationInstance, configurationObject, events) => {
 	const handler = {
-		get(target, property, receiver) {
-			try {
-                // Also Proxy nested properties
-				return new Proxy(target[property], handler);
-			} catch (err) {
-                const value = Reflect.get(target, property);
-                return value;
-			}
-        },
+		// get(target, property, receiver) {
+		// 	try {
+        //         // Also Proxy nested properties
+		// 		return new Proxy(target[property], handler);
+		// 	} catch {
+        //         return Reflect.get(target, property);
+		// 	}
+        // },
         set(target, property, value) 
         {
             if(typeof target[property] !== typeof value) {
@@ -125,11 +139,20 @@ const ConfigurationProxy = (configurationInstance, configurationObject, events) 
 };
 
 /**
- * Note that 'conf' does not monitor property changes on configuration object returned by .store property
- * So we use our own Proxy here
+ * Root level configuration storage object
+ * Configurations are split up as separate store properties
  */
 const store = new EventEmitter();
+/**
+ * General configuration storage
+ * NOTE: Only set root level properties or settings will be be saved to file
+ */
 store.general = ConfigurationProxy(general, general.store, store);
+/**
+ * Pipeline configuration storage
+ * NOTE: Only set root level properties or settings will be be saved to file
+ */
 store.pipelines = ConfigurationProxy(pipelines, pipelines.store, store);
+
 
 export default store;

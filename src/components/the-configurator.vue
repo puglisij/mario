@@ -32,6 +32,15 @@
                         <span class="topcoat-notification error" v-if="v.errors.length">{{ v.errors[0] }}</span>
                     </validation-provider>
                 </label>
+                <div class="configurator-buttons">
+                    <button 
+                        class="topcoat-button--large"
+                        type="button"
+                        @click.prevent="onReloadActions"
+                        v-show="!isLoadingActions"
+                    >Reload Actions</button>
+                    <wait-dots v-show="isLoadingActions" />
+                </div>
             </section>
             <h3 class="section-title">File Watchers</h3>
             <section class="section-content">
@@ -69,6 +78,8 @@ import store from "../store";
 import AFolderDialogButton from "./a-folder-dialog-button.vue";
 import ACheckbox from "./a-checkbox.vue";
 import AWatcher from "./a-watcher.vue";
+import WaitDots from './wait-dots.vue';
+import Server from '../server';
 
 /**
  * General Application Configuration
@@ -81,10 +92,12 @@ export default {
         AFolderDialogButton,
         ACheckbox,
         AWatcher,
+        WaitDots
     },
     data: () => {
         return {
             needSaved: false, 
+            isLoadingActions: false,
             pathToUserActions: store.general.pathToUserActions,
             fileWatchers: _.simpleDeepClone(store.general.fileWatchers)
         }
@@ -92,6 +105,12 @@ export default {
     methods: {
         markForSave: function(el) {
             this.needSaved = true;
+        },
+        async onReloadActions(event)
+        {
+            this.isLoadingActions = true;
+            await Server.actions.init();
+            this.isLoadingActions = false;
         },
         onPathToUserActions(event)
         {
@@ -109,7 +128,7 @@ export default {
                 path: "",
                 useProcessedPath: true,
                 processedPath: "",
-                extensions: ""
+                extensions: []
             };
             this.fileWatchers.push(watcher);
         },

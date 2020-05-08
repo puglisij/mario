@@ -3,6 +3,9 @@ import fs from 'fs';
 import upath from 'upath';
 import host from './index';
 
+/**
+ * Creative Suite Extendscript Script Listener Interface
+ */
 class HostScriptListener
 {
     constructor() {
@@ -63,7 +66,10 @@ class HostScriptListener
     }
     isScriptListenerActive() 
     {
-        const initialLogsFileStats = fs.statSync(this._scriptListenerJsLogsPath);
+        let initialSize = 0;
+        try {
+            initialSize = fs.statSync(this._scriptListenerJsLogsPath).size;
+        } catch {}
         
         // How this works:
         // Since Extendscript runs on a single thread, and ScriptListener runs on this same thread.
@@ -80,9 +86,13 @@ class HostScriptListener
         .then(values => {
             if(values[0].includes("error")) {
                 console.error("Could not determine if ScriptListener is active.");
+                return false;
             }
-            const logsFileStats = fs.statSync(this._scriptListenerJsLogsPath);
-            return logsFileStats.size > initialLogsFileStats.size;
+            try {
+                fs.statSync(this._scriptListenerJsLogsPath).size > initialSize;
+            } catch {
+                return false;
+            }
         });
     }
     isScriptListenerIstalled()

@@ -21,7 +21,7 @@
                 :rules="{ custom: { fn: validateWatcherNames } }" 
                 v-slot="{ errors }"
             >
-                <input class="topcoat-text-input full-width" type="text" 
+                <a-array-input class="topcoat-text-input full-width" 
                     title="The file watcher(s) to use for inputs to this pipeline. Comma delimited."
                     placeholder="my-watcher-name"
                     v-model="watcherNames_"
@@ -58,13 +58,14 @@ import { ValidationProvider } from "vee-validate";
 import _ from "../utils";
 import store from "../store"; 
 import ACheckbox from "./a-checkbox.vue";
-
+import AArrayInput from "./a-array-input.vue";
 
 export default {
     name: "APipeline",
     components: {
         ValidationProvider,
-        ACheckbox
+        ACheckbox,
+        AArrayInput
     },
     props: {
         id: {
@@ -76,7 +77,7 @@ export default {
             required: true
         },
         watcherNames: {
-            type: String, 
+            type: Array, 
             required: true
         },
         disabled: {
@@ -112,12 +113,8 @@ export default {
                 message: "Pipeline name must be unique"
             };
         },
-        validateWatcherNames(value) 
+        validateWatcherNames(names) 
         {
-            // Remove whitespace
-            const names = value.split(",").map(n => n.trim()).filter(n => !_.isEmptyString(n));
-            // Update model 
-            this.watcherNames_ = names.join(","); 
             // Ensure watcher exists by each name
             const missingNames = names.filter(n => {
                 return !store.general.fileWatchers.find(w => w.name === n); 
@@ -128,13 +125,13 @@ export default {
             };
         },
         onEdit() {
-            this.$emit("edit", this.id);
+            this.$emit("pipeline-edit", this.id);
         },
         onPlay() {
-            this.$emit("play", this.id);
+            this.$emit("pipeline-play", this.id);
         },
         onDelete() {
-            this.$emit("delete", this.id);
+            this.$emit("pipeline-delete", this.id);
         }
     }
 }
