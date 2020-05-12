@@ -135,11 +135,11 @@ class ActionFileImportStringBuilder
     _buildJsxImportString(pathToActions, namespace, defaultNamespace)
     {
         let namespacePrefix = `${defaultNamespace}.`;
-        let namespaceDefine = `${defaultNamespace}={};`;
+        let namespaceDefine = `${defaultNamespace}= ${defaultNamespace} || {};`;
         let areInRootPath = true;
         if(namespace) {
             namespacePrefix = `${namespace}.`;
-            namespaceDefine = `${namespace}={};`;
+            namespaceDefine = `${namespace}= ${namespace} || {};`;
             areInRootPath = false;
         }
         

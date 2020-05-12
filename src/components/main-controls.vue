@@ -1,104 +1,130 @@
 <template>
-    <form 
-        class="main-controls my2"
-        @keydown.enter.prevent
-        @submit.prevent
+    <validation-observer 
+        ref="observer"
+        slim
+        v-slot="{ handleSubmit }"
     >
-        <div class="main-controls__controls">
-            <button class="topcoat-button--large" 
-                @click="onPipelineRun"
-                title="Run all pipelines with the defined source."
-                type="submit"
-                v-show="canRun">&#9654;</button>
-            <button class="topcoat-button--large" 
-                @click="onPipelineResume"
-                title="Resume processing."
-                v-show="canResume">Resume</button>
-            <button class="topcoat-button--large" 
-                @click="onPipelinePause"
-                title="Pause processing."
-                v-show="canPause">&#10074;&#10074;</button>
-            <button class="topcoat-button--large" 
-                @click="onPipelineStop"
-                title="Stop all pipelines and file watchers."
-                v-show="canStop" 
-                >&#9724;</button>
-        </div>
-        <transition>
-            <div class="main-controls__drawer" 
+        <form 
+            class="main-controls my2"
+            @keydown.enter.prevent
+            @submit.prevent="handleSubmit(onPipelineRun)"
+        >
+            <div class="main-controls__controls mb2">
+                <button class="topcoat-button--large" 
+                    type="submit"
+                    title="Run all pipelines with the defined source."
+                    v-show="isStopped">&#9654;</button>
+                <button class="topcoat-button--large" 
+                    type="button"
+                    @click="onPipelineResume"
+                    title="Resume processing."
+                    v-show="isPaused">Resume</button>
+                <button class="topcoat-button--large" 
+                    type="button"
+                    @click="onPipelinePause"
+                    title="Pause processing."
+                    v-show="canPause">&#10074;&#10074;</button>
+                <button class="topcoat-button--large" 
+                    type="button"
+                    @click="onPipelineStop"
+                    title="Stop all pipelines and file watchers."
+                    v-show="!isStopped" 
+                    >&#9724;</button>
+            </div>
+            <div class="main-controls__drawer columns" 
                 v-show="isMainDrawerOpen"
             >
-                <!-- <div v-if="isInitializing">Initializing<wait-dots/></div> -->
-                <select class="topcoat-text-input" v-model="imageSourceType"> 
-                    <option v-for="option in imageSourceTypeOptions" :value="option.value" :key="option.value">
-                        {{ option.text }} 
-                    </option>
-                </select>
-                <validation-provider 
-                    slim
-                    rules="pathexists" 
-                    v-slot="{ errors }"
-                    v-if="isSourceADirectory"
-                >
-                    <a-folder-input
-                        title="The source folder containing files for processing."
-                        :errors="errors"
-                        v-model="imageSourcePath"
+                <div class="column is-half-tablet">
+                    <h3 class="section-title">File Source</h3>
+                    <validation-provider
+                        class="flex"
+                        tag="label"
+                        rules="required"
+                        v-slot="{ errors }"
                     >
-                        Source files from this folder
-                    </a-folder-input>
-                </validation-provider>
-                <validation-provider 
-                    slim
-                    rules="required" 
-                    v-slot="{ errors }"
-                    v-if="isSourceADirectory"
-                >
-                    <label>
-                        <div class="label">Only these Extensions</div>
-                        <div class="flex">
-                            <a-array-input class="topcoat-text-input full-width" 
-                                placeholder="jpg, jpeg, png, psd, tif, etc." 
-                                title="Either multiple image extensions, or json (exclusive). A comma delimited list."
-                                :value="imageSourceExtensions"
-                                @change="onExtensions"
-                            />
-                            <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
-                        </div>
-                    </label>
-                </validation-provider>
+                        <select class="topcoat-text-input flex-grow" v-model="imageSource.type"> 
+                            <option v-for="option in imageSourceTypeOptions" :value="option.value" :key="option.value">
+                                {{ option.text }} 
+                            </option>
+                        </select>
+                        <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
+                    </validation-provider>
+                    <validation-provider 
+                        slim
+                        :rules="{ required: isSourceADirectory, pathexists: true }" 
+                        v-slot="{ errors }"
+                        v-if="isSourceADirectory"
+                    >
+                        <a-folder-input
+                            title="The source folder containing files for processing."
+                            :errors="errors"
+                            v-model="imageSource.directory"
+                        >
+                            Source files from this folder
+                        </a-folder-input>
+                    </validation-provider>
+                    <validation-provider 
+                        slim
+                        :rules="{ required: isSourceADirectory }" 
+                        v-slot="{ errors }"
+                        v-if="isSourceADirectory"
+                    >
+                        <a-extensions-input
+                            title="Either multiple image extensions, or json (exclusive). A comma delimited list."
+                            :errors="errors"
+                            v-model="imageSource.extensions"
+                        >
+                            Only these Extensions
+                        </a-extensions-input>
+                    </validation-provider>
+                </div>
+                <div class="column is-half-tablet">
+                    <h3 class="section-title">Pipelines State</h3>
+                    <div>{{ pipelineEngineStateText }}</div>
+                    <h3 class="section-title" v-show="pipelineActionStateText">Action</h3>
+                    <div>{{ pipelineActionStateText }}</div>
+                    <!-- <div v-if="isInitializing">Initializing<wait-dots/></div> -->
+                </div>
             </div>
-        </transition>
-        <div class="main-controls__drawer-toggle" :class="{ active: isMainDrawerOpen }">
-            <button class="topcoat-button" 
-                @click="isMainDrawerOpen = !isMainDrawerOpen"
-            >Status &amp; Source <span>❱</span></button>
-        </div>
-    </form>
+            <div class="main-controls__drawer-toggle" :class="{ active: isMainDrawerOpen }">
+                <button 
+                    class="topcoat-button" 
+                    type="button"
+                    @click="isMainDrawerOpen = !isMainDrawerOpen"
+                >Status &amp; Source <span>❱</span></button>
+            </div>
+        </form>
+    </validation-observer>
 </template>
 
 <script>
+import { ValidationProvider, ValidationObserver } from "vee-validate";
+
 import _ from "../utils";
 import store from "../store"; 
 import eventBus from "../eventBus";
 import Server from '../server';
 import PipelineEngineState from '../server/pipelineEngineState';
 import ImageSourceType from '../server/imageSourceType';
+import AFolderInput from "./a-folder-input.vue";
+import AExtensionsInput from "./a-extensions-input.vue";
 import WaitDots from './wait-dots.vue';
 
 export default {
     name: 'MainControls',
     components: {
+        ValidationObserver,
+        ValidationProvider,
+        AFolderInput,
+        AExtensionsInput,
         WaitDots
     },
     data() {
-        const imageSource = _.simpleDeepClone(store.general.imageSource);
         return {
             pipelineEngineState: Server.pipelineEngine.state,
+            pipelineActionStateText: "",
             isMainDrawerOpen: store.general.isMainDrawerOpen,
-            imageSourceType: imageSource.type,
-            imageSourcePath: imageSource.directory,
-            imageSourceExtensions: imageSource.extensions,
+            imageSource: _.simpleDeepClone(store.general.imageSource),
             imageSourceTypeOptions: [
                 { text: "Open Files", value: ImageSourceType.OPENFILES }, 
                 { text: "Directory", value: ImageSourceType.DIRECTORY }, 
@@ -108,24 +134,33 @@ export default {
         }
     },
     watch: {
-        isMainDrawerOpen: v => { store.general.isMainDrawerOpen = v; }
+        isMainDrawerOpen: v => { store.general.isMainDrawerOpen = v; },
+        imageSource: {
+            deep: true, 
+            handler: function(v) {
+                store.general.imageSource = v;
+            }
+        }
     },
     computed: {
         canPause() {
             return this.pipelineEngineState == PipelineEngineState.IDLE 
                 || this.pipelineEngineState == PipelineEngineState.PROCESSING;
         },
-        canStop() {
-            return !this.pipelineEngineState == PipelineEngineState.STOPPED;
-        },
-        canResume() {
-            return this.pipelineEngineState == PipelineEngineState.PAUSED;
-        },
-        canRun() {
+        isStopped() {
             return this.pipelineEngineState == PipelineEngineState.STOPPED;
         },
+        isPaused() {
+            return this.pipelineEngineState == PipelineEngineState.PAUSED;
+        },
+        isProcessing() {
+            return this.pipelineEngineState == PipelineEngineState.PROCESSING;
+        },
         isSourceADirectory() {
-            return this.imageSourceType == ImageSourceType.DIRECTORY;
+            return this.imageSource.type == ImageSourceType.DIRECTORY;
+        },
+        pipelineEngineStateText() {
+            return PipelineEngineState.toKey(this.pipelineEngineState);
         }
     },
     created() 
@@ -138,10 +173,19 @@ export default {
         Server.pipelineEngine.on("state", state => {
             this.pipelineEngineState = state;
         });
+        Server.pipelineEngine.on("action", actionName => {
+            this.pipelineActionStateText = actionName;
+        });
+        Server.pipelineEngine.on("actionend", actionName => {
+            this.pipelineActionStateText = "";
+        });
     },
     methods: {
+        /**
+         * Submit handler
+         */
         onPipelineRun() {
-            Server.pipelineEngine.runAll();
+            Server.pipelineEngine.runAll(this.imageSource.type, this.imageSource.directory, this.imageSource.extensions);
         },
         onPipelineResume() {
             Server.pipelineEngine.resume();

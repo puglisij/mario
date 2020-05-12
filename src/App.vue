@@ -290,18 +290,19 @@ label {
     }
     &__drawer {
         background: rgba(0,0,0,0.2);
-        box-shadow: inset 0px 2px 8px 0px rgba(0, 0, 0, 0.2);
-        max-height: 1000px;
+        box-shadow: inset 0px 0px 8px 2px rgba(0, 0, 0, 0.2);
+        // max-height: 1000px;
         overflow: hidden;
+        padding: .5rem .5rem 2rem .5rem;
         
-        &.v-enter-active,
-        &.v-leave-active {
-            transition: max-height 0.4s;
-        }
-        &.v-enter,
-        &.v-leave-to {
-            max-height: 0;
-        }
+        // &.v-enter-active,
+        // &.v-leave-active {
+        //     transition: max-height 0.4s;
+        // }
+        // &.v-enter,
+        // &.v-leave-to {
+        //     max-height: 0;
+        // }
     }
     &__drawer-toggle {
         height: 0;

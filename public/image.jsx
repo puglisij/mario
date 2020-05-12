@@ -76,4 +76,7 @@ ImageForProcessing.prototype.parameters = function(params)
     }
     return params;
 }
+
+this.ImageForProcessing = ImageForProcessing;
+
 "";

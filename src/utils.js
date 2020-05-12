@@ -29,6 +29,14 @@ function first(obj)
     } 
     return obj[Object.keys(obj)[0]];
 }
+/**
+ * Returns new array containing only unique values
+ * Works for Numbers, Strings, and Boolean
+ * @param {Array} arr 
+ */
+function unique(arr) {
+    return [...new Set(arr)];
+}
 function getOrDefine(obj, key, defaultValue) 
 {
     if(obj[key] === undefined) {
@@ -71,6 +79,7 @@ export default {
     simpleDeepClone,
     guid, 
     first,
+    unique,
     getOrDefine,
     isBoolean, 
     isNumber,

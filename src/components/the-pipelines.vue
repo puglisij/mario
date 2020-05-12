@@ -24,6 +24,9 @@
             <a-checkbox v-model="pauseOnExceptions">
                 Pause processing on errors?
             </a-checkbox>
+            <a-checkbox v-model="doReadFileMetadata">
+                Read metadata for every file?
+            </a-checkbox>
 
             <div v-if="!isEditorOpen">
                 <h3 class="section-title">Pipelines</h3>
@@ -101,6 +104,7 @@ export default {
             pauseAfterEveryAction: store.general.pauseAfterEveryAction,
             pauseAfterEveryImage: store.general.pauseAfterEveryImage,
             pauseOnExceptions: store.general.pauseOnExceptions,
+            doReadFileMetadata: false,
             pipelines: this.toLocalPipelines(store.pipelines.pipelines),
             needSaved: false,
             pipelineBeingEdited: {}
@@ -112,6 +116,12 @@ export default {
         }
     },
     watch: {
+        // TODO This pattern kinds stinks?
+        pauseAfterEveryPipeline: function(v) { store.general.pauseAfterEveryPipeline = v; },
+        pauseAfterEveryAction: function(v) { store.general.pauseAfterEveryAction = v; },
+        pauseAfterEveryImage: function(v) { store.general.pauseAfterEveryImage = v; },
+        pauseOnExceptions: function(v) { store.general.pauseOnExceptions = v; },
+        doReadFileMetadata: function(v) { store.general.doReadFileMetadata = v; },
         pipelines: {
             deep: true,
             handler: function(value) {
@@ -134,10 +144,6 @@ export default {
         },
         onConfigurationSubmit()
         {
-            store.general.pauseAfterEveryPipeline = this.pauseAfterEveryPipeline;
-            store.general.pauseAfterEveryAction = this.pauseAfterEveryAction;
-            store.general.pauseAfterEveryImage = this.pauseAfterEveryImage;
-            store.general.pauseOnExceptions = this.pauseOnExceptions;
             store.pipelines.pipelines = this.pipelines;
             this.needSaved = false;
         },

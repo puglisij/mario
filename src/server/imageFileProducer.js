@@ -80,7 +80,7 @@ export default class ImageFileProducer extends EventEmitter
     {
         const watchPathRoot = this._imageTap.sourceValue.path;
         const watchExtensions = this._imageTap.sourceValue.extensions;
-        const watchPaths = watchExtensions.map(ext => path.join(watchPathRoot, "*." + ext));
+        const watchPaths = watchExtensions.map(ext => upath.join(watchPathRoot, "*." + ext));
 
         if(isUncPath(watchPathRoot)) {
             throw Error(`Watching network paths is problematic. Only local directories supported at this time.`);
@@ -111,14 +111,21 @@ export default class ImageFileProducer extends EventEmitter
         const directory = this._imageTap.sourceValue.path;
         const extensions = this._imageTap.sourceValue.extensions;
 
-        fs.readdir(directory, { encoding: "utf8" }, files => {
-            files = files.map(file => upath.join(directory, file));
-            files = files.filter(file => {
-                const ext = file.split('.').pop();
-                return extensions.includes(ext);
-            });
-            this._isDepleted = true;
-            this.emit("files", this._id, files);
+        fs.readdir(directory, { encoding: "utf8" }, (error, files) => {
+            if(error) {
+                this.emit("depleted", this._id);
+                throw new Error(error);
+            }
+            if(files) 
+            {
+                files = files.map(file => upath.join(directory, file));
+                files = files.filter(file => {
+                    const ext = file.split('.').pop();
+                    return extensions.includes(ext);
+                });
+                this._isDepleted = true;
+                this.emit("files", this._id, files);
+            }
             this.emit("depleted", this._id);
         });
     }

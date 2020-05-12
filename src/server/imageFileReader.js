@@ -19,7 +19,7 @@ export default class ImageFileReader
     async read(imageInputSource)
     {
         if(!this._isPathDefinedAndAbsolute(imageInputSource)) {
-            throw new Error("Image expected 'imageInputSource' to be an absolute path.");
+            throw new Error(`Image expected imageInputSource ${imageInputSource} to be an absolute path.`);
         }
 
         const image = new Image();
@@ -37,9 +37,10 @@ export default class ImageFileReader
             image.data = data;
         }
 
-        if(this._isFile(imageInputSource)) {
-            image.metadata = await this._readMetadata(imageInputSource);
-        }
+        // TODO: Make this optional since it slows down processing
+        // if(this._isFile(imageInputSource)) {
+        //     image.metadata = await this._readMetadata(imageInputSource);
+        // }
 
         return image;
     }
@@ -50,7 +51,12 @@ export default class ImageFileReader
     async _readJson(dataSource)
     {
         return new Promise(resolve => {
-            fs.readFile(dataSource, { encoding: 'utf8' }, resolve);
+            fs.readFile(dataSource, { encoding: 'utf8' }, (error, data) => {
+                if(error) {
+                    throw new Error(`Image json ${dataSource} could not be read.`);
+                }
+                resolve(JSON.parse(data));
+            });
         });
     }
     /**

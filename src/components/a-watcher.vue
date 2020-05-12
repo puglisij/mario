@@ -47,22 +47,19 @@
             </a-folder-input>
         </validation-provider>
 
-        <label>
-            <div class="label">Watch these Extensions</div>
-            <validation-provider 
-                class="flex" 
-                rules="required" 
-                v-slot="{ errors }"
-            >
-                <a-array-input class="topcoat-text-input full-width" 
-                    placeholder="jpg, jpeg, png, psd, tif, etc." 
-                    title="Either multiple image extensions, or json (exclusive). A comma delimited list."
-                    :value="localWatcher.extensions"
-                    @change="onExtensions"
-                />
-                <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
-            </validation-provider>
-        </label>
+        <validation-provider 
+            slim
+            rules="required" 
+            v-slot="{ errors }"
+        >
+            <a-extensions-input 
+                title="Either multiple image extensions, or json (exclusive). A comma delimited list."
+                :errors="errors"
+                v-model="localWatcher.extensions"
+            >   
+                Watch these Extensions
+            </a-extensions-input>
+        </validation-provider>
         
         <button class="topcoat-button--large--quiet" type="button"
             @click.prevent="onDelete"
@@ -75,16 +72,16 @@ import { ValidationProvider } from "vee-validate";
 
 import _ from "../utils";
 import AFolderInput from "./a-folder-input.vue";
+import AExtensionsInput from "./a-extensions-input.vue";
 import ACheckbox from "./a-checkbox.vue";
-import AArrayInput from "./a-array-input.vue";
 
 export default {
     name: "AWatcher",
     components: {
         ValidationProvider,
         AFolderInput,
-        ACheckbox,
-        AArrayInput
+        AExtensionsInput,
+        ACheckbox
     },
     model: {
         prop: "watcher", 
@@ -115,7 +112,7 @@ export default {
     },
     methods: {
         // TODO: Validate that a watcher does not exist already for watched path
-
+        // Multiple file producers for the same files can cause issues.
         validateName(value)
         {
             const name = value.trim();
@@ -126,20 +123,6 @@ export default {
                 valid: found === 1, 
                 message: "Name must be unique"
             };
-        },
-        validateExtensions(extensions) 
-        {
-            // TODO: Implement better validation
-            extensions = extensions.map(ext => ext.replace(/[^a-z0-9]/g, ''));
-            extensions = extensions.filter(ext => ext && ext.length > 0);
-            if(extensions.includes("json")) {
-                return ["json"];
-            }
-            return extensions;
-        },
-        onExtensions(extensions)
-        {
-            this.localWatcher.extensions = this.validateExtensions(extensions);
         },
         onDelete(event)
         {

@@ -30,6 +30,10 @@ const general = new Conf({
             type: "boolean",
             default: false
         },
+        doReadFileMetadata: {
+            type: "boolean", 
+            default: false
+        },
         logDirectory: { 
             type: "string",
             default: ""
@@ -66,7 +70,7 @@ const general = new Conf({
             default: {
                 type: "OPENFILES", 
                 directory: "", 
-                extensions: ""
+                extensions: []
             }
         }
     }

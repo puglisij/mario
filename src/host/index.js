@@ -1,6 +1,7 @@
 import os from 'os';
 import upath from 'upath';
 import appGlobal from '../global';
+import { reject } from 'async';
 
 /*
     Creative Suite Extendscript Interface / Decorator
@@ -106,6 +107,33 @@ class Host
         return new Promise(resolve => {
             this.interface.evalScript(script, result => {
                 resolve(result);
+            })
+        });
+    }
+    /**
+     * Evaluate ExtendScript/JSX script on Host and throw an Exception if string "error" or "exception" is in the result.
+     * NOTE: If result is 'Evalscript error.' there may be a syntax error in the script string
+     * @param {string} script 
+     * @returns {Promise}
+     */
+    runJsxWithThrow(script) 
+    {
+        return new Promise((resolve, reject) => 
+        {
+            this.interface.evalScript(`(function(){
+                try {
+                    ${script}
+                } catch(e) {
+                    return e.toString();
+                }
+            }())`, 
+            (result) => {
+                const lowerCaseResult = result.toLowerCase();
+                if(lowerCaseResult.includes("error") || lowerCaseResult.includes("exception")) {
+                    reject(`\nJsx:\n${script}\nException in Result:\n${result}\n`);
+                } else {
+                    resolve(result);
+                }
             })
         });
     }

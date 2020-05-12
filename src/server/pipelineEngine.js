@@ -18,13 +18,14 @@ export class PipelineEngine extends EventEmitter
         this._state = PipelineEngineState.STOPPED;
 
         /**
-         * Map values are an array containing pipeline names
+         * Produder Id => [Pipeline Names...]
          */
         this._producerIdToPipelines = new Map();
         /**
          * ImageFileProducer instances
          */
         this._producers = [];
+        this._producerIdsWhichDepleted = [];
 
         /**
          * With objects of form 
@@ -48,37 +49,45 @@ export class PipelineEngine extends EventEmitter
     {
         // stop any processing
         // destroy all producers
-        this._destroyProducers();
+        this._destroyAllProducers();
         this.state = PipelineEngineState.STOPPED;
     }
-    _destroyProducers()
+    _destroyDepletedProducers()
+    {
+        this._destroyProducers(this._producerIdsWhichDepleted);
+        this._producerIdsWhichDepleted = [];
+    }
+    _destroyAllProducers()
     {
         const producerIds = this._producers.map(p => p.id);
-        for(const producerId of producerIds) {
-            this._destroyFileProducer(producerId);
-        }
+        this._destroyProducers(producerIds);
     }
-    _destroyFileProducer(producerId)
+    _destroyProducers(producerIds)
     {
-        this._producerIdToPipelines.get(producerId).destroy();
-        this._producerIdToPipelines.delete(producerId);
-        this._producers = this._producers.filter(p => p.id !== producerId);
+        for(const producerId of producerIds) 
+        {
+            this._getProducerByProducerId(producerId).destroy();
+            this._producerIdToPipelines.delete(producerId);
+            this._producers = this._producers.filter(p => p.id !== producerId);
+
+            console.log(`Image File Producer ${producerId} destroyed.`);
+        }
     }
     _addFileProducer(producer, pipelineNames) 
     {
         this._producerIdToPipelines.set(producer.id, pipelineNames);
         this._producers.push(producer);
 
-        producer.on("files", this._onProducerFile);
-        producer.on("depleted", this._onProducerDepleted);
+        producer.on("files", this._onProducerFile.bind(this));
+        producer.on("depleted", this._onProducerDepleted.bind(this));
         producer.produce();
 
-        console.log("Image File Producer added.");
+        console.log(`Image File Producer ${producer.id} added.`);
     }
     /**
      * Run the given pipeline with files from the given source
      * @param {string} pipelineName pipeline name
-     * @param {string} sourceType FILEWATCHER, DIRECTORY, or OPENFILES
+     * @param {ImageSourceType} sourceType FILEWATCHER, DIRECTORY, or OPENFILES
      * @param {string} sourcePath if sourceType is DIRECTORY
      * @param {string} sourceExtensions if sourceType is DIRECTORY
      */
@@ -88,7 +97,7 @@ export class PipelineEngine extends EventEmitter
     }
     /**
      * Run all pipelines with files from the given source
-     * @param {string} sourceType FILEWATCHER, DIRECTORY, OPENFILES, or BLANK
+     * @param {ImageSourceType} sourceType FILEWATCHER, DIRECTORY, OPENFILES, or BLANK
      * @param {string} sourcePath if sourceType is DIRECTORY
      * @param {string} sourceExtensions if sourceType is DIRECTORY
      */
@@ -107,9 +116,10 @@ export class PipelineEngine extends EventEmitter
             console.log("Pipeline engine is already running.");
             return;
         }
+        console.log(`Running pipelines: ${pipelineNames.join(",")} with source: ${PipelineEngineState.toKey(sourceType)}`);
 
-        let type = ImageSourceType.parse(sourceType);
-        switch(type)
+        this.state = PipelineEngineState.IDLE;
+        switch(sourceType)
         {
             case ImageSourceType.FILEWATCHER: 
                 this._runWithFileWatchers(pipelineNames); break;
@@ -117,18 +127,24 @@ export class PipelineEngine extends EventEmitter
                 this._runWithDirectory(pipelineNames, sourcePath, sourceExtensions); break;
             case ImageSourceType.OPENFILES: 
                 this._runWithOpenFiles(pipelineNames); break;
+            case ImageSourceType.BLANK:
+                this._runWithBlank(pipelineNames); break;
+            default: 
+                console.log(`ImageSourceType ${sourceType} not recognized.`);
+                this.state = PipelineEngineState.STOPPED;
         }
-        this.state = PipelineEngineState.IDLE;
     }
     _runWithFileWatchers(pipelineNames)
     {
-        // Get all file watchers for given pipelines
-        const watcherNames = pipelineNames.reduce((arr, name) => {
+        // Get all unique file watchers for given pipelines
+        let watcherNames = pipelineNames.reduce((arr, name) => {
             const pipeline = this._getConfigurationByPipelineName(name);
             return arr.concat(pipeline.watcherNames);
         }, []);
+        watcherNames = _.unique(watcherNames); 
+
         // IMPORTANT: We Do Not want multiple producers for the same files
-        // Which would happen if we looped by pipeline and created its producers
+        // Which would happen if we looped by each pipeline and created its producers
         // since there is a many-to-one relationship between pipelines and file watchers
         for(const watcherName of watcherNames) 
         {
@@ -151,6 +167,11 @@ export class PipelineEngine extends EventEmitter
         const producer = ImageFileProducer.withOpenFiles();
         this._addFileProducer(producer, pipelineNames);
     }
+    _runWithBlank(pipelineNames) 
+    {
+        const producer = ImageFileProducer.withBlank();
+        this._addFileProducer(producer, pipelineNames);
+    }
     pause() {
         if(this.isProcessing()) {
             this.state = PipelineEngineState.PAUSED;
@@ -162,7 +183,7 @@ export class PipelineEngine extends EventEmitter
         }
     }
     stop() {
-        this._destroyProducers();
+        this._destroyAllProducers();
         this.state = PipelineEngineState.STOPPED;
     }
     _stopIfNoProducers()
@@ -177,10 +198,9 @@ export class PipelineEngine extends EventEmitter
     {
         return store.general.fileWatchers.find(w => w.name === watcherName);
     }
-    _getFileWatchersByPipelineName(pipelineName)
+    _getProducerByProducerId(producerId) 
     {
-        const pipeline = this._getConfigurationByPipelineName(pipelineName);
-        return store.general.fileWatchers.filter(w => pipeline.watcherNames.includes(w.name));
+        return this._producers.find(p => p.id === producerId);
     }
     _getConfigurationByPipelineName(pipelineName) 
     {
@@ -197,34 +217,58 @@ export class PipelineEngine extends EventEmitter
     }
     _onProducerFile(producerId, files) 
     {
+        console.log("File produced.");
         const qFiles = files.map(file => { 
-            file,
-            producerId
+            return {
+                file,
+                producerId
+            }
         });
         this._imageFileQ = this._imageFileQ.concat(qFiles);
         this._process();
     }
     _onProducerDepleted(producerId) 
     {
-        this._destroyFileProducer(producerId);
-        this._stopIfNoProducers();
+        this._producerIdsWhichDepleted.push(producerId);
     }
-    async _process()
+    _process()
     {
         if(this._processingMutex) return;
         this._processingMutex = true;
         this.state = PipelineEngineState.PROCESSING;
-        console.log("Pipeline process loop started.");
-
-        // Pump Image instances through Pipelines
-        await this._runProcessStart();
-        
+        console.log(`Pipeline process loop started with ${this._imageFileQ.length} images.`);
+ 
+        this._runWaitOneFrame()
+        .then(this._runProcessStart.bind(this))
+        .then(this._runProcessLoop.bind(this))
+        .then(this._runProcessEnd.bind(this))
+        .then(() => {
+            this.state = PipelineEngineState.IDLE;
+            this._destroyDepletedProducers();
+            this._stopIfNoProducers();
+            this._processingMutex = false;
+            console.log("Pipeline process loop exited.");
+        });
+    }
+    _runWaitOneFrame()
+    {
+        return new Promise(resolve => { setTimeout(resolve, 0); });
+    }
+    _runProcessStart()
+    {
+        return host.runJsxWithThrow(`app.displayDialogs = DialogModes.NO;`);
+    }
+    async _runProcessLoop()
+    {
         let qFile;
         while(qFile = this._imageFileQ.pop()) 
         {
             const { file, producerId } = qFile;
+            console.log(`Reading next file ${file} from producer ${producerId}.`);
+
             const image = await this._imageFileReader.read(file);
             const pipelines = this._getConfigurationsByProducerId(producerId);
+            console.log(`Processing image: ${image.imageInputSource}`);
 
             try 
             {
@@ -232,11 +276,11 @@ export class PipelineEngine extends EventEmitter
                 for(const pipeline of pipelines) 
                 {
                     if(pipeline.disabled) {
-                        console.log(`Skipping disabled pipeline ${pipeline.name}`);
+                        console.log(`Skipping disabled pipeline '${pipeline.name}'`);
                         continue;
                     }
     
-                    console.log(`Pipeline ${pipeline.name} started for image: ${image.imageInputSource}`);
+                    console.log(`Pipeline '${pipeline.name}' started.`);
                     this.emit("pipelinestart", pipeline.name);
                     await this._runPipelineStart(image);
     
@@ -245,11 +289,13 @@ export class PipelineEngine extends EventEmitter
                     {
                         this.emit("action", action.actionName);
                         let result = await host.runActionWithParameters(action.actionName, action.parameters);
+                        
                         if(this._stopCheck(result)) break;
                         await this._pauseCheck(result, store.general.pauseAfterEveryAction);
+                        this.emit("actionend", action.actionName);
                     }
     
-                    console.log(`Pipeline ${pipeline.name} ended.`);
+                    console.log(`Pipeline '${pipeline.name}' ended.`);
                     this.emit("pipelineend", pipeline.name);
                     await this._runPipelineEnd();
     
@@ -262,6 +308,7 @@ export class PipelineEngine extends EventEmitter
             }
             catch(e)
             {
+                console.error(e);
                 // TODO Use configured errored directory
                 await this._pauseCheck(null, store.general.pauseOnExceptions);
                 this._imageFileMover.moveToErrored(image, "./Errored", e.toString());
@@ -272,19 +319,10 @@ export class PipelineEngine extends EventEmitter
                 if(this._stopCheck()) break;
             }
         }
-
-        await this._runProcessEnd();
-        this._processingMutex = false;
-        this.state = PipelineEngineState.IDLE;
-        console.log("Pipeline process loop exited.");
-    }
-    _runProcessStart()
-    {
-        return host.runJsx(`app.displayDialogs = DialogModes.NO;`);
     }
     _runProcessEnd()
     {
-        return host.runJsx(`closeAll(); $.gc();`);
+        return host.runJsxWithThrow(`$.gc();`);
     }
     /**
      * Close all documents. Save Photoshop settings. Instantiate IMAGE instance.
@@ -293,9 +331,9 @@ export class PipelineEngine extends EventEmitter
      */
     _runPipelineStart(image)
     {
-        return host.runJsx(`
+        return host.runJsxWithThrow(`
         __PIPELINE = {
-            restoreUnits = _.saveUnits(); 
+            restoreUnits: _.saveUnits()
         };
         IMAGE = new ImageForProcessing(${JSON.stringify(image)});`);
     }
@@ -306,7 +344,7 @@ export class PipelineEngine extends EventEmitter
      */
     _runPipelineEnd()
     {
-        return host.runJsx(`
+        return host.runJsxWithThrow(`
         __PIPELINE.restoreUnits && __PIPELINE.restoreUnits(); 
         IMAGE=null;
         `);
@@ -337,6 +375,8 @@ export class PipelineEngine extends EventEmitter
                     }
                 });
             });
+        } else {
+            return Promise.resolve();
         }
     }
     get state() {

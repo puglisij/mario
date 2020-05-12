@@ -6,7 +6,7 @@ universal.openImageInputSource = function openImageInputSource()
 {
     var path = IMAGE.getInputSource();
     if(!path) {
-        throw new Error("IMAGE instance missing 'imageInputSource'.");
+        throw new Error("IMAGE 'imageInputSource' is not defined.");
     }
     return action.open(path);
 }
