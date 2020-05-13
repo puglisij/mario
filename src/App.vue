@@ -13,7 +13,7 @@
     <main-controls />
 
     <section class="tab-content">
-        <keep-alive exclude="ThePipelines, TheConfigurator">
+        <keep-alive>
             <component :is="currentTabComponent"></component>
         </keep-alive>
     </section>
@@ -351,4 +351,78 @@ label {
     }
 }
 
+.pipeline {
+    &.disabled {
+        background: rgba(255,0,0,0.03);
+    }
+}
+/*
+    -----------------------------------------------
+    | Handle | Expand | Data                      |
+    |        |        | Name (Name | X)  |
+    |        |        | Parameters                |
+    _______________________________________________
+*/
+.pipeline,
+.action {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}
+
+.pipeline-handle,
+.action-handle,
+.action-expand {
+    padding-left: $column-gap * 2;
+    padding-right: $column-gap * 2;
+}
+.pipeline-handle,
+.action-handle {
+    cursor: row-resize;
+}
+.action-expand {
+    cursor: pointer;
+    i {
+        opacity: .2;
+    }
+    &.show i {
+        opacity: 1
+    }
+}
+
+.pipeline-data,
+.action-data {
+    display: block;
+    flex-grow: 1;
+}
+.action-data {
+    .action-name {
+        display: flex;
+        width: 100%;
+        input[type=text] {
+            flex-grow: 1;
+        }
+    }
+    .action-parameters {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+
+        h3 {
+            margin: $column-gap 0;
+        }
+    }
+    .action-parameter {
+        display: flex;
+        margin-bottom: $column-gap;
+
+        &__input {
+            flex-grow: 1;
+        }
+        input {
+            width: 100%;
+        }
+    }
+}
 </style>

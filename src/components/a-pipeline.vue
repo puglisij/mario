@@ -1,11 +1,15 @@
 <template>
-    <div class="pipeline">
-        <label>
-            <div class="label">Name</div>
+    <div class="pipeline" :class="{ disabled: disabled }">
+        <span class="pipeline-handle"
+            title="Drag to re-order">&#9776;</span>
+
+        <div class="pipeline-data">
             <validation-provider
+                tag="label"
                 :rules="{ required: true, custom: { fn: validateName } }" 
                 v-slot="{ errors }"
             >
+                <div class="label">Name</div>
                 <input class="topcoat-text-input full-width" type="text" 
                     title="A name for the pipeline. Only used for reference."
                     placeholder="my-pipeline-name"
@@ -13,14 +17,17 @@
                 />
                 <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
             </validation-provider>
-        </label>
-        <label>
-            <div class="label">File Watcher(s)</div>
-            <!-- TODO: Add Autocomplete or List selection, which will eliminate need for validation here -->
             <validation-provider
+                tag="label"
                 :rules="{ custom: { fn: validateWatcherNames } }" 
                 v-slot="{ errors }"
             >
+                <div class="label">File Watcher(s)</div>
+                <!-- 
+                    TODO: Add Autocomplete or List selection, which will eliminate need for validation here 
+                    TODO: Don't force a Pipeline to use a File Watcher. Instead allow any File source selection here
+                    TODO: It's important that only a single File Producer is created for each source
+                -->
                 <a-array-input class="topcoat-text-input full-width" 
                     title="The file watcher(s) to use for inputs to this pipeline. Comma delimited."
                     placeholder="my-watcher-name"
@@ -28,27 +35,27 @@
                 />
                 <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
             </validation-provider>
-        </label>
-        <a-checkbox v-model="disabled_">
-            Disabled 
-        </a-checkbox>
-        <button 
-            class="topcoat-button--large--quiet" 
-            type="button"
-            @click="onEdit"
-        >Edit</button>
-        <button 
-            class="topcoat-button--large--quiet" 
-            type="button"
-            title="Process open files with this pipeline"
-            @click="onPlay"
-        >&#9654;</button>
-        <button 
-            class="topcoat-button--large--quiet" 
-            type="button"
-            title="Delete this pipeline"
-            @click="onDelete"
-        >X</button>
+            <a-checkbox v-model="disabled_">
+                Disabled 
+            </a-checkbox>
+            <button 
+                class="topcoat-button--large--quiet" 
+                type="button"
+                @click="onEdit"
+            >Edit</button>
+            <button 
+                class="topcoat-button--large--quiet" 
+                type="button"
+                title="Process open files with this pipeline"
+                @click="onPlay"
+            >&#9654;</button>
+            <button 
+                class="topcoat-button--large--quiet" 
+                type="button"
+                title="Delete this pipeline"
+                @click="onDelete"
+            >X</button>
+        </div>
     </div>
 </template>
 

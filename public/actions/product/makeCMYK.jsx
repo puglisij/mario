@@ -34,6 +34,6 @@ product.makeCMYK = function makeCMYK()
             "CMYK" + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
         );
         action.revert();
-        action.closeDocument();
+        action.closeDocumentWithoutSave();
     });
 }

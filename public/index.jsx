@@ -1,10 +1,3 @@
-function closeAll()
-{
-    while(app.documents.length)
-    {
-        app.activeDocument.close(SaveOptions.DONOTSAVECHANGES);
-    }
-}
 
 function importJsx(jsxFilePath)
 {

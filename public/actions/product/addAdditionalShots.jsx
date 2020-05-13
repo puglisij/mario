@@ -64,7 +64,7 @@ product.addAdditionalShots= function addAdditionalShots()
             {
                 action.makeLayer(suffixes[i]);
                 action.setLayerIconColor(LayerIconColor.Red)
-                action.fillLayer(255, 0, 255);
+                action.fillLayer({ r: 255, g: 0, b: 255 });
                 action.setLayerBlendMode(BlendMode.MULTIPLY);
             }
         }

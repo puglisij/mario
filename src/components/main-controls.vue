@@ -63,6 +63,9 @@
                             Source files from this folder
                         </a-folder-input>
                     </validation-provider>
+                    <!-- <a-checkbox v-model="useRawDirectory">
+                        Use directory itself as the input. Don't its contents?
+                    </a-checkbox> -->
                     <validation-provider 
                         slim
                         :rules="{ required: isSourceADirectory }" 
@@ -108,6 +111,7 @@ import PipelineEngineState from '../server/pipelineEngineState';
 import ImageSourceType from '../server/imageSourceType';
 import AFolderInput from "./a-folder-input.vue";
 import AExtensionsInput from "./a-extensions-input.vue";
+import ACheckbox from "./a-checkbox.vue";
 import WaitDots from './wait-dots.vue';
 
 export default {
@@ -117,6 +121,7 @@ export default {
         ValidationProvider,
         AFolderInput,
         AExtensionsInput,
+        ACheckbox,
         WaitDots
     },
     data() {
@@ -166,9 +171,7 @@ export default {
     created() 
     {
         eventBus.$on("pipeline-play", pipelineName => {
-            // get sourceType, sourcePath, sourceExtensions
-            //Server.pipelineEngine.run([pipelineName], )
-            console.log("Main controls received Play for pipeline " + pipelineName);
+            Server.pipelineEngine.run(pipelineName, this.imageSource.type, this.imageSource.directory, this.imageSource.extensions);
         });
         Server.pipelineEngine.on("state", state => {
             this.pipelineEngineState = state;
@@ -185,7 +188,13 @@ export default {
          * Submit handler
          */
         onPipelineRun() {
-            Server.pipelineEngine.runAll(this.imageSource.type, this.imageSource.directory, this.imageSource.extensions);
+            this.$dialog.openConfirm({
+                name: "confirm",
+                message: "This will run all pipelines with the given source. Continue?",
+                onYes: () => {
+                    Server.pipelineEngine.runAll(this.imageSource.type, this.imageSource.directory, this.imageSource.extensions);
+                }
+            });
         },
         onPipelineResume() {
             Server.pipelineEngine.resume();

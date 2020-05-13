@@ -9,19 +9,19 @@ export default class Image
     {
         /**
          * One of the following:
-         *  - An absolute image path (e.g. if sourced from files open in the Adobe host application, or read from a user selected directory)
-         *  - An absolute directory path (e.g. if sourced from json)
+         *  - An absolute image path (e.g. a user selected directory)
+         *  - An absolute directory path (e.g. when multiple input images are needed)
          *  - Blank, if there is no source file
          */
-        this.imageInputSource = "";
+        this.inputImagePath = "";
         /**
-         * The parent directory containing imageInputSource
+         * The parent directory containing the inputImagePath or inputDataPath, or blank if neither is defined
          */
-        this.imageInputSourceDirectory = "";
+        this.inputDirectory = "";
         /**
          * If available, the json data file for the Image process
          */
-        this.dataSource = "";
+        this.inputDataPath = "";
         /**
          * External data (stored outside file) metadata necessary for processing
          */

@@ -32,6 +32,6 @@ designidea.saveForSharepoint = function saveForSharepoint()
         });
 
         action.revert();
-        action.closeDocument();
+        action.closeDocumentWithoutSave();
     });
 }

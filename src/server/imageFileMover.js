@@ -14,10 +14,12 @@ export default class ImageFileMover
      */
     moveToProcessed(image, processedDirectory)
     {
+        console.log("Moving file to processed directory: " + processedDirectory);
         this._moveToDirectory(image, processedDirectory);
     }
     moveToErrored(image, erroredDirectory, errorMessage)
     {
+        console.log("Moving file to errored directory.");
         this._moveToDirectory(image, erroredDirectory);
         this._writeError(erroredDirectory, errorMessage);
     }
@@ -26,8 +28,17 @@ export default class ImageFileMover
         if(!directory) {
             return;
         }
+        if(!upath.isAbsolute(directory)) {
+            const sourceDirectory = this._getImageInputDirectory(image);
+            if(!sourceDirectory) {
+                console.log("Image not moved. Move directory was relative but input directory was not defined.");
+                return;
+            } else {
+                directory = upath.join(sourceDirectory, directory);
+            }
+        }
 
-        const paths = this._getPaths(image);
+        const paths = this._getImagePaths(image);
         if(!paths) {
             return;
         }
@@ -39,7 +50,7 @@ export default class ImageFileMover
             const toPath = upath.join(directory, basename);
             fs.rename(path, toPath, err => {
                 if(err) 
-                    console.warn(err + "\nImage path could not be moved to " + toPath);
+                    console.error(err + "\nImage path could not be moved to " + toPath);
             });
         }
     }
@@ -49,8 +60,8 @@ export default class ImageFileMover
         fs.writeFile(logPath, [   
             `\n`,
             `Time: ${new Date().toLocaleString()}`,
-            `imageInputSource: ${image.imageInputSource}`, 
-            `dataSource: ${image.dataSource}`, 
+            `inputImagePath: ${image.inputImagePath}`, 
+            `inputDataPath: ${image.inputDataPath}`, 
             message
         ].join(`\n`), 
         {
@@ -61,11 +72,15 @@ export default class ImageFileMover
                 console.error(err + "\nCould not write Image error to " + logPath);
         });
     }
-    _getPaths(image) 
+    _getImageInputDirectory(image)
+    {
+        return image.inputDirectory;
+    }
+    _getImagePaths(image) 
     {
         const paths = [
-            image.imageInputSource,
-            image.dataSource
+            image.inputImagePath,
+            image.inputDataPath
         ];
         return paths.filter(p => !!p); // remove empty paths
     }

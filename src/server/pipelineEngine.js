@@ -266,9 +266,9 @@ export class PipelineEngine extends EventEmitter
             const { file, producerId } = qFile;
             console.log(`Reading next file ${file} from producer ${producerId}.`);
 
-            const image = await this._imageFileReader.read(file);
+            const image = await this._imageFileReader.read(file, store.general.doReadFileMetadata);
             const pipelines = this._getConfigurationsByProducerId(producerId);
-            console.log(`Processing image: ${image.imageInputSource}`);
+            console.log(`Processing image: ${image.inputImagePath}`);
 
             try 
             {
@@ -279,10 +279,8 @@ export class PipelineEngine extends EventEmitter
                         console.log(`Skipping disabled pipeline '${pipeline.name}'`);
                         continue;
                     }
-    
-                    console.log(`Pipeline '${pipeline.name}' started.`);
-                    this.emit("pipelinestart", pipeline.name);
-                    await this._runPipelineStart(image);
+
+                    await this._runPipelineStart(image, pipeline);
     
                     // For each action function
                     for(const action of pipeline.actions) 
@@ -294,10 +292,8 @@ export class PipelineEngine extends EventEmitter
                         await this._pauseCheck(result, store.general.pauseAfterEveryAction);
                         this.emit("actionend", action.actionName);
                     }
-    
-                    console.log(`Pipeline '${pipeline.name}' ended.`);
-                    this.emit("pipelineend", pipeline.name);
-                    await this._runPipelineEnd();
+
+                    await this._runPipelineEnd(pipeline);
     
                     if(this._stopCheck()) break;
                     await this._pauseCheck(null, store.general.pauseAfterEveryPipeline);
@@ -327,10 +323,13 @@ export class PipelineEngine extends EventEmitter
     /**
      * Close all documents. Save Photoshop settings. Instantiate IMAGE instance.
      * @param {Image} image 
+     * @param {object} pipeline the pipeline configuration object
      * @returns {Promise}
      */
-    _runPipelineStart(image)
+    _runPipelineStart(image, pipeline)
     {
+        console.log(`Pipeline '${pipeline.name}' started.`);
+        this.emit("pipelinestart", pipeline.name);
         return host.runJsxWithThrow(`
         __PIPELINE = {
             restoreUnits: _.saveUnits()
@@ -339,11 +338,13 @@ export class PipelineEngine extends EventEmitter
     }
     /**
      * Restore Photoshop settings. Clear IMAGE Instance.
-     * @param {Image} image 
+     * @param {object} pipeline the pipeline configuration object 
      * @returns {Promise}
      */
-    _runPipelineEnd()
+    _runPipelineEnd(pipeline)
     {
+        console.log(`Pipeline '${pipeline.name}' ended.`);
+        this.emit("pipelineend", pipeline.name);
         return host.runJsxWithThrow(`
         __PIPELINE.restoreUnits && __PIPELINE.restoreUnits(); 
         IMAGE=null;

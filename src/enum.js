@@ -71,7 +71,7 @@ function create_(enumArr, offset)
         enumer[ nextKey ] = i + offset;       
     }
 
-    // TODO: After dropping IE8 support, use defineProperty
+    // TODO: Use defineProperty
     // Object.defineProperty(this, 'enumValues', {
     //     value: [],
     //     configurable: false,

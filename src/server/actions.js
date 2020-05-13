@@ -202,7 +202,7 @@ export class Actions
         if(!importDirectory.trim()) {
             return;
         }
-        const importString = this._importStringBuilder.build(importDirectory, "action");
+        const importString = this._importStringBuilder.build(importDirectory, "action") + "; act = action;";
         return host.runJsx(importString);
     }
 

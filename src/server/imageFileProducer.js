@@ -134,7 +134,7 @@ export default class ImageFileProducer extends EventEmitter
      */
     _sourceOpenFiles() 
     {
-        host.runActionWithParameters("action.getOpenFilePaths")
+        host.runActionWithParameters("action.getOpenDocumentPaths")
         .then(files => {
             this._isDepleted = true;
             this.emit("files", this._id, files.split(','));
@@ -166,6 +166,7 @@ ImageFileProducer.withFileWatcher = function(directory, extensions)
  */
 ImageFileProducer.withDirectory = function(directory, extensions) 
 {
+    // TODO: Allow use of Directory AS the Source, instead of reading its files. Which means the Producer can produce directory paths, instead of just files
     return new ImageFileProducer(
         new ImageTap(ImageSourceType.DIRECTORY, new ImageSourceValue(directory, extensions))
     );

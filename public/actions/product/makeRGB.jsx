@@ -26,6 +26,6 @@ product.makeRGB = function makeRGB()
             "RGB" + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
         );
         action.revert();
-        action.closeDocument();
+        action.closeDocumentWithoutSave();
     })
 }

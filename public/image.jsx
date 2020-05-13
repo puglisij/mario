@@ -4,16 +4,16 @@
 */
 function ImageForProcessing(json)
 {
-    if(_.isString(json.imageInputSource) && json.imageInputSource.endsWith(".json")) {
-        throw new Error("ImageForProcessing should not receive imageInputSource as json file.");
+    if(_.isString(json.inputImagePath) && json.inputImagePath.endsWith(".json")) {
+        throw new Error("ImageForProcessing should not receive inputImagePath as json file.");
     } 
 
     // An absolute path to an image or directory, or blank
-    this._imageInputSource   = json.imageInputSource;
-    //The parent directory containing imageInputSource, if defined
-    this._imageInputSourceDirectory  = json.imageInputSourceDirectory;
+    this._inputImagePath   = json.inputImagePath;
+    // The parent directory containing inputImagePath or if not defined, the inputDataPath
+    this._inputDirectory  = json.inputDirectory;
     // Path to json file from which data was sourced, if available
-    this._dataSource = json.dataSource;
+    this._inputDataPath = json.inputDataPath;
     // External (stored outside file) metadata necessary for processing
     this._data       = json.data;     
     // Metadata (i.e. XMP/EXIF) stored in the image file, if available
@@ -22,16 +22,16 @@ function ImageForProcessing(json)
     this._context = {};
 }
 /**
-* Returns input source path, either an image file or directory
+* Returns the absolute input source path, either an image file or directory
 */
-ImageForProcessing.prototype.getInputSource = function() {
-    return this._imageInputSource;
+ImageForProcessing.prototype.getInputPath = function() {
+    return this._inputImagePath;
 };
 /**
-* Returns the parent directory containing the input source path
+* Returns the absolute parent directory containing inputImagePath or if not defined, the inputDataPath
 */
-ImageForProcessing.prototype.getInputSourceDirectory = function() {
-    return this._imageInputSourceDirectory;
+ImageForProcessing.prototype.getInputDirectory = function() {
+    return this._inputDirectory;
 };
 /**
 * Return property in data which matches the given key

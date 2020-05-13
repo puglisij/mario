@@ -14,46 +14,49 @@ export default class ImageFileReader
 
     /**
      * Create a new Image instance, using the image or json file path, if given.
-     * @param {String} [imageInputSource] the image or json file path. Path should be absolute.
+     * @param {String} [inputImagePath] the image or json file path. Path should be absolute unless it is an Open File in the Adobe application.
+     * @param {boolean} [readMetadata = false] whether to read the image files metadata (slower)
      */
-    async read(imageInputSource)
+    async read(path, readMetadata = false)
     {
-        if(!this._isPathDefinedAndAbsolute(imageInputSource)) {
-            throw new Error(`Image expected imageInputSource ${imageInputSource} to be an absolute path.`);
+        let inputImagePath = path || "";
+        let inputDirectory = this._isPathDefinedAndAbsolute(path) ? upath.dirname(path) : "";
+        let inputDataPath = "";
+        let data = {};
+        let metadata = {};
+        if(this._isFile(inputImagePath)) 
+        {
+            if(this._isJsonFile(inputImagePath)) 
+            {
+                inputDataPath = inputImagePath;
+                data = await this._readJson(inputDataPath);
+                // Grab new image source path from json, if available
+                inputImagePath = this._ensureAbsolutePath(data.inputImagePath, inputDirectory);
+            }
+            if(this._isFile(inputImagePath) && readMetadata) 
+            {
+                metadata = await this._readMetadata(inputImagePath);
+            }
         }
 
         const image = new Image();
-
-        if(this._isFile(imageInputSource) && this._isJsonFile(imageInputSource)) 
-        {
-            const dataSource = imageInputSource;
-            const data = await this._readJson(dataSource);
-            const dataSourceDirectory = upath.dirname(dataSource);
-            // Grab new image source path from json, if available
-            imageInputSource = this._ensureAbsolutePath(data.imageInputSource, dataSourceDirectory);
-            image.imageInputSource = imageInputSource;
-            image.imageInputSourceDirectory = upath.dirname(imageInputSource);
-            image.dataSource = dataSource;
-            image.data = data;
-        }
-
-        // TODO: Make this optional since it slows down processing
-        // if(this._isFile(imageInputSource)) {
-        //     image.metadata = await this._readMetadata(imageInputSource);
-        // }
-
+              image.inputImagePath = inputImagePath;        
+              image.inputDataPath = inputDataPath;
+              image.inputDirectory = inputDirectory;
+              image.data = data;
+              image.metadata = metadata;
         return image;
     }
     /**
      * Reads any json from the given data source, if it is json and it exists.
      * @returns {object}
      */
-    async _readJson(dataSource)
+    async _readJson(inputDataPath)
     {
         return new Promise(resolve => {
-            fs.readFile(dataSource, { encoding: 'utf8' }, (error, data) => {
+            fs.readFile(inputDataPath, { encoding: 'utf8' }, (error, data) => {
                 if(error) {
-                    throw new Error(`Image json ${dataSource} could not be read.`);
+                    throw new Error(`Image json ${inputDataPath} could not be read.`);
                 }
                 resolve(JSON.parse(data));
             });
@@ -63,9 +66,9 @@ export default class ImageFileReader
      * Reads any metadata from the given source, if it is a file
      * @returns {object}
      */
-    async _readMetadata(imageInputSource)
+    async _readMetadata(inputImagePath)
     {
-        if(!this._isFile(imageInputSource)) {
+        if(!this._isFile(inputImagePath)) {
             return Promise.resolve();
         }
 
@@ -76,7 +79,7 @@ export default class ImageFileReader
         .then(pid => {
             processid = pid;
         })
-        .then(() => ep.readMetadata(imageInputSource, ['-File:all']))
+        .then(() => ep.readMetadata(inputImagePath, ['-File:all']))
         .then(metadata => {
             let fileMetadata = metadata.data[0];
             return fileMetadata;
@@ -86,7 +89,7 @@ export default class ImageFileReader
         });
     }
     _isPathDefinedAndAbsolute(path) {
-        return typeof path === "string" && upath.isAbsolute(path);
+        return typeof path === "string" && path.length > 0 && upath.isAbsolute(path);
     }
     _ensureAbsolutePath(path, parentDirectory) {
         if(!path) {

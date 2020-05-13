@@ -12,14 +12,14 @@ var _ = {
     * @param {string|Folder|File} path
     */
     isFile: function(path) {
-        return new Folder(path) instanceof File;
+        return File(path) instanceof File;
     },
     /**
     * Returns true if path is a Folder
     * @param {string|Folder|File} path
     */
     isFolder: function(path) {
-        return new Folder(path) instanceof Folder;
+        return Folder(path) instanceof Folder;
     },
     getDocumentPath: function() 
     {

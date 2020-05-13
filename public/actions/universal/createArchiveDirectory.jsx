@@ -5,11 +5,11 @@
 */
 universal.createArchiveDirectory = function createArchiveDirectory(archiveName)
 {
-    var archiveDirectory= IMAGE.data("archiveDirectory") || "../Archive";
+    var archiveDirectory= IMAGE.data("archiveDirectory") || "./Archive";
         archiveDirectory = archiveDirectory + "/" + archiveName.toLowerCase();
 
     var currentDir = Folder.current;
-    Folder.current = new Folder(IMAGE.getInputSourceDirectory());
+    Folder.current = new Folder(IMAGE.getInputDirectory());
     var folder = new Folder(archiveDirectory);
     Folder.current = currentDir;
 

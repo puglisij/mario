@@ -32,6 +32,8 @@
                 <h3 class="section-title">Pipelines</h3>
                 <draggable 
                     v-model="pipelines"
+                    draggable=".pipeline"
+                    handle=".pipeline-handle"
                     group="pipelines" 
                 >
                     <a-pipeline
