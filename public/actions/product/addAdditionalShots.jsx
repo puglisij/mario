@@ -13,7 +13,7 @@
         ▫ Creates a new layer with shot name and makes layer icon red 
         ▫ Fills the layer with purple, sets opacity to 100% and blend mode to multiply
 */
-product.addAdditionalShots= function addAdditionalShots()
+action.product.addAdditionalShots= function addAdditionalShots()
 {
 	$.writeln("addAdditionalShots()");
 
@@ -41,7 +41,7 @@ product.addAdditionalShots= function addAdditionalShots()
                         action.scaleLayerByPercent(200);
                     }
 
-                    product.dropShadow();
+                    action.product.dropShadow();
                     action.unsharpMask({
                         amountPercent: 40,
                         radiusPixels: 0.4,

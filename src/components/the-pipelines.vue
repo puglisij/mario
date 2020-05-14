@@ -10,7 +10,7 @@
             @keydown.enter.prevent
             @submit.prevent="handleSubmit(onConfigurationSubmit)"
         >
-            <h2 class="tab-title">Pipelines</h2>
+            <h2 class="tab-title">Pipelines<i v-show="needSaved">*</i></h2>
 
             <a-checkbox v-model="pauseAfterEveryPipeline">
                 Pause processing after every Pipeline?

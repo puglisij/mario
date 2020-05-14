@@ -3,7 +3,7 @@
 /**
 * Assembles product views into a single web TIF. Also saves each view to RGB Archive. 
 */ 
-product.makeWebTIF = function makeWebTIF()
+action.product.makeWebTIF = function makeWebTIF()
 {
     var sku = IMAGE.data("sku");
     if(!sku) {
@@ -13,9 +13,9 @@ product.makeWebTIF = function makeWebTIF()
     var tif;
     var BORDER_SIZE = 50;
 
-    universal.private.eachAdditionalView(function(view)
+    action.universal.private.eachAdditionalView(function(view)
     {
-        product.maskOrPath({
+        action.product.maskOrPath({
             koMethod: view.koMethod
         });
         // Add border 
@@ -47,12 +47,12 @@ product.makeWebTIF = function makeWebTIF()
         // Trim transparent area around the image
         activeDocument.trim(TrimType.TRANSPARENT);
 
-        universal.resizeLayerByTargetScale({
+        action.universal.resizeLayerByTargetScale({
             currentScale: view.currentScale,
             targetScale: view.webTifTargetScale
         });
 
-        product.dropShadow();
+        action.product.dropShadow();
         action.unsharpMask({
             amountPercent: 40,
             radiusPixels: 0.4,
@@ -62,7 +62,7 @@ product.makeWebTIF = function makeWebTIF()
          // Create TIF, if not created
         if(!tif) {
             // The created TIF becomes the active document
-            var outputDirectory = universal.createOutputDirectory();
+            var outputDirectory = action.universal.createOutputDirectory();
             var newTifFilePath = outputDirectory.fullName + "/" + sku + ".tif";
             action.makeWhiteBackground();
             action.saveAsTIF(newTifFilePath);
@@ -77,7 +77,7 @@ product.makeWebTIF = function makeWebTIF()
             activeDocument = tif;
         }
 
-        product.trimAndResizeCanvas();
+        action.product.trimAndResizeCanvas();
     });
 }
 

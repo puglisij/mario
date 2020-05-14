@@ -7,12 +7,10 @@ import Logger from './console';
 import Server from './server';
 import Validation from './validation';
 
-const create = () => {
-    Logger.init();
-    Server.init();
-    Host.init();
-    HostScriptListener.init();
-};
+Vue.config.productionTip = false;
+Vue.config.devtools = true;
+Vue.use(Dialog);
+
 const destroy = () => {
     Server.destroy();
     Host.destroy();
@@ -20,16 +18,19 @@ const destroy = () => {
     Logger.destroy();
 };
 
-Vue.config.productionTip = false;
-Vue.config.devtools = true;
-Vue.use(Dialog);
+const create = async () => {
+    await Logger.init();
+    await Server.init();
+    await Host.init(); 
+    await HostScriptListener.init();
 
+    window.vue = new Vue({
+        render: h => h(App),
+        beforeDestroy: destroy
+    }).$mount('#app');
+};
 
-window.vue = new Vue({
-    render: h => h(App),
-    beforeCreate: create,
-    beforeDestroy: destroy
-}).$mount('#app');
+create();
 
 window.addEventListener("beforeunload", destroy);
 

@@ -1,9 +1,9 @@
 /**
 * Save design idea as a stupid simple JPG for export to Sharepoint
 */
-designidea.saveForSharepoint = function saveForSharepoint() 
+action.designidea.saveForSharepoint = function saveForSharepoint() 
 {
-    universal.private.eachAdditionalView(function(view)
+    action.universal.private.eachAdditionalView(function(view)
     {
         activeDocument.flatten();
 
@@ -25,7 +25,7 @@ designidea.saveForSharepoint = function saveForSharepoint()
             );
         }
 
-        var outputDirectory = universal.createOutputDirectory();
+        var outputDirectory = action.universal.createOutputDirectory();
         action.saveForWeb({
             quality: 80, 
             file: outputDirectory

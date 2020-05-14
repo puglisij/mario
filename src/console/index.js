@@ -22,6 +22,9 @@ class Logger extends EventEmitter
         this.logBuffer = [];
         this.maxBufferSize = 64;
     }
+    /**
+     * @returns {Promise}
+     */
     init() 
     {
         if(this.initialized)
@@ -55,6 +58,7 @@ class Logger extends EventEmitter
 
         this.emit("initialized");
         console.log("Logger initialized");
+        return Promise.resolve();
     }
     _write(method, args)
     {

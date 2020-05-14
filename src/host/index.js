@@ -16,6 +16,9 @@ class Host
         this.interface = new CSInterface();
         this._initialized = false;
     }
+    /**
+     * @returns {Promise}
+     */
     init() 
     {
         if(this._initialized) return;
@@ -40,6 +43,8 @@ class Host
             Builtin Action Path: ${appGlobal.appBuiltinActionsPath}\n
             Creative Suite API Version: ${apiVersion.major}.${apiVersion.minor}.${apiVersion.micro}\n
             OS: ${this.interface.getOSInformation()}`);
+            
+        return Promise.resolve();
     }
     destroy()
     {
@@ -146,14 +151,10 @@ class Host
     runActionWithParameters(functionName, parameters)
     {
         const parametersJson = JSON.stringify(parameters);
-        return this.runJsx(`(function(){
-            try {
-                var result = ${functionName}(${parametersJson});
-                return result;
-            } catch(e) {
-                return e.toString();
-            }
-        }())`);
+        return this.runJsxWithThrow(`
+            var result = ${functionName}(${parametersJson});
+            return result;
+        `);
     }
     
     /**

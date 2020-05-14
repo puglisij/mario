@@ -4,7 +4,7 @@
 * @param {string} options.fileName can be a mustache template such as P{{sku}}HI.jpg
 * @param {Number} [options.quality = 70] range from 1 to 100  
 */
-product.saveForWeb = function saveForWeb(options) 
+action.product.saveForWeb = function saveForWeb(options) 
 {
     // var sku = IMAGE.data("sku");
     // if(!sku) {
@@ -17,7 +17,7 @@ product.saveForWeb = function saveForWeb(options)
 
     //var fileName = IMAGE.parameters(options.fileName);
     var fileName = _.mustache(options.fileName, { sku: sku });
-    var outputDirectory = universal.createOutputDirectory();
+    var outputDirectory = action.universal.createOutputDirectory();
     var file = new File(outputDirectory + "/" + fileName);
 
     action.saveForWeb({ 

@@ -15,8 +15,13 @@ class HostScriptListener
         this._scriptListenerJsLogsPath = upath.join(os.homedir(), "Desktop", "ScriptingListenerJS.log");
         this._scriptListenerVbLogsPath = upath.join(os.homedir(), "Desktop", "ScriptingListenerVB.log");
     }
-    init() {
-
+    /**
+     * @returns {Promise}
+     */
+    init() 
+    {
+        console.log("HostScriptListener initialized.");
+        return Promise.resolve();
     }
     destroy()
     {

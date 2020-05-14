@@ -7,7 +7,7 @@ import ImageSourceType from './imageSourceType';
 import host from '../host';
 
 
-class ImageSourceValue 
+class ImageSourcePath 
 {
     /**
      * Data object containing path (file or directory) and valid file extensions array for new image(s)
@@ -21,17 +21,17 @@ class ImageSourceValue
     }
 }
 
-class ImageTap
+class ImageSource
 {
     /**
      * Data object containing context information for processing new images
      * @param {ImageSourceType} sourceType e.g. ImageSourceType.FILEWATCHER
-     * @param {ImageSourceValue} [sourceValue] e.g. { path: "C:/images" }
+     * @param {ImageSourcePath} [sourcePath] e.g. { path: "C:/images" }
      */
-    constructor(sourceType, sourceValue)
+    constructor(sourceType, sourcePath)
     {
         this.sourceType = sourceType;
-        this.sourceValue = sourceValue;
+        this.sourcePath = sourcePath;
     }
 }
 
@@ -76,10 +76,14 @@ export default class ImageFileProducer extends EventEmitter
         }
         this.removeAllListeners();
     }
+    _emitFiles(files) 
+    {
+        this.emit("files", this._id, files);
+    }
     _sourceFileWatchers() 
     {
-        const watchPathRoot = this._imageTap.sourceValue.path;
-        const watchExtensions = this._imageTap.sourceValue.extensions;
+        const watchPathRoot = this._imageTap.sourcePath.path;
+        const watchExtensions = this._imageTap.sourcePath.extensions;
         const watchPaths = watchExtensions.map(ext => upath.join(watchPathRoot, "*." + ext));
 
         if(isUncPath(watchPathRoot)) {
@@ -98,7 +102,7 @@ export default class ImageFileProducer extends EventEmitter
         })
         .on("add", newPath => 
         {
-            this.emit("files", this._id, [newPath]);
+            this._emitFiles([newPath]);
         });
 
         this._fileWatcher = watcher;
@@ -108,8 +112,8 @@ export default class ImageFileProducer extends EventEmitter
      */
     _sourceDirectory() 
     {
-        const directory = this._imageTap.sourceValue.path;
-        const extensions = this._imageTap.sourceValue.extensions;
+        const directory = this._imageTap.sourcePath.path;
+        const extensions = this._imageTap.sourcePath.extensions;
 
         fs.readdir(directory, { encoding: "utf8" }, (error, files) => {
             if(error) {
@@ -124,7 +128,7 @@ export default class ImageFileProducer extends EventEmitter
                     return extensions.includes(ext);
                 });
                 this._isDepleted = true;
-                this.emit("files", this._id, files);
+                this._emitFiles(files);
             }
             this.emit("depleted", this._id);
         });
@@ -137,14 +141,14 @@ export default class ImageFileProducer extends EventEmitter
         host.runActionWithParameters("action.getOpenDocumentPaths")
         .then(files => {
             this._isDepleted = true;
-            this.emit("files", this._id, files.split(','));
+            this._emitFiles(files.split(','));
             this.emit("depleted", this._id);
         });
     }
     _sourceBlank()
     {
         this._isDepleted = true;
-        this.emit("files", this._id, [""]);
+        this._emitFiles([""]);
         this.emit("depleted", this._id);
     }
 }
@@ -156,7 +160,7 @@ export default class ImageFileProducer extends EventEmitter
 ImageFileProducer.withFileWatcher = function(directory, extensions) 
 {
     return new ImageFileProducer(
-        new ImageTap(ImageSourceType.FILEWATCHER, new ImageSourceValue(directory, extensions))
+        new ImageSource(ImageSourceType.FILEWATCHER, new ImageSourcePath(directory, extensions))
     );
 };
 /**
@@ -168,7 +172,7 @@ ImageFileProducer.withDirectory = function(directory, extensions)
 {
     // TODO: Allow use of Directory AS the Source, instead of reading its files. Which means the Producer can produce directory paths, instead of just files
     return new ImageFileProducer(
-        new ImageTap(ImageSourceType.DIRECTORY, new ImageSourceValue(directory, extensions))
+        new ImageSource(ImageSourceType.DIRECTORY, new ImageSourcePath(directory, extensions))
     );
 };
 /**
@@ -177,7 +181,7 @@ ImageFileProducer.withDirectory = function(directory, extensions)
 ImageFileProducer.withOpenFiles = function() 
 {
     return new ImageFileProducer(
-        new ImageTap(ImageSourceType.OPENFILES, null)
+        new ImageSource(ImageSourceType.OPENFILES, null)
     );
 };
 /**
@@ -186,6 +190,6 @@ ImageFileProducer.withOpenFiles = function()
 ImageFileProducer.withBlank = function() 
 {
     return new ImageFileProducer( 
-        new ImageTap(ImageSourceType.BLANK, null)
+        new ImageSource(ImageSourceType.BLANK, null)
     );
 };

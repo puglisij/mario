@@ -10,14 +10,14 @@
             @keydown.enter.prevent
             @submit.prevent="handleSubmit(onConfigurationSubmit)"
         >
-            <h2 class="tab-title">Configuration</h2>
+            <h2 class="tab-title">Configuration<i v-show="needSaved">*</i></h2>
             <section class="section-content">
                 <label>
                     <div class="label">Custom Actions Folder</div>
                     <validation-provider 
                         class="flex"
                         tag="div"
-                        rules="pathexists" 
+                        rules="pathunc:false|pathexists" 
                         v-slot="v"
                     >
                         <a-folder-dialog-button :folder.sync="pathToUserActions" @update:folder="onPathToUserActions"></a-folder-dialog-button>

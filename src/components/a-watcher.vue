@@ -16,7 +16,7 @@
 
         <validation-provider 
             slim
-            rules="required|pathexists" 
+            rules="required|pathunc:false|pathexists" 
             v-slot="{ errors }"
         >
             <a-folder-input
@@ -34,7 +34,7 @@
 
         <validation-provider 
             slim
-            :rules="{ required: localWatcher.useProcessedPath, pathexists: true }" 
+            :rules="{ required: localWatcher.useProcessedPath, pathunc: { allowed: false }, pathexists: true }" 
             v-slot="{ errors }"
             v-if="localWatcher.useProcessedPath"
         >

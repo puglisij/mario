@@ -125,39 +125,28 @@ class ActionFileImportStringBuilder
     /**
      * Reads all jsx files in the given directory and builds an import JSX string for execution.
      * Each new directory encountered becomes a nested namespace.
+     * @param {string} pathToActions the directory containing the jsx files
+     * @param {string} rootNamespace the root action function namespace. All action names with start with this
      * @returns {string} the stringified JSX script to run which will import all actions
      */
-    build(pathToActions, defaultNamespace)
+    build(pathToActions, rootNamespace)
     {
-        return this._buildJsxImportString(pathToActions, "", defaultNamespace); 
+        return this._buildJsxImportString(pathToActions, rootNamespace); 
     }
     // NOTE: importAction() is expected to be defined on Host JSX side
-    _buildJsxImportString(pathToActions, namespace, defaultNamespace)
+    _buildJsxImportString(pathToActions, rootNamespace)
     {
-        let namespacePrefix = `${defaultNamespace}.`;
-        let namespaceDefine = `${defaultNamespace}= ${defaultNamespace} || {};`;
-        let areInRootPath = true;
-        if(namespace) {
-            namespacePrefix = `${namespace}.`;
-            namespaceDefine = `${namespace}= ${namespace} || {};`;
-            areInRootPath = false;
-        }
-        
-        // TODO make async
+        let namespacePrefix = `${rootNamespace}.`;
+        let namespaceDefine = `${rootNamespace}= (typeof ${rootNamespace} !== "undefined") ? ${rootNamespace} : {};`;
+
         return fs.readdirSync(pathToActions)
             .reduce((script, name) => 
             {
                 let nextPath = upath.join(pathToActions, name);
                 let nextActionName = namespacePrefix + name.split('.')[0];
                 let nextScript;
-                if(fs.statSync(nextPath).isDirectory()) 
-                {
-                    // if were in the root action directory, we dont want to include the default namespace prefix in
-                    // other subdirectory actions
-                    if(areInRootPath) 
-                        nextScript = this._buildJsxImportString(nextPath, name);
-                    else 
-                        nextScript = this._buildJsxImportString(nextPath, namespacePrefix + name);
+                if(fs.statSync(nextPath).isDirectory()) {
+                    nextScript = this._buildJsxImportString(nextPath, namespacePrefix + name);
                 } else {
                     nextScript = `importAction("${nextPath}", "${nextActionName}");`;
                 }
@@ -202,7 +191,8 @@ export class Actions
         if(!importDirectory.trim()) {
             return;
         }
-        const importString = this._importStringBuilder.build(importDirectory, "action") + "; act = action;";
+        const importString = this._importStringBuilder.build(importDirectory, "action") + "act = action;";
+        console.log(importString);
         return host.runJsx(importString);
     }
 

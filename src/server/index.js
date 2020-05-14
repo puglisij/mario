@@ -39,13 +39,16 @@ class Server extends EventEmitter
         this._pipelineEngine = new PipelineEngine();
         this._actions = new Actions();
     }
-    init() 
+    /**
+     * @returns {Promise}
+     */
+    async init() 
     {
         if(this._initialized) return;
         this._initialized = true;
 
-        this._pipelineEngine.init();
-        this._actions.init();
+        await this._pipelineEngine.init();
+        await this._actions.init();
         //-----------------
         // Express Routes
         //-----------------
@@ -85,6 +88,7 @@ class Server extends EventEmitter
         });
 
         this.state = ServerState.RUNNING;
+        this.emit("initialized");
         console.log("Server initialized.");
     }
     destroy() 

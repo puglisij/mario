@@ -1,7 +1,7 @@
 /**
 * If no path exists with name "WEB" than document is trimmed to top left and canvas resized.
 */
-product.trimAndResizeCanvas = function trimAndResizeCanvas()
+action.product.trimAndResizeCanvas = function trimAndResizeCanvas()
 {
     if(!_.getPathByName("WEB")) 
     {

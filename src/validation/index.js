@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { configure, setInteractionMode, extend } from 'vee-validate';
+import e from 'express';
 
 setInteractionMode("custom", context => {
     return {
@@ -21,7 +22,6 @@ extend('required', {
 extend('pathexists', { 
     async validate(value) 
     {
-        console.log("validating path");
         const exists = await new Promise(resolve => {
             fs.access(value, error => {
                 resolve(!error);
@@ -36,6 +36,17 @@ extend('pathexists', {
     },
     message: "Path does not exist"
 });
+
+extend('pathunc', {
+    validate(value, args) {
+        const allowed = typeof args.allowed === "boolean" ? args.allowed : JSON.parse(args.allowed.toLowerCase());
+        const path = value.trim();
+        const isUnc = path.startsWith("//") || path.startsWith("\\\\");
+        return !(isUnc && !allowed)
+    },
+    params: ['allowed'],
+    message: `Path cannot be a UNC path.`
+})
 
 extend('custom', {
     params: ['fn'],

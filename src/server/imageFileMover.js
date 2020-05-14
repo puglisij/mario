@@ -1,4 +1,5 @@
 import upath from 'upath';
+import uncSafePath from '../unc-safe-path';
 import fs from 'fs';
 import Image from './image';
 
@@ -10,40 +11,44 @@ export default class ImageFileMover
      * Moves the Image and its associated files to the given processed directory.
      * Does nothing if Image does not contain any path values.
      * @param {Image} image 
-     * @param {string} processedDirectory path to target directory. Absolute or relative to input or data source path.
+     * @param {string} toDirectory target directory. Absolute or relative to input or data source path.
+     * @param {string} [errorMessage] optional error message to write to error.logs
      */
-    moveToProcessed(image, processedDirectory)
+    async move(image, toDirectory, errorMessage)
     {
-        console.log("Moving file to processed directory: " + processedDirectory);
-        this._moveToDirectory(image, processedDirectory);
-    }
-    moveToErrored(image, erroredDirectory, errorMessage)
-    {
-        console.log("Moving file to errored directory.");
-        this._moveToDirectory(image, erroredDirectory);
-        this._writeError(erroredDirectory, errorMessage);
-    }
-    async _moveToDirectory(image, directory) 
-    {
-        if(!directory) {
-            return;
+        if(!toDirectory) {
+            return Promise.resolve();
         }
-        if(!upath.isAbsolute(directory)) {
-            const sourceDirectory = this._getImageInputDirectory(image);
-            if(!sourceDirectory) {
+        if(!upath.isAbsolute(toDirectory)) 
+        {
+            if(!image.inputDirectory) {
                 console.log("Image not moved. Move directory was relative but input directory was not defined.");
-                return;
+                return Promise.resolve();
             } else {
-                directory = upath.join(sourceDirectory, directory);
+                toDirectory = uncSafePath.join(image.inputDirectory, toDirectory);
             }
         }
 
+        console.log("Moving file to directory: " + toDirectory);
+        await this._makeDirectory(toDirectory);
+        this._moveToDirectory(image, toDirectory);
+        this._writeError(image, toDirectory, errorMessage);
+    }
+    _makeDirectory(directory) 
+    {
+        return new Promise(resolve => {
+            fs.mkdir(directory, { recursive: true }, err => {
+                if(err && err.code != "EEXIST") {
+                    reject(err + "\nImage move failed. Could not create directory.");
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+    _moveToDirectory(image, directory) 
+    {
         const paths = this._getImagePaths(image);
-        if(!paths) {
-            return;
-        }
-
-        await this._makeDirectory(directory);
         for(const path of paths) 
         {
             const basename = upath.basename(path);
@@ -54,8 +59,19 @@ export default class ImageFileMover
             });
         }
     }
+    _getImagePaths(image) 
+    {
+        const paths = [
+            image.inputImagePath,
+            image.inputDataPath
+        ];
+        return paths.filter(p => !!p); // remove empty paths
+    }
     _writeError(image, directory, message) 
     {
+        if(!message) {
+            return;
+        }
         const logPath = upath.join(directory, "error.logs");
         fs.writeFile(logPath, [   
             `\n`,
@@ -72,27 +88,4 @@ export default class ImageFileMover
                 console.error(err + "\nCould not write Image error to " + logPath);
         });
     }
-    _getImageInputDirectory(image)
-    {
-        return image.inputDirectory;
-    }
-    _getImagePaths(image) 
-    {
-        const paths = [
-            image.inputImagePath,
-            image.inputDataPath
-        ];
-        return paths.filter(p => !!p); // remove empty paths
-    }
-    _makeDirectory(directory) 
-    {
-        return new Promise(resolve => {
-            fs.mkdir(directory, { recursive: true }, err => {
-                if(err && !err.code == "EEXIST") 
-                    console.error(err + "\nImage move failed. Could not create directory " + directory);
-                resolve();
-            });
-        });
-    }
-    
 }

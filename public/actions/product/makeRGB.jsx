@@ -1,13 +1,13 @@
 /**
 * Create RGB psd for archives
 */
-product.makeRGB = function makeRGB()
+action.product.makeRGB = function makeRGB()
 {
     var BORDER_SIZE = 50;
     
-    universal.private.eachAdditionalView(function(view)
+    action.universal.private.eachAdditionalView(function(view)
     {
-        product.maskOrPath({
+        action.product.maskOrPath({
             koMethod: view.koMethod
         });
 
@@ -22,7 +22,7 @@ product.makeRGB = function makeRGB()
         );
 
         action.convertToColorProfile("RGB");
-        universal.saveAsPSDToArchiveDirectory(
+        action.universal.saveAsPSDToArchiveDirectory(
             "RGB" + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
         );
         action.revert();

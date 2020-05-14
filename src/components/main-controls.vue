@@ -51,7 +51,7 @@
                     </validation-provider>
                     <validation-provider 
                         slim
-                        :rules="{ required: isSourceADirectory, pathexists: true }" 
+                        :rules="{ required: isSourceADirectory, pathunc: { allowed: false }, pathexists: true }" 
                         v-slot="{ errors }"
                         v-if="isSourceADirectory"
                     >

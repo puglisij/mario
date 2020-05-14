@@ -1,5 +1,6 @@
 import exiftool from 'node-exiftool';
 import upath from 'upath';
+import uncSafePath from '../unc-safe-path';
 import fs from 'fs';
 import Image from './image';
 import ImageSourceType from './imageSourceType';
@@ -20,7 +21,7 @@ export default class ImageFileReader
     async read(path, readMetadata = false)
     {
         let inputImagePath = path || "";
-        let inputDirectory = this._isPathDefinedAndAbsolute(path) ? upath.dirname(path) : "";
+        let inputDirectory = this._isPathDefinedAndAbsolute(path) ? uncSafePath.dirname(path) : "";
         let inputDataPath = "";
         let data = {};
         let metadata = {};

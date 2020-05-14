@@ -126,6 +126,7 @@ export default {
         }
     },
     mounted() {
+        
         if(this.checkIsScriptListenerActiveOnStart) 
         {
             console.log("Checking ScriptListenerStatus...");
@@ -143,7 +144,6 @@ export default {
     },
     methods: {
         // TODO:
-        // - Check if ScriptListener is installed
         // - When ScriptListener Watcher is turned on, "Clear" button clears the file
         // - Only show "Toggle ScriptListener Watching" button when ScriptListener is installed and On
         clearJsxResult() {

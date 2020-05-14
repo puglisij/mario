@@ -4,7 +4,7 @@
 * @param {object} options 
 * @param {string} options.koMethod either "masked", "path", or "no_ko" 
 */
-product.maskOrPath = function maskOrPath(options)
+action.product.maskOrPath = function maskOrPath(options)
 {
     options = options || {};
 

@@ -22,9 +22,9 @@ export class PipelineEngine extends EventEmitter
          */
         this._producerIdToPipelines = new Map();
         /**
-         * ImageFileProducer instances
+         * Producer Id => ImageFileProducer instance
          */
-        this._producers = [];
+        this._producerIdToProducer = new Map();
         this._producerIdsWhichDepleted = [];
 
         /**
@@ -59,16 +59,17 @@ export class PipelineEngine extends EventEmitter
     }
     _destroyAllProducers()
     {
-        const producerIds = this._producers.map(p => p.id);
+        const producerIds = [...this._producerIdToProducer.keys()];
         this._destroyProducers(producerIds);
     }
     _destroyProducers(producerIds)
     {
+        producerIds = producerIds.filter(id => this._producerIdToProducer.has(id));
         for(const producerId of producerIds) 
         {
-            this._getProducerByProducerId(producerId).destroy();
+            this._producerIdToProducer.get(producerId).destroy();
+            this._producerIdToProducer.delete(producerId);
             this._producerIdToPipelines.delete(producerId);
-            this._producers = this._producers.filter(p => p.id !== producerId);
 
             console.log(`Image File Producer ${producerId} destroyed.`);
         }
@@ -76,7 +77,7 @@ export class PipelineEngine extends EventEmitter
     _addFileProducer(producer, pipelineNames) 
     {
         this._producerIdToPipelines.set(producer.id, pipelineNames);
-        this._producers.push(producer);
+        this._producerIdToProducer.set(producer.id, producer);
 
         producer.on("files", this._onProducerFile.bind(this));
         producer.on("depleted", this._onProducerDepleted.bind(this));
@@ -116,7 +117,7 @@ export class PipelineEngine extends EventEmitter
             console.log("Pipeline engine is already running.");
             return;
         }
-        console.log(`Running pipelines: ${pipelineNames.join(",")} with source: ${PipelineEngineState.toKey(sourceType)}`);
+        console.log(`Running pipelines: "${pipelineNames.join(",")}" with source: ${ImageSourceType.toKey(sourceType)}`);
 
         this.state = PipelineEngineState.IDLE;
         switch(sourceType)
@@ -188,7 +189,7 @@ export class PipelineEngine extends EventEmitter
     }
     _stopIfNoProducers()
     {
-        if(this._producers.length === 0) {
+        if(this._producerIdToProducer.size === 0) {
             this.state = PipelineEngineState.STOPPED;
         }
     }
@@ -197,10 +198,6 @@ export class PipelineEngine extends EventEmitter
     _getFileWatcherByName(watcherName)
     {
         return store.general.fileWatchers.find(w => w.name === watcherName);
-    }
-    _getProducerByProducerId(producerId) 
-    {
-        return this._producers.find(p => p.id === producerId);
     }
     _getConfigurationByPipelineName(pipelineName) 
     {
@@ -220,8 +217,8 @@ export class PipelineEngine extends EventEmitter
         console.log("File produced.");
         const qFiles = files.map(file => { 
             return {
-                file,
-                producerId
+                producerId,
+                file
             }
         });
         this._imageFileQ = this._imageFileQ.concat(qFiles);
@@ -287,10 +284,10 @@ export class PipelineEngine extends EventEmitter
                     {
                         this.emit("action", action.actionName);
                         let result = await host.runActionWithParameters(action.actionName, action.parameters);
-                        
+                        this.emit("actionend", action.actionName);
+
                         if(this._stopCheck(result)) break;
                         await this._pauseCheck(result, store.general.pauseAfterEveryAction);
-                        this.emit("actionend", action.actionName);
                     }
 
                     await this._runPipelineEnd(pipeline);
@@ -300,14 +297,14 @@ export class PipelineEngine extends EventEmitter
                 }
 
                 // TODO Use configured processed directory
-                this._imageFileMover.moveToProcessed(image, "./Processed");
+                this._imageFileMover.move(image, "./Processed");
             }
             catch(e)
             {
                 console.error(e);
                 // TODO Use configured errored directory
                 await this._pauseCheck(null, store.general.pauseOnExceptions);
-                this._imageFileMover.moveToErrored(image, "./Errored", e.toString());
+                this._imageFileMover.move(image, "./Errored", e.toString());
             }
             finally
             {

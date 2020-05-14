@@ -3,7 +3,7 @@
 * The created directory will be at:
 *   <outputDirectory or ../Output>/<projectId or type>
 */
-universal.createOutputDirectory = function createOutputDirectory() 
+action.universal.createOutputDirectory = function createOutputDirectory() 
 {
     var subDirectory = "" + IMAGE.data("projectId");
     var outputDirectory = IMAGE.data("outputDirectory") || "./Output";

@@ -5,7 +5,7 @@
 * Each view becomes the active document.
 * @param {function} cb the callback to execute for each additional view
 */
-universal.private.eachAdditionalView = function eachAdditionalView(cb)
+action.universal.private.eachAdditionalView = function eachAdditionalView(cb)
 {
     var viewsDirectory = IMAGE.getInputPath();
         viewsDirectory += viewsDirectory ? "/" : "";

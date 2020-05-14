@@ -6,7 +6,7 @@
 * @param {number} options.currentScale the current resolution (pixels per inch)
 * @param {number} options.targetScale the target resolution (pixels per inch)
 */
-universal.resizeImageByTargetScale = function resizeImageByTargetScale(options)
+action.universal.resizeImageByTargetScale = function resizeImageByTargetScale(options)
 {
     var currentScale = options.currentScale;
     var targetScale = options.targetScale;

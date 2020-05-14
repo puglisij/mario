@@ -5,7 +5,7 @@
 * @param {number} options.currentScale the current resolution (pixels per inch)
 * @param {number} options.targetScale the target resolution (pixels per inch)
 */
-universal.resizeLayerByTargetScale = function resizeLayerByTargetScale(options)
+action.universal.resizeLayerByTargetScale = function resizeLayerByTargetScale(options)
 {
     var currentScale = options.currentScale;
     var targetScale = options.targetScale;
