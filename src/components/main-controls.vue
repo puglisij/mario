@@ -131,6 +131,7 @@ export default {
             isMainDrawerOpen: store.general.isMainDrawerOpen,
             imageSource: _.simpleDeepClone(store.general.imageSource),
             imageSourceTypeOptions: [
+                { text: "Active Document", value: ImageSourceType.ACTIVEDOCUMENT },
                 { text: "Open Files", value: ImageSourceType.OPENFILES }, 
                 { text: "Directory", value: ImageSourceType.DIRECTORY }, 
                 { text: "File Watchers", value: ImageSourceType.FILEWATCHER }, 

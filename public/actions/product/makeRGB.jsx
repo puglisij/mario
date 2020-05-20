@@ -5,7 +5,7 @@ action.product.makeRGB = function makeRGB()
 {
     var BORDER_SIZE = 50;
     
-    action.universal.private.eachAdditionalView(function(view)
+    action.openEachImage(function(view)
     {
         action.product.maskOrPath({
             koMethod: view.koMethod

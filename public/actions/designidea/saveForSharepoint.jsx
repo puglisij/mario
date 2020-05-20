@@ -3,7 +3,7 @@
 */
 action.designidea.saveForSharepoint = function saveForSharepoint() 
 {
-    action.universal.private.eachAdditionalView(function(view)
+    action.openEachImage(function(view)
     {
         activeDocument.flatten();
 

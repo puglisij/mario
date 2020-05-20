@@ -4,7 +4,7 @@
 * If path is a directory, does nothing
 * If path is already open, it is set as the activeDocument
 */
-action.universal.openImage = function openImage()
+action.openImage = function openImage()
 {
     var path = IMAGE.getInputPath();
     if(!path) {

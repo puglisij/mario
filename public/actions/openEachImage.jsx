@@ -1,17 +1,17 @@
 
 /**
-* Iterate and open each image path listed in IMAGE.data("packageImages")
-* If IMAGE.data("package") is defined, image paths should be relative to this directory.
+* Iterate and open each image path listed in IMAGE.data("inputImages")
+* If IMAGE.data("inputImagePath") is defined, image paths should be relative to its parent directory.
 * Each view becomes the active document.
 * @param {function} cb the callback to execute for each additional view
 */
-action.universal.private.eachAdditionalView = function eachAdditionalView(cb)
+action.openEachImage = function openEachImage(cb)
 {
     var viewsDirectory = IMAGE.getInputPath();
         viewsDirectory += viewsDirectory ? "/" : "";
-    var views = IMAGE.data("packageImages");
+    var views = IMAGE.data("inputImages");
     if(!views) {
-        throw new Error("Image data missing 'packageImages'.");
+        throw new Error("Image data missing 'inputImages'.");
     }
 
     // For each Additional View in the data

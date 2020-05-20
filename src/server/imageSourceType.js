@@ -4,7 +4,8 @@ const ImageSourceType = new Enum([
     "OPENFILES", 
     "DIRECTORY", 
     "FILEWATCHER",
-    "BLANK"
+    "BLANK",
+    "ACTIVEDOCUMENT"
 ]);
 
 export default ImageSourceType

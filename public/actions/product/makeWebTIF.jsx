@@ -5,15 +5,15 @@
 */ 
 action.product.makeWebTIF = function makeWebTIF()
 {
-    var sku = IMAGE.data("sku");
+    var sku = IMAGE.data("skuOrId");
     if(!sku) {
-        throw new Error("Image data missing sku.");
+        throw new Error("Image data missing 'skuOrId'.");
     }
 
     var tif;
     var BORDER_SIZE = 50;
 
-    action.universal.private.eachAdditionalView(function(view)
+    action.openEachImage(function(view)
     {
         action.product.maskOrPath({
             koMethod: view.koMethod

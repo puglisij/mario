@@ -145,6 +145,7 @@ export default {
         },
         onConfigurationSubmit(event)
         {
+            // TODO Ensure pipelines only refer to existing watchers?
             store.general.pathToUserActions = this.pathToUserActions;
             store.general.fileWatchers = this.fileWatchers;
             this.$emit('changed');

@@ -118,7 +118,7 @@ export default {
         }
     },
     watch: {
-        // TODO This pattern kinds stinks?
+        // TODO This pattern is too repetitive?
         pauseAfterEveryPipeline: function(v) { store.general.pauseAfterEveryPipeline = v; },
         pauseAfterEveryAction: function(v) { store.general.pauseAfterEveryAction = v; },
         pauseAfterEveryImage: function(v) { store.general.pauseAfterEveryImage = v; },

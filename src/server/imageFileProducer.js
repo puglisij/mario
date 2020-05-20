@@ -64,6 +64,7 @@ export default class ImageFileProducer extends EventEmitter
             case ImageSourceType.DIRECTORY: this._sourceDirectory(); break;
             case ImageSourceType.OPENFILES: this._sourceOpenFiles(); break;
             case ImageSourceType.BLANK: this._sourceBlank(); break;
+            case ImageSourceType.ACTIVEDOCUMENT: this._sourceActiveDocument(); break;
             default: throw new Error("Unknown ImageSourceType: " + this._imageTap.sourceType);
         }
     }
@@ -139,9 +140,9 @@ export default class ImageFileProducer extends EventEmitter
     _sourceOpenFiles() 
     {
         host.runActionWithParameters("action.getOpenDocumentPaths")
-        .then(files => {
+        .then(filePaths => {
             this._isDepleted = true;
-            this._emitFiles(files.split(','));
+            this._emitFiles(filePaths.split(','));
             this.emit("depleted", this._id);
         });
     }
@@ -150,6 +151,15 @@ export default class ImageFileProducer extends EventEmitter
         this._isDepleted = true;
         this._emitFiles([""]);
         this.emit("depleted", this._id);
+    }
+    _sourceActiveDocument()
+    {
+        host.runActionWithParameters("action.getActiveDocumentPath")
+        .then(filePath => {
+            this._isDepleted = true;
+            this._emitFiles(filePath ? [filePath] : []);
+            this.emit("depleted", this._id);
+        });
     }
 }
 /**
@@ -191,5 +201,14 @@ ImageFileProducer.withBlank = function()
 {
     return new ImageFileProducer( 
         new ImageSource(ImageSourceType.BLANK, null)
+    );
+};
+/**
+ * Create an ImageFileProducer instance with the current active file in Adobe as the source
+ */
+ImageFileProducer.withActiveDocument = function() 
+{
+    return new ImageFileProducer(
+        new ImageSource(ImageSourceType.ACTIVEDOCUMENT, null)
     );
 };

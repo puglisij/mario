@@ -5,7 +5,7 @@ action.product.makeCMYK = function makeCMYK()
 {
     var BORDER_SIZE = 25;
 
-    action.universal.private.eachAdditionalView(function(view)
+    action.openEachImage(function(view)
     {
         action.product.maskOrPath({
             koMethod: view.koMethod

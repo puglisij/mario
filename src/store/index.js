@@ -68,7 +68,7 @@ const general = new Conf({
         imageSource: {
             type: "object", 
             default: {
-                type: "OPENFILES", 
+                type: "ACTIVEDOCUMENT", 
                 directory: "", 
                 extensions: []
             }

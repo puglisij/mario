@@ -130,6 +130,8 @@ export class PipelineEngine extends EventEmitter
                 this._runWithOpenFiles(pipelineNames); break;
             case ImageSourceType.BLANK:
                 this._runWithBlank(pipelineNames); break;
+            case ImageSourceType.ACTIVEDOCUMENT: 
+                this._runWithActiveDocument(pipelineNames); break;
             default: 
                 console.log(`ImageSourceType ${sourceType} not recognized.`);
                 this.state = PipelineEngineState.STOPPED;
@@ -150,6 +152,10 @@ export class PipelineEngine extends EventEmitter
         for(const watcherName of watcherNames) 
         {
             const fileWatcher = this._getFileWatcherByName(watcherName);
+            if(!fileWatcher) {
+                console.warn(`File watcher ${watcherName} not found.`);
+                continue;
+            }
             const pipelineNames = this._getConfigurationsByFileWatcherName(watcherName).map(p => p.name);
             const producer = ImageFileProducer.withFileWatcher(
                 fileWatcher.path, 
@@ -171,6 +177,11 @@ export class PipelineEngine extends EventEmitter
     _runWithBlank(pipelineNames) 
     {
         const producer = ImageFileProducer.withBlank();
+        this._addFileProducer(producer, pipelineNames);
+    }
+    _runWithActiveDocument(pipelineNames) 
+    {
+        const producer = ImageFileProducer.withActiveDocument();
         this._addFileProducer(producer, pipelineNames);
     }
     pause() {
