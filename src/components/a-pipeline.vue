@@ -46,7 +46,7 @@
             <button 
                 class="topcoat-button--large--quiet" 
                 type="button"
-                title="Process open files with this pipeline"
+                title="Run this pipeline on selected file source"
                 @click="onPlay"
             >&#9654;</button>
             <button 

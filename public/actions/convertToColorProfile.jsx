@@ -22,7 +22,7 @@ action.convertToColorProfile = function convertToColorProfile(spaceType)
         ref566.putEnumerated( idDcmn, idOrdn, idTrgt );
         desc1870.putReference( idnull, ref566 );
         var idT = charIDToTypeID( "T   " );
-        desc1870.putString( idT, """Adobe RGB (1998)""" );
+        desc1870.putString( idT, "Adobe RGB (1998)" );
         var idInte = charIDToTypeID( "Inte" );
         var idInte = charIDToTypeID( "Inte" );
         var idClrm = charIDToTypeID( "Clrm" );

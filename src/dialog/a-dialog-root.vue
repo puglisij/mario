@@ -1,13 +1,17 @@
 <template>
     <a-dialog :isOpen="isOpen" :width="width" :height="height">
-        <component :is="component" v-bind="props" v-on="listeners" @onClose="close" />
+        <component 
+            :is="component" 
+            v-bind="props" 
+            v-on="listeners" 
+            @onClose="close" />
     </a-dialog>
 </template>
 
 <script>
 import {events} from './events';
 import ADialog from './a-dialog.vue';
-import Confirm from './builtins/confirm.vue';
+import Confirm from './confirm.vue';
 
 const defaultOptions = {
     height: "auto",

@@ -1,7 +1,7 @@
 /**
 * Saves the active document as JPG. The created PSD does NOT become active document.
 * @param {object} options 
-* @param {string|File} options.file full path or File instance
+* @param {string|File} options.file full path or File instance. Can also be a directory.
 * @param {Number} [options.quality = 70] between 1 and 100
 */
 action.saveForWeb = function saveForWeb(options)

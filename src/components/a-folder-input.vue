@@ -8,7 +8,6 @@
                 :placeholder="placeholder" 
                 :title="title"
                 v-model="path"
-                @change="onPathChange"
             />
             <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
         </div>
@@ -50,9 +49,9 @@ export default {
             path: this.value
         }
     },
-    methods: {
-        onPathChange(e) { 
-            this.$emit("change", this.path); 
+    watch: {
+        path: function(v) {
+            this.$emit("change", this.path);
         }
     }
 }

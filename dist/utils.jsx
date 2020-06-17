@@ -7,6 +7,20 @@ var _ = {
         if(app.refresh)
             app.refresh();
     }, 
+    /**
+    * Returns true if path is a File
+    * @param {string|Folder|File} path
+    */
+    isFile: function(path) {
+        return File(path) instanceof File;
+    },
+    /**
+    * Returns true if path is a Folder
+    * @param {string|Folder|File} path
+    */
+    isFolder: function(path) {
+        return Folder(path) instanceof Folder;
+    },
     getDocumentPath: function() 
     {
         return app.activeDocument.fullName.fsName;
@@ -14,6 +28,40 @@ var _ = {
     getDocumentNameWithoutExtension: function(fullName)
     {
         return (fullName || app.activeDocument.name).match(/^[^.]+/).toString();
+    },
+    /**
+    * Converts the given UnitValue to appropriate charID and Number values necessary to add to an ActionDescriptor
+    * @param {Number|UnitValue} unitValue any type of supported unit: px, pt, pc, cm, mm, in, etc
+    * @param {Number} [documentResolution] resolution of the reference document for this value, in pixels per inch. If no value is given, the activeDocument resolution is used.
+    */
+    unitValueToActionDescriptorValue: function(unitValue, documentResolution)
+    {
+        // Set reference Resolution (Document resolution is always in pixels per inch)
+        var resolution = documentResolution || activeDocument.resolution;
+        var originalBaseUnit = UnitValue.baseUnit; 
+        UnitValue.baseUnit = UnitValue(1 / resolution, "in");
+
+        var theUnit = UnitValue(unitValue);
+        var result;
+        if(theUnit.type == "px") {
+            result = {
+                value: theUnit.value, 
+                charID: "#Pxl" // pixel 
+            };
+        } else if(theUnit.type == "%") {
+            result = {
+                value: theUnit.value, 
+                charID: "#Prc" // percentUnit
+            };
+        } else {
+            result = {
+                value: theUnit.as("pt"), // Convert value to points ( which is inches / 72 )
+                charID: "#Rlt" // distanceUnit (points)
+            };
+        }
+        // Restore reference Resolution
+        UnitValue.baseUnit = originalBaseUnit;
+        return result;
     },
     saveUnits: function() 
     {
@@ -141,69 +189,14 @@ var _ = {
     isNull: function isNull(val) {
         return val === null;
     }
-}
+};
 
-
-
-function c2s(c) { return typeIDToStringID(charIDToTypeID(c)) }
+function c2s(c) { return app.typeIDToStringID(app.charIDToTypeID(c)) }
 function s2t(s) { return app.stringIDToTypeID(s) }
 function c2t(c) { return app.charIDToTypeID(c) }
+function t2s(t) { return app.typeIDToStringID(t) }
+function t2c(t) { return app.typeIDToCharID(t) }
 
-/**
-* Cross-platform path joining. Works similar to node.js  path.join(). 
-* If path does not exist, the returned path may be invalid.
-*/
-// function pathJoin()
-// {
-//     if(!arguments.length) {
-//         return null; 
-//     }
-//     function isPathAFile(path) {
-//         return path.match(/\.[^\/:\\]+$/) !== null;
-//     }
-//     function makePathRelative(path) {
-//         return "./" + path.replace(/^\.?[\/\\]/, '');
-//     }
-//     function makePathAbsolute(path) {
-//         var f = new Folder(path);
-//         return f.fsName;
-//     }
-//     var args = Array.prototype.slice.call(arguments);
-//     var firstPart = args.shift();
-//     if(!args.length) 
-//     {
-//         if(isPathAFile(firstPart)) {
-//             return new File(firstPart);
-//         } else {
-//             return new Folder(firstPart);
-//         }
-//     }
-
-//     firstPart = makePathAbsolute(firstPart);
-//     var lastPart = makePathRelative(args.pop());
-//     var currentDir = Folder.current;
-//     Folder.current = new Folder(firstPart);
-
-//     for(var i = 0; i < args.length; ++i) 
-//     {
-//         var pathPart = args[i];
-//         if(typeof pathPart !== "string") {
-//             throw new TypeError("Path must be a string. Received: " + pathPart);
-//         }
-//         pathPart = makePathRelative(pathPart);
-//         Folder.current = new Folder(pathPart);
-//     }
-    
-//     var result;
-//     if(isPathAFile(lastPart)) {
-//         result = new File(lastPart);
-//     } else {
-//         result = new Folder(lastPart);
-//     }
-//     // restore 
-//     Folder.current = currentDir;
-//     return result;
-// }
 
 /**
 * Get JSON Introspection of an ActionDescriptor
@@ -225,5 +218,15 @@ function actionDescriptorToJSON(actionDescriptor)
     convertDesc, DialogModes.NO );
     return jsonDesc.getString( s2t("json") );
 }
+
+
+// Export as globals
+this._ = _;
+this.s2t = s2t;
+this.c2t = c2t;
+this.c2s = c2s;
+this.t2s = t2s;
+this.t2c = t2c;
+this.actionDescriptorToJSON = actionDescriptorToJSON;
 
 "";

@@ -21,6 +21,9 @@ export const ServerState = {
     RUNNING: 1
 };
 
+// DELETE. Note, to access in iframe use iframe.contentWindow.actions
+// TODO: For DEBUG Only
+window.actions = new Actions(); 
 /**
  * Backend systems.
  * Manages Node REST API, and JS API for managing pipelines. 
@@ -37,7 +40,7 @@ class Server extends EventEmitter
         // Express instance
         this._httpServer = null;
         this._pipelineEngine = new PipelineEngine();
-        this._actions = new Actions();
+        this._actions = window.actions;
     }
     /**
      * @returns {Promise}

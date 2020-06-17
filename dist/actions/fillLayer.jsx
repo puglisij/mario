@@ -1,12 +1,14 @@
 /**
 * Fill the active layer with the given r,g,b and opacity color values
-* @param {Number} red value
-* @param {Number} green value
-* @param {Number} blue value
-* @param {Number} opacity opacity percentage 
+* @param {object} options
+* @param {Number} options.r red value
+* @param {Number} options.g green value
+* @param {Number} options.b blue value
+* @param {Number} options.a opacity percentage 
 */
-action.fillLayer = function fillLayer(red, green, blue, opacity)
+action.fillLayer = function fillLayer(options)
 {
+    options = options || {};
     // activeDocument.selection.selectAll();
     // var mySolid = new SolidColor();
     // mySolid.rgb.red = red;
@@ -26,16 +28,16 @@ action.fillLayer = function fillLayer(red, green, blue, opacity)
     var idClr = charIDToTypeID( "Clr " ); // color
     var desc65 = new ActionDescriptor();
     var idRd = charIDToTypeID( "Rd  " ); // red
-    desc65.putDouble( idRd, red );
+    desc65.putDouble( idRd, options.r );
     var idGrn = charIDToTypeID( "Grn " ); // green
-    desc65.putDouble( idGrn, green );
+    desc65.putDouble( idGrn, options.g );
     var idBl = charIDToTypeID( "Bl  " ); // blue
-    desc65.putDouble( idBl, blue );
+    desc65.putDouble( idBl, options.b );
     var idRGBC = charIDToTypeID( "RGBC" ); // RGBColor
     desc64.putObject( idClr, idRGBC, desc65 );
     var idOpct = charIDToTypeID( "Opct" ); // opacity
     var idPrc = charIDToTypeID( "#Prc" ); // percentUnit
-    desc64.putUnitDouble( idOpct, idPrc, opacity || 100 );
+    desc64.putUnitDouble( idOpct, idPrc, options.opacity || 100 );
     var idMd = charIDToTypeID( "Md  " ); // mode
     var idBlnM = charIDToTypeID( "BlnM" ); // blendMode
     var idNrml = charIDToTypeID( "Nrml" ); // normal

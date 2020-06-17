@@ -1,7 +1,7 @@
 /**
 * Apply shadow for web tif layers
 */
-product.dropShadow = function dropShadow() 
+action.product.dropShadow = function dropShadow() 
 {
     var idsetd = s2t("set");
     var desc217 = new ActionDescriptor();

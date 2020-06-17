@@ -2,21 +2,25 @@
 * Knocks out an iamge using Masking or Pathing, based on the data field "masked"
 * Image is trimmed by alpha 
 * @param {object} options 
-* @param {boolean} options.isMasked 
+* @param {string} options.koMethod either "masked", "path", or "no_ko" 
 */
-product.maskOrPath = function maskOrPath(options)
+action.product.maskOrPath = function maskOrPath(options)
 {
     options = options || {};
 
-    var isMasked = !_.isUndefined(options.isMasked) ? options.isMasked : null;
-    if(!_.isBoolean(isMasked)) {
-        throw new Error("Missing parameter 'isMasked'");
+    var koMethod = !_.isUndefined(options.koMethod) ? options.koMethod : "path";
+    if(!_.isString(koMethod)) {
+        throw new Error("Invalid parameter 'koMethod'. Expected a string");
     }
-    
-    if(isMasked) { //|| _.hasKeyword("masked")) {
-        _maskActions();
-    } else {
-        _pathActions("Path 1");
+
+    switch(koMethod) {
+        case "path": 
+            _pathActions("Path 1"); break;
+        case "masked":
+            _maskActions(); break;
+        default:
+            throw new Error("Invalid 'koMethod' of " + koMethod);
+            return;
     }
 
     try{
@@ -32,14 +36,12 @@ product.maskOrPath = function maskOrPath(options)
         action.setColorChannel_8Bit();
 
         // Set background to layer
-        if (activeDocument.layers[0].isBackgroundLayer == true) 
-            activeDocument.layers[0].isBackgroundLayer = false;
+        activeDocument.layers[0].isBackgroundLayer = false;
+
         try {
-            // Set selection to "Path 1"
             activeDocument.pathItems.getByName(pathName).makeSelection(0, true, SelectionType.REPLACE);
-        } catch(err) {
-            // has no Path
-            return false;
+        } catch(e) {
+            throw new Error(e + "\nCould not select path: " + pathName);
         }
 
         try {
@@ -49,12 +51,11 @@ product.maskOrPath = function maskOrPath(options)
             //Delete selection
             activeDocument.selection.deselect();
         } catch(err) {}
-
-        return true;
     }
 
     function _maskActions() 
     {
+        action.hideBackgroundLayer();
         action.removeHiddenLayers();
         try {
             activeDocument.mergeVisibleLayers()

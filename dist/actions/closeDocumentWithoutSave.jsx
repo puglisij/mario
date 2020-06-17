@@ -1,7 +1,7 @@
 /**
 * Close the active document without saving
 */
-action.closeDocument = function closeDocument()
+action.closeDocumentWithoutSave = function closeDocumentWithoutSave()
 {
     activeDocument.close(SaveOptions.DONOTSAVECHANGES);
 }

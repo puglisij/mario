@@ -13,7 +13,7 @@ action.makeWhiteBackground = function makeWhiteBackground()
     var idUsng = charIDToTypeID("Usng");
     var desc19 = new ActionDescriptor();
     var idNm = charIDToTypeID("Nm  ");
-    desc19.putString(idNm, """White""");
+    desc19.putString(idNm, "White");
     var idType = charIDToTypeID("Type");
     var desc20 = new ActionDescriptor();
     var idClr = charIDToTypeID("Clr ");

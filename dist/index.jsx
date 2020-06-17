@@ -1,11 +1,13 @@
-function closeAll()
+
+function importJsx(jsxFilePath)
 {
-    while(app.documents.length)
-    {
-        app.activeDocument.close(SaveOptions.DONOTSAVECHANGES);
+    try{ 
+        var file = new File(jsxFilePath).fsName; 
+        return $.evalFile(file); 
+    } catch(e) {  
+        alert("File: " + file + " Jsx Import Exception: " + e); 
     }
 }
-
 
 function importAction(actionFilePath, actionName)
 {
@@ -86,3 +88,8 @@ JsxEvents.dispatch = function(type, data)
     }
 };
 JsxEvents.init();
+
+
+function noop() {
+    return true;
+}

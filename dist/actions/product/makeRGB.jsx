@@ -1,14 +1,14 @@
 /**
 * Create RGB psd for archives
 */
-product.makeRGB = function makeRGB()
+action.product.makeRGB = function makeRGB()
 {
     var BORDER_SIZE = 50;
     
-    universal.private.eachAdditionalView(function(view)
+    action.openEachImage(function(view)
     {
-        product.maskOrPath({
-            isMasked: view.isMasked
+        action.product.maskOrPath({
+            koMethod: view.koMethod
         });
 
         // Add border 
@@ -22,11 +22,10 @@ product.makeRGB = function makeRGB()
         );
 
         action.convertToColorProfile("RGB");
-        universal.saveAsPSDToArchiveDirectory(
-            "RGB" 
-            + view.archiveSubdirectory ? "/" + view.archiveSubdirectory : ""
+        action.universal.saveAsPSDToArchiveDirectory(
+            "RGB" + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
         );
         action.revert();
-        action.closeDocument();
+        action.closeDocumentWithoutSave();
     })
 }

@@ -12,7 +12,7 @@
             <div class="main-controls__controls mb2">
                 <button class="topcoat-button--large" 
                     type="submit"
-                    title="Run all pipelines with the defined source."
+                    title="Run all pipelines on the selected source."
                     v-show="isStopped">&#9654;</button>
                 <button class="topcoat-button--large" 
                     type="button"
@@ -82,7 +82,7 @@
                     </validation-provider>
                 </div>
                 <div class="column is-half-tablet">
-                    <h3 class="section-title">Pipelines State</h3>
+                    <h3 class="section-title">Pipelines Status</h3>
                     <div>{{ pipelineEngineStateText }}</div>
                     <h3 class="section-title" v-show="pipelineActionStateText">Action</h3>
                     <div>{{ pipelineActionStateText }}</div>
@@ -94,7 +94,7 @@
                     class="topcoat-button" 
                     type="button"
                     @click="isMainDrawerOpen = !isMainDrawerOpen"
-                >Status &amp; Source <span>❱</span></button>
+                >Source &amp; Status <span>❱</span></button>
             </div>
         </form>
     </validation-observer>

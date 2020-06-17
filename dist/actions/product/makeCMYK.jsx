@@ -1,19 +1,23 @@
 /**
 * Create CMYK psd for use by Print and Lago
 */
-product.makeCMYK = function makeCMYK()
+action.product.makeCMYK = function makeCMYK()
 {
     var BORDER_SIZE = 25;
 
-    universal.private.eachAdditionalView(function(view)
+    action.openEachImage(function(view)
     {
-        product.maskOrPath({
-            isMasked: view.isMasked
+        action.product.maskOrPath({
+            koMethod: view.koMethod
         });
-        universal.resizeImageByTargetScale({
-            currentScale: IMAGE.data("currentScale"), 
-            targetScale: IMAGE.data("cmykTargetScale")
-        });
+        
+        if(!_.isNull(view.currentScale) && !_.isNull(view.cmykTargetScale)) 
+        {
+            action.universal.resizeImageByTargetScale({
+                currentScale: view.currentScale, 
+                targetScale: view.cmykTargetScale
+            }); 
+        }
         
         // Add border
         app.preferences.rulerUnits = Units.PIXELS;
@@ -26,11 +30,10 @@ product.makeCMYK = function makeCMYK()
         );
 
         action.convertToColorProfile("CMYK");
-        universal.saveAsPSDToArchiveDirectory(
-            "CMYK"
-            + view.archiveSubdirectory ? "/" + view.archiveSubdirectory : ""
+        action.universal.saveAsPSDToArchiveDirectory(
+            "CMYK" + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
         );
         action.revert();
-        action.closeDocument();
+        action.closeDocumentWithoutSave();
     });
 }

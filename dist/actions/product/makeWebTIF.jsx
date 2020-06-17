@@ -3,20 +3,21 @@
 /**
 * Assembles product views into a single web TIF. Also saves each view to RGB Archive. 
 */ 
-product.makeWebTIF = function makeWebTIF()
+action.product.makeWebTIF = function makeWebTIF()
 {
-    var sku = IMAGE.data("sku");
+    var sku = IMAGE.data("skuOrId");
     if(!sku) {
-        throw new Error("Image data missing sku.");
+        throw new Error("Image data missing 'skuOrId'.");
     }
 
     var tif;
     var BORDER_SIZE = 50;
 
-    universal.private.eachAdditionalView(function(view)
+    action.openEachImage(function(view)
     {
-        product.maskOrPath();
-
+        action.product.maskOrPath({
+            koMethod: view.koMethod
+        });
         // Add border 
         app.preferences.rulerUnits = Units.PIXELS;
         app.preferences.typeUnits = TypeUnits.PIXELS;
@@ -43,16 +44,15 @@ product.makeWebTIF = function makeWebTIF()
         if(view.isFromArchives) {
             action.setLayerIconColor(LayerIconColor.Violet);
         }
-
         // Trim transparent area around the image
         activeDocument.trim(TrimType.TRANSPARENT);
 
-        universal.resizeLayerByTargetScale({
-            currentScale: IMAGE.data("currentScale"),
-            targetScale: IMAGE.data("webTifTargetScale")
-        })
-        
-        product.dropShadow();
+        action.universal.resizeLayerByTargetScale({
+            currentScale: view.currentScale,
+            targetScale: view.webTifTargetScale
+        });
+
+        action.product.dropShadow();
         action.unsharpMask({
             amountPercent: 40,
             radiusPixels: 0.4,
@@ -62,7 +62,7 @@ product.makeWebTIF = function makeWebTIF()
          // Create TIF, if not created
         if(!tif) {
             // The created TIF becomes the active document
-            var outputDirectory = universal.createOutputDirectory();
+            var outputDirectory = action.universal.createOutputDirectory();
             var newTifFilePath = outputDirectory.fullName + "/" + sku + ".tif";
             action.makeWhiteBackground();
             action.saveAsTIF(newTifFilePath);
@@ -76,8 +76,8 @@ product.makeWebTIF = function makeWebTIF()
             duplicateView.close(SaveOptions.DONOTSAVECHANGES);
             activeDocument = tif;
         }
-        
-        product.trimAndResizeCanvas();
+
+        action.product.trimAndResizeCanvas();
     });
 }
 

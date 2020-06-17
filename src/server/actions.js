@@ -19,6 +19,7 @@ export class ActionDescriptor
         this.params = [];
     }
     /**
+     * Translate JSDocXDescription object to ActionDescriptor
      * @param {JSDocXDescription} jsDocDescription the description object returned by JSDocX
      */
     static fromJSDocDescription(jsDocDescription)
@@ -47,6 +48,9 @@ export class ActionParameter
     }
 }
 
+/**
+ * 
+ */
 class ActionParameterCurator
 {
     constructor(hostInterface)
@@ -96,7 +100,10 @@ class ActionFileDescriptionReader
         }
 
         const path = this._getPathFromActionName(actionName);
-        return jsdocx.parse(path)
+        return jsdocx.parse(path, {
+                undocumented: false // include undocumented symbols
+                //output: "output/path" // path for JSON to be created (cache)
+            })
             .then(description => {
                 this._actionToJSDocDescriptionCache[actionName] = description;
                 return description;
@@ -129,12 +136,12 @@ class ActionFileImportStringBuilder
      * @param {string} rootNamespace the root action function namespace. All action names with start with this
      * @returns {string} the stringified JSX script to run which will import all actions
      */
-    build(pathToActions, rootNamespace)
+    static build(pathToActions, rootNamespace)
     {
         return this._buildJsxImportString(pathToActions, rootNamespace); 
     }
     // NOTE: importAction() is expected to be defined on Host JSX side
-    _buildJsxImportString(pathToActions, rootNamespace)
+    static _buildJsxImportString(pathToActions, rootNamespace)
     {
         let namespacePrefix = `${rootNamespace}.`;
         let namespaceDefine = `${rootNamespace}= (typeof ${rootNamespace} !== "undefined") ? ${rootNamespace} : {};`;
@@ -163,7 +170,7 @@ export class Actions
 {
     constructor() 
     {
-        this._importStringBuilder = new ActionFileImportStringBuilder();
+
     }
     /**
      * @returns {Promise}
@@ -191,11 +198,15 @@ export class Actions
         if(!importDirectory.trim()) {
             return;
         }
-        const importString = this._importStringBuilder.build(importDirectory, "action") + "act = action;";
+        const importString = ActionFileImportStringBuilder.build(importDirectory, "action") + "act = action;";
         console.log(importString);
         return host.runJsx(importString);
     }
-
+    /**
+     * Return all available action namespaces
+     * @returns {string[]} multi dimensional array containing category/subcategory names
+     */
+    getAllActionCategories() {}
     /**
      * @returns {string[]}
      */

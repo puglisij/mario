@@ -6,21 +6,19 @@
 * @param {number} options.currentScale the current resolution (pixels per inch)
 * @param {number} options.targetScale the target resolution (pixels per inch)
 */
-universal.resizeImageByTargetScale = function resizeImageByTargetScale(options)
+action.universal.resizeImageByTargetScale = function resizeImageByTargetScale(options)
 {
     var currentScale = options.currentScale;
     var targetScale = options.targetScale;
-    if(_.isUndefined(currentScale) || _.isUndefined(targetScale)) {
-        return;
-    }
-    if(currentScale == targetScale) {
-        return;
-    }
+
     if(typeof targetScale !== "number" || typeof currentScale !== "number") {
         throw new Error("Target scale and Current scale must be defined and must be numbers.");
     }
     if(targetScale > currentScale) {
         throw new Error("Target scale cannot be larger than current scale.");
+    }
+    if(currentScale == targetScale) {
+        return;
     }
     
     // Dont scale below 0%
