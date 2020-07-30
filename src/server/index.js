@@ -22,7 +22,7 @@ export const ServerState = {
 };
 
 // DELETE. Note, to access in iframe use iframe.contentWindow.actions
-// TODO: For DEBUG Only
+// TODO: For DEBUG Only. When finished, move new Actions() inside Server constructor.
 window.actions = new Actions(); 
 /**
  * Backend systems.

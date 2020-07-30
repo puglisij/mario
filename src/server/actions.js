@@ -1,7 +1,8 @@
 import upath from 'upath';
 import fs from 'fs';
-import jsdocx from 'jsdocx';
 import EventEmitter from "events";
+const jsdoc = require("jsdoc-api");
+//import jsdocx from 'jsdoc-x';
 
 import store from '../store';
 import host from '../host';
@@ -20,12 +21,15 @@ export class ActionDescriptor
     }
     /**
      * Translate JSDocXDescription object to ActionDescriptor
-     * @param {JSDocXDescription} jsDocDescription the description object returned by JSDocX
+     * @param {JSDocXDescription} jsDocXDescription the description object returned by JSDocX
      */
-    static fromJSDocDescription(jsDocDescription)
+    static fromJSDocXDescription(jsDocXDescription)
     {
+        // jsdocx.utils.getFullName
+        // jsdocx.utils.isMethod
+        
         // TODO Make this function another class?
-        const description = jsDocDescription.filter(x => x.$kind === "method");
+        const description = jsDocXDescription.filter(x => x.$kind === "method");
         const descriptor = new ActionDescriptor();
               descriptor.name = description.$longname;
               descriptor.params = description.params; // TODO convert to ActionParameter
@@ -58,6 +62,11 @@ class ActionParameterCurator
         this.host = hostInterface;
         this.typeNameToDataCache = {};
     }
+    /**
+     * Convert jsdoc parameter type name to Vue control component type
+     * @param {string} typeName any type for which a control exists (e.g. string, boolean, etc)
+     * @returns {string} 
+     */
     typeNameToControlInputType(typeName)
     {
         // call jsx functions to get type information
@@ -70,57 +79,43 @@ class ActionParameterCurator
  */
 class ActionFileDescriptionReader 
 {
-    constructor(rootPathToActions, defaultNamespace)
-    {
-        this._rootPathToActions = rootPathToActions;
-        this._defaultNamespace = defaultNamespace;
-        this._actionToJSDocDescriptionCache = {};
-    }
-
     /**
-     * Reads the appropriate JSX action file and converts JSDoc to instance of ActionDescriptor
-     * @param {string} actionName 
-     * @returns {ActionDescriptor}
+     * Returns mapping of fully qualified action names to their JSXDocDescription
+     * @param {Action[]} actions 
+     * @returns {Object}
      */
-    getActionDescriptor(actionName)
+    static read(actions)
     {
-        const jsDocDescription = this._readJSDocDescription(actionName);
-        const actionDescriptor = ActionDescriptor.fromJSDocDescription(jsDocDescription);
-        return actionDescriptor;
+        let map = new Map();
+        let promises = actions.map(action => 
+        {
+            const { name, absolutePath } = action;
+            return this._readJSDocXDescription(absolutePath)
+            .then(description => {
+                map.set(name, description);
+            });
+        })
+        return Promise.all(promises).then(() => {
+            return map;
+        });
     }
     /**
      * Returns the JSDocX object describing the particulars of the given action
-     * @param {string} actionName the action name e.g. action.saveDocument
+     * @param {string} actionPath the absolute action path e.g. C:/actions/action.saveDocument.jsx
      * @returns {JSDocXDescription}
      */
-    _readJSDocDescription(actionName)
+    static _readJSDocXDescription(actionPath)
     {
-        if(this._actionToJSDocDescriptionCache[actionName]) {
-            return this._actionToJSDocDescriptionCache[actionName];
-        }
-
-        const path = this._getPathFromActionName(actionName);
-        return jsdocx.parse(path, {
-                undocumented: false // include undocumented symbols
-                //output: "output/path" // path for JSON to be created (cache)
-            })
-            .then(description => {
-                this._actionToJSDocDescriptionCache[actionName] = description;
-                return description;
-            });
-    }
-    // TODO Move to its own class? (e.g.  ActionFileNameTranslator)
-    _getFileNameFromActionName(actionName) 
-    {
-        if(actionName.startsWith(this._defaultNamespace + '.'))
-            return actionName.split('.').slice(1).join('.') + ".jsx";
-        else 
-            return actionName + ".jsx";
-    }
-    _getPathFromActionName(actionName)
-    {
-        const actionFileName = this._getFileNameFromActionName(actionName);
-        return upath.join(this._rootPathToActions, actionFileName);
+        return jsdoc.explain({
+            files: [actionPath]
+        });
+        // return jsdocx.parse(actionPath, {
+        //         undocumented: false // include undocumented symbols
+        //         //output: "output/path" // path for JSON to be created (cache)
+        //     })
+        //     .then(description => {
+        //         return description;
+        //     });
     }
 }
 
@@ -141,25 +136,61 @@ class ActionFileImportStringBuilder
         return this._buildJsxImportString(pathToActions, rootNamespace); 
     }
     // NOTE: importAction() is expected to be defined on Host JSX side
-    static _buildJsxImportString(pathToActions, rootNamespace)
+    static _buildJsxImportString(absolutePathToActions, rootNamespace)
     {
-        let namespacePrefix = `${rootNamespace}.`;
-        let namespaceDefine = `${rootNamespace}= (typeof ${rootNamespace} !== "undefined") ? ${rootNamespace} : {};`;
-
-        return fs.readdirSync(pathToActions)
-            .reduce((script, name) => 
+        let actions = [];
+        let imports = [];
+        let directory;
+        let directories = [
             {
-                let nextPath = upath.join(pathToActions, name);
-                let nextActionName = namespacePrefix + name.split('.')[0];
-                let nextScript;
-                if(fs.statSync(nextPath).isDirectory()) {
-                    nextScript = this._buildJsxImportString(nextPath, namespacePrefix + name);
-                } else {
-                    nextScript = `importAction("${nextPath}", "${nextActionName}");`;
+                namespace: rootNamespace,
+                absolutePath: absolutePathToActions
+            }
+        ];
+        while(directory = directories.pop()) 
+        {
+            const namespace = directory.namespace;
+            const namespaceDefine = `${namespace}= (typeof ${namespace} !== "undefined") ? ${namespace} : {};`;
+            imports.push(namespaceDefine);
+            
+            const names = fs.readdirSync(directory.absolutePath);
+            for(let i = 0; i < names.length; ++i) 
+            {
+                const nameParts = names[i].split('.');
+                if(nameParts.length > 2) {
+                    throw new Error("Action file and directory names cannot contain periods.");
                 }
-                return script + nextScript;
-            }, 
-            namespaceDefine);
+
+                const name = nameParts[0];
+                const nameSpacedName = `${namespace}.${name}`;
+                const path = upath.join(directory.absolutePath, names[i]);
+                if(fs.statSync(path).isDirectory()) 
+                {
+                    directories.push({
+                        namespace: nameSpacedName,
+                        absolutePath: path
+                    });
+                } 
+                else 
+                {
+                    imports.push(`importAction("${path}", "${nameSpacedName}");`);
+                    actions.push(new Action(nameSpacedName, path));
+                }
+            }
+        }
+        return {
+            importString: imports.join(''),
+            actions
+        };
+    }
+}
+
+class Action
+{
+    constructor(name, absolutePath)
+    {
+        this.name = name;
+        this.absolutePath = absolutePath;
     }
 }
 
@@ -170,7 +201,26 @@ export class Actions
 {
     constructor() 
     {
-
+        this._actions = [];
+        this._actionCategories = [
+            {
+                category: "action",
+                categories: [
+                    {
+                        category: "action.universal",
+                        categories: [],
+                        actions: []
+                    },
+                    {
+                        category: "action.product",
+                        categories: [],
+                        actions: []
+                    }
+                ],
+                actions: []
+            }
+        ];
+        this._actionToJSDocXCache = new Map();
     }
     /**
      * @returns {Promise}
@@ -193,28 +243,45 @@ export class Actions
 
         console.log("Import actions exited.");
     }
-    _import(importDirectory) 
+    async _import(importDirectory) 
     {
         if(!importDirectory.trim()) {
             return;
         }
-        const importString = ActionFileImportStringBuilder.build(importDirectory, "action") + "act = action;";
-        console.log(importString);
-        return host.runJsx(importString);
+        const { importString,  actions } = ActionFileImportStringBuilder.build(importDirectory, "action");
+        ActionFileDescriptionReader.read(actions)
+        .then(actionToJsDocXMap => {
+            // Merge mapping into cache
+            this._actionToJSDocXCache = new Map([...this._actionToJSDocXCache, ...actionToJsDocXMap]);
+        });
+
+        this._actions = [...this._actions, actions];
+        return host.runJsx(importString  + "act = action;");
     }
     /**
-     * Return all available action namespaces
+     * Return all available action nested namespaces/categories
      * @returns {string[]} multi dimensional array containing category/subcategory names
      */
-    getAllActionCategories() {}
+    getAllActionCategories() {
+        return this._actionCategories; // TODO: Return clone for safety?
+    }
     /**
+     * Return all available action names
      * @returns {string[]}
      */
-    getAllActionNames() {}
+    getAllActionNames() {
+        return this._actions.map(a => a.name);
+    }
     /**
+     * Converts JSDocX for given action name to instance of ActionDescriptor
      * @param {string} actionName
      * @returns {ActionDescriptor}  
      */
-    getActionDescriptorByName(actionName) {}
+    getActionDescriptorByName(actionName) 
+    {
+        const jsDocXDescription = this._actionToJSDocXCache[actionName];
+        const actionDescriptor = ActionDescriptor.fromJSDocXDescription(jsDocXDescription);
+        return actionDescriptor;
+    }
 
 }

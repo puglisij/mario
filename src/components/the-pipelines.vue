@@ -90,6 +90,7 @@ import eventBus from "../eventBus";
 import ACheckbox from "./a-checkbox.vue";
 import APipeline from "./a-pipeline.vue";
 import APipelineAction from "./a-pipeline-action.vue";
+import SelectPipelineAction from "../dialog/select-pipeline-action.vue";
 
 export default {
     name: "ThePipelines",
@@ -219,9 +220,16 @@ export default {
         {
             // TODO: Action name should be selected from a list and non-editable
             // TODO: Action parameters should be fixed/baked-in and only values editable
-            this.pipelineBeingEdited.actions.push({
-                id: _.guid(),
-                actionName: ""
+            this.$dialog.open({
+                component: SelectPipelineAction, 
+                listeners: {
+                    onSelect: (actionDescriptor) => {
+                        this.pipelineBeingEdited.actions.push({
+                            id: _.guid(),
+                            actionName: actionDescriptor.name
+                        });
+                    }
+                }
             });
         },
         onActionDelete(id)
