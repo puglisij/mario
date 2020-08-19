@@ -226,7 +226,8 @@ export default {
                     onSelect: (actionDescriptor) => {
                         this.pipelineBeingEdited.actions.push({
                             id: _.guid(),
-                            actionName: actionDescriptor.name
+                            actionName: actionDescriptor.name,
+                            parameters: undefined
                         });
                     }
                 }

@@ -24,6 +24,7 @@ action.designidea.saveForSharepoint = function saveForSharepoint()
                 AnchorPosition.MIDDLECENTER
             );
         }
+        action.pause();
 
         var outputDirectory = action.universal.createOutputDirectory();
         action.saveForWeb({

@@ -50,8 +50,10 @@ const general = new Conf({
                 //  id: ""
                 //  name: "",
                 //  path: "",
-                //  useProcessedPath: true
-                //  processedPath: "", 
+                //  useProcessedDirectory: true
+                //  processedDirectory: "", 
+                //  useOutputDirectory: true,
+                //  outputDirectory: "",
                 //  extensions: []
                 // }
             ]

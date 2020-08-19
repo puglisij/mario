@@ -16,9 +16,11 @@ export default class ImageFileReader
     /**
      * Create a new Image instance, using the image or json file path, if given.
      * @param {String} [inputImagePath] the image or json file path. Path should be absolute unless it is an Open File in the Adobe application.
+     * @param {String} [outputDirectory] 
+     * @param {String} [processedDirectory]
      * @param {boolean} [readMetadata = false] whether to read the image files metadata (slower)
      */
-    async read(path, readMetadata = false)
+    async read(path, outputDirectory = "", processedDirectory = "", readMetadata = false)
     {
         let inputImagePath = path || "";
         let inputDirectory = this._isPathDefinedAndAbsolute(path) ? uncSafePath.dirname(path) : "";
@@ -31,8 +33,10 @@ export default class ImageFileReader
             {
                 inputDataPath = inputImagePath;
                 data = await this._readJson(inputDataPath);
-                // Grab new image source path from json, if available
+                // Grab new image source path and other paths from json, if available
                 inputImagePath = this._ensureAbsolutePath(data.inputImagePath, inputDirectory);
+                outputDirectory = this._ensureAbsolutePath(data.outputDirectory, inputDirectory);
+                processedDirectory = this._ensureAbsolutePath(data.processedDirectory, inputDirectory);
             }
             if(this._isFile(inputImagePath) && readMetadata) 
             {
@@ -44,6 +48,8 @@ export default class ImageFileReader
               image.inputImagePath = inputImagePath;        
               image.inputDataPath = inputDataPath;
               image.inputDirectory = inputDirectory;
+              image.outputDirectory = outputDirectory;
+              image.processedDirectory = processedDirectory;
               image.data = data;
               image.metadata = metadata;
         return image;

@@ -3,11 +3,10 @@
 * The created directory will be at:
 *   <outputDirectory or ../Output>/<projectId or type>
 */
-action.universal.createOutputDirectory = function createOutputDirectory() 
+action.universal.createOutputDirectory = function createOutputDirectory(subDirectoryName) 
 {
-    var subDirectory = "" + IMAGE.data("projectId");
     var outputDirectory = IMAGE.data("outputDirectory") || "./Output";
-        outputDirectory = outputDirectory + "/" + subDirectory.toLowerCase()
+        outputDirectory = outputDirectory + "/" + (subDirectoryName || "")
 
     var currentDir = Folder.current;
     Folder.current = new Folder(IMAGE.getInputDirectory());

@@ -101,16 +101,6 @@ You might find this at *C:/Program Files (x86)/Adobe/Adobe ExtensionScript Toolk
 
 ## Components
 
-<br>&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: app.vue (main `route`)
-:file_folder: ./src/components
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: jsx.vue 
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • Adobe JSX tab with helpful tools for testing/translating Extendscript code
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: console.vue
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • a convenience view for console logs, including exceptions
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: configurator.vue
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • app configuration tab, including folder watchers
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|\_\_&nbsp;:page_facing_up: pipelines.vue
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • tab for viewing/editing pipeline configurations
 
 ---
 
@@ -196,18 +186,18 @@ This can either be either:
 
 Optional json file. 
 *NOTE:* One json file is expected per **IMAGE** process. If there are multiple images needed for a process 
-    (such as when 'package' is defined) than any data needed for these should be listed in the 
-    single json file, such as in an array of objects. 
+    (such as when 'inputImages' is defined) than any data needed for these should be listed within this 
+    single json file, such as extra properties on the objects within the 'inputImages' array. 
 
 Contains data needed for a pipeline in order for a particular IMAGE to be processed. 
-***type*** - (optional) the type indicating the pipeline(s) that will process the IMAGE. **This must match a pipeline type.**
-***image*** - (optional) a path to the Working Image used in the pipeline. Generally opened at the very start. 
-***package*** - (optional) a path to the Package folder containing other images used by the pipeline. 
-*NOTE:* As a convention, any other paths in the json data will be expected to be relative to the **package** path
+***inputImagePath*** - (optional) a path to either:
+    1. A file (when only one input file/image is needed)
+    2. A directory (when multiple input files/images are needed)
+***inputImages*** - (optional) an array of objects where each object has an 'image' property indicating the path to the input image, relative to the 'inputImagePath'. Other properties may be added to these objects as required by a particular pipeline. 
+*NOTE:* As a convention, any paths in the json are expected to be relative to the **inputImagePath** path
 
 All other data will be made available on the IMAGE instance on the photoshop jsx side. 
-Or said another way, Mario ALWAYS looks for the 'type', 'image', and 'package' properties.
-All other properties in the json are only used by JSX actions. 
+Technically, the only **required** field is the 'inputImagePath', whereas all other properties may be required/used by JSX actions within a particular pipeline. (e.g. 'inputImages' is used by the openEachImage.jsx action)
 
 
 ### Input Methods
@@ -215,28 +205,42 @@ All other properties in the json are only used by JSX actions.
 REST:
 - Currently the REST api is not setup to stream images/data for processing  (See Roadmap)
 
+The following are available via the GUI by selecting **File Source**
+
 File Watching:
 - Mario can be configured to watch specific directories for new images to process. 
-  (Files in subdirectories are ignored by the watcher.)
+  (Files in subdirectories are ignored by the watcher and do not trigger a pipeline process.)
   There are two options:
     1. Watch for json files 
     See **Input JSON** for info on image paths necessary for processing.
     2. Watch for images 
     Looks for json file containing data by the same name as the image. Ok if none found.  
 
+Active Document: 
+- Mario will process the currently active document within the Adobe application
+
+Open Files:
+- Mario will process files currently open in the Adobe application
+
+Directory:
+- Mario will process files in the selected directory
+
+None:
+- Not likely to be used much. But it is an option available for files that may be programmatically generated and do not need any inputs.
+
 
 ### Pipeline
 
-A configurable series of JSX actions to be performed on an IMAGE. 
-Pipelines are configurable via Mario's UI. 
+A configurable series of JSX actions to be performed on an IMAGE in process. 
+Pipelines are configurable via Mario's GUI. 
 
-**NOTE** Currently only linear configurations can be created via the UI. For pipelines requiring loops, 
+**NOTE** Currently only linear configurations can be created via the GUI. For pipelines requiring loops, 
 or other types of control flow, a custom action is necessary. 
 Actions may call other actions from within themselves. 
 (See Roadmap)
 
 - A Pipeline can be thought of as generating as 'single' output file, and this is a good convention 
-to follow to avoid overly complex pipeline configurations. 
+to follow to avoid overly complex pipeline configurations (logic which generates multiple output files usually leads to an oversized/complex pipeline that would be better split up). 
 
 
 ### Action
@@ -246,28 +250,25 @@ Extendscript code that will be executed (Example, adding a background color, or 
 - Actions that have *no business specific logic or data references* will be defined in the 
   root /actions directory. For example, action.saveDocument() which just saves the active document. 
   These types of actions can be thought of as 'Augmenting' Photoshop functionality which isnt availble 
-  via their existing jsx API. For example, adding a drop shadow to a layer. 
-- Business specific actions should be defined in other subdirectories. 
-  Its recommended that actions specific to a particular Pipeline should be defined in a 
-  subdirectory by that Pipeline name. 
-- Actions MUST have the same name and casing as their functions. 
+  via extending existing jsx API. For example, adding a drop shadow to a layer. 
+- Business/Custom actions should be defined in other subdirectories. 
+- Action files MUST have the same name and casing as their function definition. 
 - Actions are defined in the directory /public/actions (See Roadmap)
 - Only one action is defined per .jsx file 
 - Actions within the root /public/actions directory are defined on the 'action' namespace
-
-    Actions within other subdirectories are defined on the namespace corresponding to the folder structure. 
-    For example, an action at /public/actions/foo/bar.jsx  will be defined as foo.bar = function bar(){...}; 
 - Action arguments can either receive a single primitive value (Number, String, etc), or an options object with key/value pairs. 
 
 
 ### Outputs 
 
-IMAGEs which are successfully processed will be moved into a processed directory (Processed_<type>) inside the watched directory which initiated the process.
+Input/source files for IMAGEs which are processed will be moved into a processed directory (default is "./Processed") inside the input directory which initiated the process. Alternatively, this path can be specified as a custom property "processedDirectory" when using a JSON data input file. 
+
+Resulting output files/images will be written to an output directory (default is "./Output") inside the input directory which initiated the process. Alternatively, this path can be specified as a custom property "outputDirectory" when using a JSON data input file.  
 
 
 ### Logging 
 
-If an exception occurs in the JSX while a pipeline is running, the current IMAGE (including anything at 'image' or 'package') 
+If an exception occurs in the JSX while a pipeline is running, the current IMAGE (including anything at 'inputImagePath' or 'inputImages') 
 will be moved within an error directory (Error_<type>) inside the watched directory which initiated the process. 
 An error message describing the exception will also be logged within the directory. 
 

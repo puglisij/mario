@@ -14,6 +14,8 @@ function ImageForProcessing(json)
     this._inputDirectory  = json.inputDirectory;
     // Path to json file from which data was sourced, if available
     this._inputDataPath = json.inputDataPath;
+    this._outputDirectory = json.outputDirectory;
+    this._processedDirectory = json.processedDirectory;
     // External (stored outside file) metadata necessary for processing
     this._data       = json.data;     
     // Metadata (i.e. XMP/EXIF) stored in the image file, if available
@@ -32,6 +34,18 @@ ImageForProcessing.prototype.getInputPath = function() {
 */
 ImageForProcessing.prototype.getInputDirectory = function() {
     return this._inputDirectory;
+};
+/**
+* Returns absolute directory where output files 'should' be written (it's up to a given Pipeline/action to honor this)
+*/
+ImageForProcessing.prototype.getOutputDirectory = function() {
+    return this._outputDirectory;
+};
+/**
+* Returns absolute directory where processed input files 'will' be moved automatically (files are moved by engine on Node.js side)
+*/
+ImageForProcessing.prototype.getProcessedDirectory = function() {
+    return this._processedDirectory;
 };
 /**
 * Return property in data which matches the given key

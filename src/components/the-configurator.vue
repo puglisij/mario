@@ -126,8 +126,10 @@ export default {
                 id: _.guid(),
                 name: "",
                 path: "",
-                useProcessedPath: true,
-                processedPath: "",
+                useProcessedDirectory: true,
+                processedDirectory: "",
+                useOutputDirectory: true,
+                outputDirectory: "",
                 extensions: []
             };
             this.fileWatchers.push(watcher);

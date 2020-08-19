@@ -1,7 +1,7 @@
 
 
 /**
-* Assembles product views into a single web TIF. Also saves each view to RGB Archive. 
+* Assembles product views into a single web TIF. 
 */ 
 action.product.makeWebTIF = function makeWebTIF()
 {

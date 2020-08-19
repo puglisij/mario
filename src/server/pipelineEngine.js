@@ -159,7 +159,9 @@ export class PipelineEngine extends EventEmitter
             const pipelineNames = this._getConfigurationsByFileWatcherName(watcherName).map(p => p.name);
             const producer = ImageFileProducer.withFileWatcher(
                 fileWatcher.path, 
-                fileWatcher.extensions
+                fileWatcher.extensions,
+                fileWatcher.outputDirectory,
+                fileWatcher.processedDirectory
             );
             this._addFileProducer(producer, pipelineNames);
         }
@@ -206,6 +208,10 @@ export class PipelineEngine extends EventEmitter
     }
 
 
+    _getProducerById(producerId)
+    {
+        return this._producerIdToProducer.get(producerId);
+    }
     _getFileWatcherByName(watcherName)
     {
         return store.general.fileWatchers.find(w => w.name === watcherName);
@@ -274,7 +280,8 @@ export class PipelineEngine extends EventEmitter
             const { file, producerId } = qFile;
             console.log(`Reading next file ${file} from producer ${producerId}.`);
 
-            const image = await this._imageFileReader.read(file, store.general.doReadFileMetadata);
+            const imageSource = this._getProducerById(producerId).getImageSource();
+            const image = await this._imageFileReader.read(file, imageSource.outputDirectory, imageSource.processedDirectory, store.general.doReadFileMetadata);
             const pipelines = this._getConfigurationsByProducerId(producerId);
             console.log(`Processing image: ${image.inputImagePath}`);
 
@@ -307,15 +314,14 @@ export class PipelineEngine extends EventEmitter
                     await this._pauseCheck(null, store.general.pauseAfterEveryPipeline);
                 }
 
-                // TODO Use configured processed directory
-                this._imageFileMover.move(image, "./Processed");
+                // TODO Utilize "useProcessedDirectory" and "useOutputDirectory" options
+                this._imageFileMover.move(image, image.processedDirectory || "./Processed");
             }
             catch(e)
             {
                 console.error(e);
-                // TODO Use configured errored directory
                 await this._pauseCheck(null, store.general.pauseOnExceptions);
-                this._imageFileMover.move(image, "./Errored", e.toString());
+                this._imageFileMover.move(image, image.processedDirectory || "./Errored", e.toString());
             }
             finally
             {

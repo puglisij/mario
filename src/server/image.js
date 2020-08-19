@@ -12,6 +12,8 @@ export default class Image
          *  - An absolute image path (e.g. a user selected directory)
          *  - An absolute directory path (e.g. when multiple input images are needed)
          *  - Blank, if there is no source file
+         * IMPORTANT: This is the only 'required' field within an input json file
+         * (i.e. an invalid/blank path will cause an error when using a json input file)
          */
         this.inputImagePath = "";
         /**
@@ -22,6 +24,14 @@ export default class Image
          * If available, the json data file for the Image process
          */
         this.inputDataPath = "";
+        /**
+         * If available (either via json or GUI configuration), the directory where output files should be written
+         */
+        this.outputDirectory = "";
+        /**
+         * If available (either via json or GUI configuration), the directory where processed input files will be moved
+         */
+        this.processedDirectory = "";
         /**
          * External data (stored outside file) metadata necessary for processing
          */

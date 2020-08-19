@@ -1,5 +1,5 @@
 /**
-* Knocks out an iamge using Masking or Pathing, based on the data field "masked"
+* Knocks out an image using Masking or Pathing
 * Image is trimmed by alpha 
 * @param {object} options 
 * @param {string} options.koMethod either "masked", "path", or "no_ko" 

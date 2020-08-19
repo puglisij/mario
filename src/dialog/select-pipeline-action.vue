@@ -2,6 +2,13 @@
     <div>
         <section class="modal-body">
             <p>Select an Action...</p>
+
+            <div class="tree-node">
+                <button class="tree-node__expand"><i>&#9654;</i></button>
+                <i>&#128447;</i>
+                <span>{{name}}</span>
+            </div>
+
         </section>
         <footer class="modal-footer">
             <slot name="footer">
@@ -17,7 +24,7 @@
 </template>
 
 <script>
-
+import Server from '../server';
 
 export default {
     name: "SelectPipelineAction",
@@ -27,7 +34,7 @@ export default {
         }
     },
     created() {
-        
+        Server.actions.getAllActionCategories();
         // fetch available action categories (folders/namespaces)
         // fetch action names for selected category
         // when action hovered/clicked display action description

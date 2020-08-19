@@ -28,22 +28,41 @@
             </a-folder-input>
         </validation-provider>
 
-        <a-checkbox v-model="localWatcher.useProcessedPath">
+        <a-checkbox v-model="localWatcher.useProcessedDirectory">
             Use Processed Folder?
         </a-checkbox>
 
         <validation-provider 
             slim
-            :rules="{ required: localWatcher.useProcessedPath, pathunc: { allowed: false }, pathexists: true }" 
+            :rules="{ required: localWatcher.useProcessedDirectory, pathunc: { allowed: false }, pathexists: true }" 
             v-slot="{ errors }"
-            v-if="localWatcher.useProcessedPath"
+            v-if="localWatcher.useProcessedDirectory"
         >
             <a-folder-input
                 title="Files in the watch folder will be moved here after pipeline(s) have run."
                 :errors="errors"
-                v-model="localWatcher.processedPath"
+                v-model="localWatcher.processedDirectory"
             >
                 Move processed files to this Folder
+            </a-folder-input>
+        </validation-provider>
+
+        <a-checkbox v-model="localWatcher.useOutputDirectory">
+            Use Output Folder?
+        </a-checkbox>
+
+        <validation-provider 
+            slim
+            :rules="{ required: localWatcher.useOutputDirectory, pathunc: { allowed: false }, pathexists: true }" 
+            v-slot="{ errors }"
+            v-if="localWatcher.useOutputDirectory"
+        >
+            <a-folder-input
+                title="Files in the watch folder will be moved here after pipeline(s) have run."
+                :errors="errors"
+                v-model="localWatcher.outputDirectory"
+            >
+                Output files to this Folder
             </a-folder-input>
         </validation-provider>
 

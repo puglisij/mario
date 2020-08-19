@@ -27,11 +27,15 @@ class ImageSource
      * Data object containing context information for processing new images
      * @param {ImageSourceType} sourceType e.g. ImageSourceType.FILEWATCHER
      * @param {ImageSourcePath} [sourcePath] e.g. { path: "C:/images" }
+     * @param {string} [outputDirectory]
+     * @param {string} [processedDirectory]
      */
-    constructor(sourceType, sourcePath)
+    constructor(sourceType, sourcePath, outputDirectory, processedDirectory)
     {
         this.sourceType = sourceType;
         this.sourcePath = sourcePath;
+        this.outputDirectory = outputDirectory;
+        this.processedDirectory = processedDirectory;
     }
 }
 
@@ -45,11 +49,11 @@ let nextProducerId = 0;
  */
 export default class ImageFileProducer extends EventEmitter
 {
-    constructor(imageTap) 
+    constructor(imageSource) 
     {
         super();
         this._id = nextProducerId++;
-        this._imageTap = imageTap;
+        this._imageSource = imageSource;
         this._fileWatcher = null;
         this._isDepleted = false;
     }
@@ -58,14 +62,14 @@ export default class ImageFileProducer extends EventEmitter
     }
     produce()
     {
-        switch(this._imageTap.sourceType) 
+        switch(this._imageSource.sourceType) 
         {
             case ImageSourceType.FILEWATCHER: this._sourceFileWatchers(); break;
             case ImageSourceType.DIRECTORY: this._sourceDirectory(); break;
             case ImageSourceType.OPENFILES: this._sourceOpenFiles(); break;
             case ImageSourceType.BLANK: this._sourceBlank(); break;
             case ImageSourceType.ACTIVEDOCUMENT: this._sourceActiveDocument(); break;
-            default: throw new Error("Unknown ImageSourceType: " + this._imageTap.sourceType);
+            default: throw new Error("Unknown ImageSourceType: " + this._imageSource.sourceType);
         }
     }
     destroy()
@@ -77,14 +81,19 @@ export default class ImageFileProducer extends EventEmitter
         }
         this.removeAllListeners();
     }
+    getImageSource()
+    {
+        return this._imageSource;
+    }
     _emitFiles(files) 
     {
+        // TODO: Emit ImageSource here? Is 'id' enough?
         this.emit("files", this._id, files);
     }
     _sourceFileWatchers() 
     {
-        const watchPathRoot = this._imageTap.sourcePath.path;
-        const watchExtensions = this._imageTap.sourcePath.extensions;
+        const watchPathRoot = this._imageSource.sourcePath.path;
+        const watchExtensions = this._imageSource.sourcePath.extensions;
         const watchPaths = watchExtensions.map(ext => upath.join(watchPathRoot, "*." + ext));
 
         if(isUncPath(watchPathRoot)) {
@@ -113,8 +122,8 @@ export default class ImageFileProducer extends EventEmitter
      */
     _sourceDirectory() 
     {
-        const directory = this._imageTap.sourcePath.path;
-        const extensions = this._imageTap.sourcePath.extensions;
+        const directory = this._imageSource.sourcePath.path;
+        const extensions = this._imageSource.sourcePath.extensions;
 
         fs.readdir(directory, { encoding: "utf8" }, (error, files) => {
             if(error) {
@@ -166,11 +175,13 @@ export default class ImageFileProducer extends EventEmitter
  * Create an ImageFileProducer instance with a file watcher as its source
  * @param {string} directory directory which will be watched for new files
  * @param {string[]} extensions an array of valid extensions to read (e.g. "psd", "jpg", etc)
+ * @param {string} outputDirectory directory where pipeline outputs will be written
+ * @param {string} processedDirectory directory where source files will be moved to when finished processing
  */
-ImageFileProducer.withFileWatcher = function(directory, extensions) 
+ImageFileProducer.withFileWatcher = function(directory, extensions, outputDirectory, processedDirectory) 
 {
     return new ImageFileProducer(
-        new ImageSource(ImageSourceType.FILEWATCHER, new ImageSourcePath(directory, extensions))
+        new ImageSource(ImageSourceType.FILEWATCHER, new ImageSourcePath(directory, extensions), outputDirectory, processedDirectory)
     );
 };
 /**
@@ -180,6 +191,7 @@ ImageFileProducer.withFileWatcher = function(directory, extensions)
  */
 ImageFileProducer.withDirectory = function(directory, extensions) 
 {
+    // TODO: Add outputDirectory, and processedDirectory options here
     // TODO: Allow use of Directory AS the Source, instead of reading its files. Which means the Producer can produce directory paths, instead of just files
     return new ImageFileProducer(
         new ImageSource(ImageSourceType.DIRECTORY, new ImageSourcePath(directory, extensions))
@@ -190,6 +202,7 @@ ImageFileProducer.withDirectory = function(directory, extensions)
  */
 ImageFileProducer.withOpenFiles = function() 
 {
+    // TODO: Add outputDirectory, and processedDirectory options here
     return new ImageFileProducer(
         new ImageSource(ImageSourceType.OPENFILES, null)
     );
@@ -199,6 +212,7 @@ ImageFileProducer.withOpenFiles = function()
  */
 ImageFileProducer.withBlank = function() 
 {
+    // TODO: Add outputDirectory, and processedDirectory options here
     return new ImageFileProducer( 
         new ImageSource(ImageSourceType.BLANK, null)
     );
@@ -208,6 +222,7 @@ ImageFileProducer.withBlank = function()
  */
 ImageFileProducer.withActiveDocument = function() 
 {
+    // TODO: Add outputDirectory, and processedDirectory options here
     return new ImageFileProducer(
         new ImageSource(ImageSourceType.ACTIVEDOCUMENT, null)
     );

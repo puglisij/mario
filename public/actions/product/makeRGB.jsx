@@ -22,9 +22,7 @@ action.product.makeRGB = function makeRGB()
         );
 
         action.convertToColorProfile("RGB");
-        action.universal.saveAsPSDToArchiveDirectory(
-            "RGB" + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
-        );
+        action.universal.saveAsPSDToOutputDirectory("RGB");
         action.revert();
         action.closeDocumentWithoutSave();
     })

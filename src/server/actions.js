@@ -16,22 +16,42 @@ export class ActionDescriptor
     constructor()
     {
         this.name = "";
+        this.description = "";
         this.path = "";
         this.params = [];
     }
     /**
-     * Translate JSDocXDescription object to ActionDescriptor
-     * @param {JSDocXDescription} jsDocXDescription the description object returned by JSDocX
+     * Translate JSDocDescription object to ActionDescriptor
+     * @param {JSDocDescription} jsDocDescription the description object returned by JSDoc
      */
-    static fromJSDocXDescription(jsDocXDescription)
+    static fromJSDocDescription(jsdocDescription)
     {
-        // jsdocx.utils.getFullName
-        // jsdocx.utils.isMethod
+        /*
+            Example JSDoc Output:
+            {
+                "name": "action.makeNote",
+                "description": "Add a Note/Annotation to the document",
+                "path": "C:\\Users\\puglisij\\AppData\\Roaming\\Adobe\\CEP\\extensions\\com.mario.panel\\public\\actions",
+                "params": [
+                    {
+                    "type": { "names": ["Number"] },
+                    "description": "x axis position in pixels",
+                    "name": "posX"
+                    },
+                    {
+                    "type": { "names": ["Number"] },
+                    "description": "y axis position in pixels",
+                    "name": "posY"
+                    }
+                ]
+            }
+        */
         
         // TODO Make this function another class?
-        const description = jsDocXDescription.filter(x => x.$kind === "method");
+        const description = jsdocDescription.find(x => x.kind === "function");
         const descriptor = new ActionDescriptor();
-              descriptor.name = description.$longname;
+              descriptor.name = description.longname;
+              descriptor.description = description.description;
               descriptor.params = description.params; // TODO convert to ActionParameter
               descriptor.path = description.meta.path;
         return descriptor;
@@ -81,32 +101,27 @@ class ActionFileDescriptionReader
 {
     /**
      * Returns mapping of fully qualified action names to their JSXDocDescription
-     * @param {Action[]} actions 
-     * @returns {Object}
+     * @param {Action} action
+     * @returns {jsdocDescription}
      */
-    static read(actions)
+    static read(action)
     {
-        let map = new Map();
-        let promises = actions.map(action => 
-        {
-            const { name, absolutePath } = action;
-            return this._readJSDocXDescription(absolutePath)
-            .then(description => {
-                map.set(name, description);
-            });
-        })
-        return Promise.all(promises).then(() => {
-            return map;
+        const { name, absolutePath } = action;
+        return this._readJSDocDescription(absolutePath)
+        .then(description => {
+            return description;
         });
     }
     /**
-     * Returns the JSDocX object describing the particulars of the given action
+     * Returns the JSDoc object describing the particulars of the given action
      * @param {string} actionPath the absolute action path e.g. C:/actions/action.saveDocument.jsx
-     * @returns {JSDocXDescription}
+     * @returns {JSDocDescription}
      */
-    static _readJSDocXDescription(actionPath)
+    static _readJSDocDescription(actionPath)
     {
+        //TODO: Use jsdoc-api cache
         return jsdoc.explain({
+            cache: true,
             files: [actionPath]
         });
         // return jsdocx.parse(actionPath, {
@@ -194,6 +209,7 @@ class Action
     }
 }
 
+
 /**
  * Primary interface for loading/reloading jsx action files and their JSDoc descriptions
  */
@@ -202,6 +218,7 @@ export class Actions
     constructor() 
     {
         this._actions = [];
+        this._actionNameToAction = new Map();
         this._actionCategories = [
             {
                 category: "action",
@@ -220,7 +237,6 @@ export class Actions
                 actions: []
             }
         ];
-        this._actionToJSDocXCache = new Map();
     }
     /**
      * @returns {Promise}
@@ -243,20 +259,27 @@ export class Actions
 
         console.log("Import actions exited.");
     }
-    async _import(importDirectory) 
+    _import(importDirectory) 
     {
         if(!importDirectory.trim()) {
             return;
         }
         const { importString,  actions } = ActionFileImportStringBuilder.build(importDirectory, "action");
-        ActionFileDescriptionReader.read(actions)
-        .then(actionToJsDocXMap => {
-            // Merge mapping into cache
-            this._actionToJSDocXCache = new Map([...this._actionToJSDocXCache, ...actionToJsDocXMap]);
-        });
+        for(let i = 0; i < actions.length; ++i) 
+        {
+            this._actions.push(actions[i]);
+            this._actionNameToAction.set(actions[i].name, actions[i]);
+        }
 
-        this._actions = [...this._actions, actions];
         return host.runJsx(importString  + "act = action;");
+    }
+    _parseCategories()
+    {
+        for(let i = 0; i < actions.length; ++i) 
+        {
+            const action = actions[i];
+
+        }
     }
     /**
      * Return all available action nested namespaces/categories
@@ -273,15 +296,21 @@ export class Actions
         return this._actions.map(a => a.name);
     }
     /**
-     * Converts JSDocX for given action name to instance of ActionDescriptor
+     * Converts JSDoc for given action name to instance of ActionDescriptor
      * @param {string} actionName
-     * @returns {ActionDescriptor}  
+     * @returns {Promise<ActionDescriptor>}  
      */
-    getActionDescriptorByName(actionName) 
+    async getActionDescriptorByName(actionName) 
     {
-        const jsDocXDescription = this._actionToJSDocXCache[actionName];
-        const actionDescriptor = ActionDescriptor.fromJSDocXDescription(jsDocXDescription);
-        return actionDescriptor;
+        const action = this._actionNameToAction.get(actionName);
+        if(!action) {
+            throw new Error(`Action doesnt exist by name ${actionName}`);
+        }
+
+        return ActionFileDescriptionReader.read(action)
+        .then(jsDocDescription => {
+            return ActionDescriptor.fromJSDocDescription(jsDocDescription);
+        });
     }
 
 }

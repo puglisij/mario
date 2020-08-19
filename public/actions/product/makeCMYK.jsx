@@ -30,9 +30,7 @@ action.product.makeCMYK = function makeCMYK()
         );
 
         action.convertToColorProfile("CMYK");
-        action.universal.saveAsPSDToArchiveDirectory(
-            "CMYK" + (view.archiveSubdirectory ? "/" + view.archiveSubdirectory : "")
-        );
+        action.universal.saveAsPSDToOutputDirectory("CMYK");
         action.revert();
         action.closeDocumentWithoutSave();
     });

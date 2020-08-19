@@ -1,5 +1,5 @@
 /**
-* Add a Note/Annotation in Photoshop
+* Add a Note/Annotation to the document
 * @param {Number} posX x axis position in pixels 
 * @param {Number} posY y axis position in pixels
 */

@@ -1,3 +1,4 @@
+import process from 'process';
 import Vue from 'vue';
 import App from './app.vue';
 import Dialog from './dialog';
@@ -5,7 +6,13 @@ import Host from './host';
 import HostScriptListener from './host/hostScriptListener';
 import Logger from './console';
 import Server from './server';
+import global from './global';
 import Validation from './validation';
+
+// Fixes module resolution issues for dependencies within node_modules
+process.chdir(global.appWorkingPath);
+__dirname = global.appWorkingPath;
+
 
 Vue.config.productionTip = false;
 Vue.config.devtools = true;

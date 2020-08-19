@@ -1,6 +1,5 @@
 import fs from 'fs';
 import { configure, setInteractionMode, extend } from 'vee-validate';
-import e from 'express';
 
 setInteractionMode("custom", context => {
     return {
