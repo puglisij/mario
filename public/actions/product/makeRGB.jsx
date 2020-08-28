@@ -7,6 +7,9 @@ action.product.makeRGB = function makeRGB()
     
     action.openEachImage(function(view)
     {
+        if(view.isFromArchives) {
+            return;
+        }
         action.product.maskOrPath({
             koMethod: view.koMethod
         });

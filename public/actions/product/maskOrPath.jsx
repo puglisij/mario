@@ -18,6 +18,8 @@ action.product.maskOrPath = function maskOrPath(options)
             _pathActions("Path 1"); break;
         case "masked":
             _maskActions(); break;
+        case "no_ko":
+            return;
         default:
             throw new Error("Invalid 'koMethod' of " + koMethod);
             return;

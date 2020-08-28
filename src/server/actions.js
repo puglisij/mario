@@ -7,6 +7,7 @@ const jsdoc = require("jsdoc-api");
 import store from '../store';
 import host from '../host';
 import global from '../global';
+import FolderTree from './folderTree';
 
 /**
  * Describes a JSX Actions signature in full, including parameters
@@ -219,24 +220,21 @@ export class Actions
     {
         this._actions = [];
         this._actionNameToAction = new Map();
-        this._actionCategories = [
+        this._actionCategories = new FolderTree([
             {
-                category: "action",
-                categories: [
+                name: "action",
+                children: [
                     {
-                        category: "action.universal",
-                        categories: [],
-                        actions: []
+                        name: "action.universal",
+                        children: []
                     },
                     {
-                        category: "action.product",
-                        categories: [],
-                        actions: []
+                        name: "action.product",
+                        children: []
                     }
-                ],
-                actions: []
+                ]
             }
-        ];
+        ]);
     }
     /**
      * @returns {Promise}
@@ -269,6 +267,7 @@ export class Actions
         {
             this._actions.push(actions[i]);
             this._actionNameToAction.set(actions[i].name, actions[i]);
+            console.log("Action: " + actions[i].name);
         }
 
         return host.runJsx(importString  + "act = action;");

@@ -40,6 +40,10 @@ export default class Image
          * Internal data (Metadata stored in the file)
          */
         this.metadata = {}; 
+        /**
+         * (Optional) pipelines that should process this Image
+         */
+        this.pipelines = [];
     }
 }
 

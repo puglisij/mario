@@ -27,6 +27,7 @@ export default class ImageFileReader
         let inputDataPath = "";
         let data = {};
         let metadata = {};
+        let pipelines = [];
         if(this._isFile(inputImagePath)) 
         {
             if(this._isJsonFile(inputImagePath)) 
@@ -37,6 +38,7 @@ export default class ImageFileReader
                 inputImagePath = this._ensureAbsolutePath(data.inputImagePath, inputDirectory);
                 outputDirectory = this._ensureAbsolutePath(data.outputDirectory, inputDirectory);
                 processedDirectory = this._ensureAbsolutePath(data.processedDirectory, inputDirectory);
+                pipelines = data.pipelines || [];
             }
             if(this._isFile(inputImagePath) && readMetadata) 
             {
@@ -52,6 +54,7 @@ export default class ImageFileReader
               image.processedDirectory = processedDirectory;
               image.data = data;
               image.metadata = metadata;
+              image.pipelines = pipelines;
         return image;
     }
     /**

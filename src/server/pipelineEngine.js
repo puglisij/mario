@@ -216,6 +216,10 @@ export class PipelineEngine extends EventEmitter
     {
         return store.general.fileWatchers.find(w => w.name === watcherName);
     }
+    _getConfigurationsByPipelineNames(pipelineNames)
+    {
+        return store.pipelines.pipelines.filter(p => pipelineNames.includes(p.name));
+    }
     _getConfigurationByPipelineName(pipelineName) 
     {
         return store.pipelines.pipelines.find(p => p.name === pipelineName);
@@ -280,9 +284,10 @@ export class PipelineEngine extends EventEmitter
             const { file, producerId } = qFile;
             console.log(`Reading next file ${file} from producer ${producerId}.`);
 
+            // Note: image 'pipelines' property takes precedence over pipelines listed for producer
             const imageSource = this._getProducerById(producerId).getImageSource();
             const image = await this._imageFileReader.read(file, imageSource.outputDirectory, imageSource.processedDirectory, store.general.doReadFileMetadata);
-            const pipelines = this._getConfigurationsByProducerId(producerId);
+            const pipelines = image.pipelines ? this._getConfigurationsByPipelineNames(image.pipelines) : this._getConfigurationsByProducerId(producerId);
             console.log(`Processing image: ${image.inputImagePath}`);
 
             try 
