@@ -326,7 +326,7 @@ export class PipelineEngine extends EventEmitter
             {
                 console.error(e);
                 await this._pauseCheck(null, store.general.pauseOnExceptions);
-                this._imageFileMover.move(image, image.processedDirectory || "./Errored", e.toString());
+                this._imageFileMover.move(image, (image.processedDirectory || "") + "./Errored", e.toString());
             }
             finally
             {

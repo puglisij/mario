@@ -14,7 +14,7 @@
                     placeholder="the action function name (e.g. 'action.saveDocument')"
                     title="The action function name as given in the jsx. Case sensitive."
                     v-model="localAction.actionName"
-                    @change="onActionName"
+                    readonly
                 />
                 <button class="topcoat-button--large--quiet" 
                     type="button" 
@@ -152,9 +152,6 @@ export default {
                 }
             }
             return rawAction;
-        },
-        onActionName() {
-            this.emitChange();
         },
         onActionDelete() {
            this.$emit("delete", this.action.id);

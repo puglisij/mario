@@ -7,7 +7,10 @@ const jsdoc = require("jsdoc-api");
 import store from '../store';
 import host from '../host';
 import global from '../global';
-import FolderTree from './folderTree';
+import FolderTreeNode from './folderTree';
+
+const ROOT_ACTION_DIRECTORY = "actions";
+const ROOT_ACTION_NAMESPACE = "action";
 
 /**
  * Describes a JSX Actions signature in full, including parameters
@@ -169,6 +172,7 @@ class ActionFileImportStringBuilder
             const namespaceDefine = `${namespace}= (typeof ${namespace} !== "undefined") ? ${namespace} : {};`;
             imports.push(namespaceDefine);
             
+            // Read directory contents
             const names = fs.readdirSync(directory.absolutePath);
             for(let i = 0; i < names.length; ++i) 
             {
@@ -177,20 +181,20 @@ class ActionFileImportStringBuilder
                     throw new Error("Action file and directory names cannot contain periods.");
                 }
 
-                const name = nameParts[0];
-                const nameSpacedName = `${namespace}.${name}`;
-                const path = upath.join(directory.absolutePath, names[i]);
-                if(fs.statSync(path).isDirectory()) 
+                const nameWithoutExtension = nameParts[0];
+                const nameSpacedName = `${namespace}.${nameWithoutExtension}`;
+                const absoluteFilePath = upath.join(directory.absolutePath, names[i]);
+                if(fs.statSync(absoluteFilePath).isDirectory()) 
                 {
                     directories.push({
                         namespace: nameSpacedName,
-                        absolutePath: path
+                        absolutePath: absoluteFilePath
                     });
                 } 
                 else 
                 {
-                    imports.push(`importAction("${path}", "${nameSpacedName}");`);
-                    actions.push(new Action(nameSpacedName, path));
+                    imports.push(`importAction("${absoluteFilePath}", "${nameSpacedName}");`);
+                    actions.push(new Action(nameSpacedName, namespace, absoluteFilePath));
                 }
             }
         }
@@ -203,9 +207,10 @@ class ActionFileImportStringBuilder
 
 class Action
 {
-    constructor(name, absolutePath)
+    constructor(name, namespace, absolutePath)
     {
         this.name = name;
+        this.namespace = namespace;
         this.absolutePath = absolutePath;
     }
 }
@@ -218,23 +223,8 @@ export class Actions
 {
     constructor() 
     {
-        this._actions = [];
         this._actionNameToAction = new Map();
-        this._actionCategories = new FolderTree([
-            {
-                name: "action",
-                children: [
-                    {
-                        name: "action.universal",
-                        children: []
-                    },
-                    {
-                        name: "action.product",
-                        children: []
-                    }
-                ]
-            }
-        ]);
+        this._actionTree = new FolderTreeNode(ROOT_ACTION_NAMESPACE, true);
     }
     /**
      * @returns {Promise}
@@ -262,37 +252,32 @@ export class Actions
         if(!importDirectory.trim()) {
             return;
         }
-        const { importString,  actions } = ActionFileImportStringBuilder.build(importDirectory, "action");
+
+        const { importString,  actions } = ActionFileImportStringBuilder.build(importDirectory, ROOT_ACTION_NAMESPACE);
+        // Parse to data structures
         for(let i = 0; i < actions.length; ++i) 
         {
-            this._actions.push(actions[i]);
+            const actionPath = actions[i].name.split('.');
             this._actionNameToAction.set(actions[i].name, actions[i]);
+            this._actionTree.insert(actionPath, false);
             console.log("Action: " + actions[i].name);
         }
 
         return host.runJsx(importString  + "act = action;");
     }
-    _parseCategories()
-    {
-        for(let i = 0; i < actions.length; ++i) 
-        {
-            const action = actions[i];
-
-        }
-    }
     /**
-     * Return all available action nested namespaces/categories
-     * @returns {string[]} multi dimensional array containing category/subcategory names
+     * Returns tree structure of all available action nested namespaces/action names
+     * @returns {FolderTreeNode} n-ary tree indicating folder and action file structure
      */
-    getAllActionCategories() {
-        return this._actionCategories; // TODO: Return clone for safety?
+    getAllActions() {
+        return this._actionTree.cloneTree(); 
     }
     /**
      * Return all available action names
      * @returns {string[]}
      */
     getAllActionNames() {
-        return this._actions.map(a => a.name);
+        return Array.from( this._actionNameToAction.keys() );
     }
     /**
      * Converts JSDoc for given action name to instance of ActionDescriptor

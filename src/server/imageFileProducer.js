@@ -105,9 +105,10 @@ export default class ImageFileProducer extends EventEmitter
         const watcher = chokidar.watch(watchPaths, {
             ignored: /^\./, 
             depth: 0,
+            usePolling: true,
             awaitWriteFinish: {
-                stabilityThreshold: 2000,
-                pollInterval: 500
+                stabilityThreshold: 5000,
+                pollInterval: 5000
             }
         })
         .on("add", newPath => 

@@ -1,7 +1,7 @@
 import upath from 'upath';
 import uncSafePath from '../unc-safe-path';
 import fs from 'fs';
-import path from 'path';
+import rimraf from 'rimraf';
 import Image from './image';
 
 /**
@@ -22,7 +22,26 @@ function mkdirp(dirPath, mode, callback)
             callback && callback(err);
         }
     });
-};
+}
+/**
+ * Force deletes the destination file/directory recursively and renames the source path to the destination
+ * @param {*} fromPath 
+ * @param {*} toPath 
+ * @param {*} callback 
+ */
+function move(fromPath, toPath, callback)
+{
+    rimraf(toPath, err => 
+    {
+        if(err) {
+            callback(err);
+            return;
+        }
+        fs.rename(fromPath, toPath, err => {
+            callback(err);
+        });
+    });
+}
 
 export default class ImageFileMover 
 {
@@ -74,9 +93,10 @@ export default class ImageFileMover
         {
             const basename = upath.basename(path);
             const toPath = upath.join(directory, basename);
-            fs.rename(path, toPath, err => {
-                if(err) 
+            move(path, toPath, err => {
+                if(err) {
                     console.error(err + "\nImage path could not be moved to " + toPath);
+                }
             });
         }
     }
