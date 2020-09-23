@@ -66,6 +66,26 @@
             </a-folder-input>
         </validation-provider>
 
+        
+        <a-checkbox v-model="localWatcher.useErrorDirectory">
+            Use Error Folder?
+        </a-checkbox>
+
+        <validation-provider 
+            slim
+            :rules="{ required: localWatcher.useErrorDirectory, pathunc: { allowed: false }, pathexists: true }" 
+            v-slot="{ errors }"
+            v-if="localWatcher.useErrorDirectory"
+        >
+            <a-folder-input
+                title="Files in the watch folder will be moved here after encountering an error in the pipeline(s)."
+                :errors="errors"
+                v-model="localWatcher.errorDirectory"
+            >
+                Move errored files and write error logs to this Folder
+            </a-folder-input>
+        </validation-provider>
+
         <validation-provider 
             slim
             rules="required" 
@@ -94,6 +114,7 @@ import AFolderInput from "./a-folder-input.vue";
 import AExtensionsInput from "./a-extensions-input.vue";
 import ACheckbox from "./a-checkbox.vue";
 
+// TODO: Use a common ImageSource vue here, as well as in main-controls.vue?
 export default {
     name: "AWatcher",
     components: {

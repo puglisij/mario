@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import FolderTreeNode from "../server/folderTree";
+import FolderTreeNode from "../folderTree";
 
 export default {
     name: "SelectPipelineActionNode",

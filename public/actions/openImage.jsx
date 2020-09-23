@@ -6,7 +6,7 @@
 */
 action.openImage = function openImage()
 {
-    var path = IMAGE.getInputPath();
+    var path = IMAGE.getInputImagePath();
     if(!path) {
         throw new Error("IMAGE 'inputImagePath' is not defined.");
     }

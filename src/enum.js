@@ -71,7 +71,7 @@ function create_(enumArr, offset)
         enumer[ nextKey ] = i + offset;       
     }
 
-    // TODO: Use defineProperty
+    // TODO: 
     // Object.defineProperty(this, 'enumValues', {
     //     value: [],
     //     configurable: false,

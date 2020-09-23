@@ -27,6 +27,7 @@ class Host
         // Host Environment Setup
         this.importScript("utils.jsx");
         this.importScript("polyfil.jsx");
+        this.importScript("json.jsx"); 
         this.importScript("image.jsx"); 
         
         // Listeners

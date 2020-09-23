@@ -1,13 +1,13 @@
 
 /**
 * Iterate and open each image path listed in IMAGE.data("inputImages")
-* If IMAGE.data("inputImagePath") is defined, image paths should be relative to its parent directory.
+* If IMAGE.getInputImagePath() is defined, image paths should be relative to its parent directory.
 * Each view becomes the active document.
 * @param {function} cb the callback to execute for each additional view
 */
 action.openEachImage = function openEachImage(cb)
 {
-    var viewsDirectory = IMAGE.getInputPath();
+    var viewsDirectory = IMAGE.getInputImagePath();
         viewsDirectory += viewsDirectory ? "/" : "";
     var views = IMAGE.data("inputImages");
     if(!views) {

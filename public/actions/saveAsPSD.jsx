@@ -9,6 +9,8 @@ action.saveAsPSD = function saveAsPSD(file)
         psdSaveOptions.embedColorProfile = true;
         psdSaveOptions.alphaChannels = true;
 
+    file = new File(file);
+    IMAGE.addSavedFilePath(file.fsName);
     // File, options object, asCopy, Extension policy
     activeDocument.saveAs(file, psdSaveOptions, true, Extension.LOWERCASE);
 };

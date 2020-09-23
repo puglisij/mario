@@ -323,12 +323,14 @@ label {
     }
 }
 
-.watcher,
-.pipeline,
-.action {
+.source,
+.pipeline {
+    background: rgba(0,0,0,0.2);
     border: none;
     border-bottom: 1px solid #333;
-    padding: ($column-gap * 2);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
 
     label {
         position: relative;
@@ -369,6 +371,23 @@ label {
     display: flex;
     flex-wrap: nowrap;
     justify-content: flex-start;
+}
+
+.action {
+    border: none;
+    border-bottom: 1px solid #333;
+    padding: ($column-gap * 2);
+
+    label {
+        position: relative;
+    }
+    label:not(.topcoat-checkbox) {
+        display: block;
+        margin-bottom: $column-gap;
+    }
+    &:last-of-type {
+        margin-bottom: ($column-gap * 2);
+    }
 }
 
 .pipeline-handle,

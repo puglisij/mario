@@ -7,7 +7,7 @@ const jsdoc = require("jsdoc-api");
 import store from '../store';
 import host from '../host';
 import global from '../global';
-import FolderTreeNode from './folderTree';
+import FolderTreeNode from '../folderTree';
 
 const ROOT_ACTION_DIRECTORY = "actions";
 const ROOT_ACTION_NAMESPACE = "action";
@@ -242,6 +242,8 @@ export class Actions
     {
         console.log("Import actions started.");
 
+        // TODO: Cache these imports along with ActionDescriptors
+        //      Use checksum to indicate changes
         await this._import(global.appBuiltinActionsPath);
         await this._import(store.general.pathToUserActions);
 

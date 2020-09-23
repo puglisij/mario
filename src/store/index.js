@@ -42,18 +42,21 @@ const general = new Conf({
             type: "string",
             default: ""
         }, 
-        fileWatchers: {
+        fileSources: {
             type: "array",
             default: [
                 // TODO: Add Schema validation
                 // {
                 //  id: ""
                 //  name: "",
+                //  type: 0,
                 //  path: "",
                 //  useProcessedDirectory: true
                 //  processedDirectory: "", 
                 //  useOutputDirectory: true,
                 //  outputDirectory: "",
+                //  useErrorDirectory: true,
+                //  errorDirectory: "",
                 //  extensions: []
                 // }
             ]
@@ -65,15 +68,6 @@ const general = new Conf({
         isMainDrawerOpen: {
             type: "boolean", 
             default: false
-        },
-        // See ImageSourceType enum
-        imageSource: {
-            type: "object", 
-            default: {
-                type: "ACTIVEDOCUMENT", 
-                directory: "", 
-                extensions: []
-            }
         }
     }
 });
@@ -93,7 +87,7 @@ const pipelines = new Conf({
                 // {
                 //   id: "",
                 //   name: "",
-                //   watcherNames: [], 
+                //   sourceNames: [], 
                 //   disabled: false,
                 //   actions: []
                 // }
@@ -152,11 +146,13 @@ const store = new EventEmitter();
 /**
  * General configuration storage
  * NOTE: Only set root level properties or settings will be be saved to file
+ * NOTE: Properties are set by Reference.
  */
 store.general = ConfigurationProxy(general, general.store, store);
 /**
  * Pipeline configuration storage
  * NOTE: Only set root level properties or settings will be be saved to file
+ * NOTE: Properties are set by Reference.
  */
 store.pipelines = ConfigurationProxy(pipelines, pipelines.store, store);
 

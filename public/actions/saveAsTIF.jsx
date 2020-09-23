@@ -5,6 +5,8 @@
 action.saveAsTIF = function saveAsTIF(file)
 {
     // TODO: Add boolean flag to make active document instead of active by default
+    file = new File(file);
+    IMAGE.addSavedFilePath(file.fsName);
 
     // layer compression | string id | jsx
     // RLE | "RLE" | s2t("RLE")
@@ -29,8 +31,8 @@ action.saveAsTIF = function saveAsTIF(file)
     var idTIFF = charIDToTypeID("TIFF");
     desc29.putObject(idAs, idTIFF, desc30);
     var idIn = charIDToTypeID("In  "); // in
-    desc29.putPath(idIn, new File(file));
-    
+    desc29.putPath(idIn, file);
+
     // if(layerCompression == "DiscardLayers") 
     // {
     //     var idLyrs = charIDToTypeID( "Lyrs" ); // layers

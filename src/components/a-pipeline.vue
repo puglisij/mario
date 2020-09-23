@@ -11,7 +11,7 @@
             >
                 <div class="label">Name</div>
                 <input class="topcoat-text-input full-width" type="text" 
-                    title="A name for the pipeline. Only used for reference."
+                    title="A unique name for the pipeline."
                     placeholder="my-pipeline-name"
                     v-model="name_"
                 />
@@ -19,19 +19,19 @@
             </validation-provider>
             <validation-provider
                 tag="label"
-                :rules="{ custom: { fn: validateWatcherNames } }" 
+                :rules="{ custom: { fn: validateSourceNames } }" 
                 v-slot="{ errors }"
             >
-                <div class="label">File Watcher(s)</div>
+                <div class="label">File Source(s)</div>
                 <!-- 
                     TODO: Add Autocomplete or List selection, which will eliminate need for validation here 
-                    TODO: Don't force a Pipeline to use a File Watcher. Instead allow any File source selection here
+                    TODO: Instead allow any File source selection here
                     TODO: It's important that only a single File Producer is created for each source
                 -->
                 <a-array-input class="topcoat-text-input full-width" 
-                    title="The file watcher(s) to use for inputs to this pipeline. Comma delimited."
-                    placeholder="my-watcher-name"
-                    v-model="watcherNames_"
+                    title="The file source(s) to use for inputs to this pipeline. Comma delimited."
+                    placeholder="my-file-source-name"
+                    v-model="sourceNames_"
                 />
                 <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
             </validation-provider>
@@ -83,7 +83,7 @@ export default {
             type: String, 
             required: true
         },
-        watcherNames: {
+        sourceNames: {
             type: Array, 
             required: true
         },
@@ -97,17 +97,19 @@ export default {
             required: true
         }
     }, 
-    data() {
-        return {
-            name_: this.name,
-            watcherNames_: this.watcherNames,
-            disabled_: this.disabled
+    computed: {
+        name_: {
+            get() { return this.name; },
+            set(v) { this.$emit("update:name", v); }
+        },
+        sourceNames_: {
+            get() { return _.simpleDeepClone(this.sourceNames); },
+            set(v) { this.$emit("update:sourceNames", v); }
+        },
+        disabled_: {
+            get() { return this.disabled; },
+            set(v) { this.$emit("update:disabled", v); }
         }
-    },
-    watch: {
-        name_:          function(v) { this.$emit("update:name", v); },
-        watcherNames_:  function(v) { this.$emit("update:watcherNames", v); },
-        disabled_:      function(v) { this.$emit("update:disabled", v); },
     },
     methods: {
         validateName(value)
@@ -120,15 +122,16 @@ export default {
                 message: "Pipeline name must be unique"
             };
         },
-        validateWatcherNames(names) 
+        validateSourceNames(names) 
         {
-            // Ensure watcher exists by each name
+            // TODO: Remove reference to store here
+            // Ensure file source exists by each name
             const missingNames = names.filter(n => {
-                return !store.general.fileWatchers.find(w => w.name === n); 
+                return !store.general.fileSources.find(w => w.name === n); 
             });
             return {
                 valid: missingNames.length === 0,
-                message: `A File Watcher by name '${missingNames.pop()}' does not exist.`
+                message: `A file source by name '${missingNames.pop()}' does not exist.`
             };
         },
         onEdit() {

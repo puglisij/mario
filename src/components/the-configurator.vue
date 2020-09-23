@@ -42,23 +42,23 @@
                     <wait-dots v-show="isLoadingActions" />
                 </div>
             </section>
-            <h3 class="section-title">File Watchers</h3>
+            <h3 class="section-title">File Sources</h3>
             <section class="section-content">
-                <a-watcher
-                    v-for="(watcher, index) in fileWatchers"
-                    :key="watcher.id"
-                    :watchers="fileWatchers"
-                    v-model="fileWatchers[index]"
-                    @changed="onWatcherChange"
-                    @delete="onDeleteWatcher"
-                ></a-watcher>
+                <a-file-source
+                    v-for="(source, index) in fileSources"
+                    :key="source.id"
+                    v-model="fileSources[index]"
+                    :sources="fileSources"
+                    @change="onSourceChange"
+                    @delete="onDeleteSource"
+                ></a-file-source>
             </section>
             <div class="configurator-buttons">
                 <button 
                     class="topcoat-button--large" 
                     type="button"
-                    @click.prevent="onAddNewWatcher"
-                >Add File Watcher</button>
+                    @click.prevent="onAddNewSource"
+                >Add File Source</button>
                 <button 
                     class="topcoat-button--large"
                     type="submit" 
@@ -74,10 +74,11 @@
 import { ValidationProvider, ValidationObserver } from "vee-validate";
 
 import _ from "../utils";
-import store from "../store"; 
+import store from "../store";
+import eventBus from "../eventBus"; 
 import AFolderDialogButton from "./a-folder-dialog-button.vue";
 import ACheckbox from "./a-checkbox.vue";
-import AWatcher from "./a-watcher.vue";
+import AFileSource from "./a-file-source.vue";
 import WaitDots from './wait-dots.vue';
 import Server from '../server';
 
@@ -91,7 +92,7 @@ export default {
         ValidationProvider,
         AFolderDialogButton,
         ACheckbox,
-        AWatcher,
+        AFileSource,
         WaitDots
     },
     data: () => {
@@ -99,7 +100,7 @@ export default {
             needSaved: false, 
             isLoadingActions: false,
             pathToUserActions: store.general.pathToUserActions,
-            fileWatchers: _.simpleDeepClone(store.general.fileWatchers)
+            fileSources: _.simpleDeepClone(store.general.fileSources)
         }
     },
     methods: {
@@ -116,40 +117,75 @@ export default {
         {
             this.markForSave();
         },
-        onWatcherChange(watcher)
+        onSourceChange(newSource)
         {
             this.markForSave();
         },
-        onAddNewWatcher(event)
+        updatePipelineFileSourceReferences() 
+        {
+            // We look at on-disk settings 'before' saving, in order to determine what needs updated
+            // TODO: A change to the GUI to allow selection from a fixed list of file sources
+            // may eliminate some of this foolery
+            let pipelines = _.simpleDeepClone(store.pipelines.pipelines);
+            let fileSources = _.simpleDeepClone(store.general.fileSources);
+
+            // Remove pipeline references to deleted file sources
+            // Update pipeline references to renamed file sources
+            pipelines.forEach(p => 
+            {
+                let sourceNames = [];
+                for(let i = 0; i < p.sourceNames.length; ++i) 
+                {
+                    // ASSERT: Should always find an original source for this name
+                    // assuming that the Pipelines configuration interface disallows 
+                    // source names which do not exist
+                    const sourceName = p.sourceNames[i];
+                    const sourceId = fileSources.find(s => s.name === sourceName).id;
+                    const source = this.fileSources.find(s => s.id === sourceId);
+                    if(source) {
+                        sourceNames.push(source.name);
+                    }
+                }
+                p.sourceNames = sourceNames;
+            });
+  
+            // Save to disk
+            store.pipelines.pipelines = pipelines;
+        },
+        onAddNewSource(event)
         { 
-            let watcher = {
+            let source = {
                 id: _.guid(),
                 name: "",
-                path: "",
-                useProcessedDirectory: true,
+                type: -1,
+                sourceDirectory: "",
+                sourceExtensions: [],
+                useProcessedDirectory: false,
                 processedDirectory: "",
-                useOutputDirectory: true,
+                useOutputDirectory: false,
                 outputDirectory: "",
-                extensions: []
+                useErrorDirectory: false,
+                errorDirectory: ""
             };
-            this.fileWatchers.push(watcher);
+            this.fileSources.push(source);
         },
-        onDeleteWatcher(id)
+        onDeleteSource(id)
         {
             this.$dialog.openConfirm({
                 name: "confirm",
-                message: "Delete this file watcher?",
+                message: "Delete this file source?",
                 onYes: () => {
-                    this.fileWatchers = this.fileWatchers.filter(w => w.id != id);
+                    this.fileSources = this.fileSources.filter(w => w.id != id);
                     this.markForSave();
                 }
             })
         },
         onConfigurationSubmit(event)
         {
-            // TODO Ensure pipelines only refer to existing watchers?
+            this.updatePipelineFileSourceReferences();
             store.general.pathToUserActions = this.pathToUserActions;
-            store.general.fileWatchers = this.fileWatchers;
+            store.general.fileSources = _.simpleDeepClone(this.fileSources);
+            eventBus.$emit("filesource-update");
             this.$emit('changed');
             this.needSaved = false;
         }

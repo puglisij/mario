@@ -41,7 +41,7 @@
                         :key="pipeline.id"
                         :id.sync="pipeline.id"
                         :name.sync="pipeline.name"
-                        :watcherNames.sync="pipeline.watcherNames"
+                        :sourceNames.sync="pipeline.sourceNames"
                         :disabled.sync="pipeline.disabled"
                         :pipelines="pipelines"
                         @pipeline-delete="onPipelineDelete"
@@ -92,6 +92,8 @@ import APipeline from "./a-pipeline.vue";
 import APipelineAction from "./a-pipeline-action.vue";
 import SelectPipelineAction from "../dialog/select-pipeline-action.vue";
 
+// TODO: Add button to disable/enable all pipelines at once
+// TODO: Allow pipelines to be organized into groups, and groups can be run all at once?
 export default {
     name: "ThePipelines",
     components: {
@@ -132,6 +134,9 @@ export default {
             }
         }
     },
+    created() {
+        eventBus.$on("filesource-update", () => { this.refreshPipelineSourcesFromStorage(); });
+    },
     methods: {
         toLocalPipelines(value)
         {
@@ -150,6 +155,16 @@ export default {
             store.pipelines.pipelines = this.pipelines;
             this.needSaved = false;
         },
+        refreshPipelineSourcesFromStorage() 
+        {
+            // TODO: Using Vuex would probably be the best option for managing configuration changes
+            // in the store across the app. In such a case we would clone the configurations
+            // from store and store them in a Vuex instance.
+            store.pipelines.pipelines.forEach(p => {
+                let pipeline = this.getPipeline(p.id);
+                this.$set(pipeline, "sourceNames", p.sourceNames);
+            });
+        },
         /*---------------
             Pipelines
         ---------------*/
@@ -161,7 +176,7 @@ export default {
             this.pipelines.push({
                 id: _.guid(),
                 name: "",
-                watcherNames: [], 
+                sourceNames: [], 
                 disabled: false,
                 actions: []
             });

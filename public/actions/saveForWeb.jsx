@@ -12,8 +12,11 @@ action.saveForWeb = function saveForWeb(options)
         exportOptions.format = SaveDocumentType.JPEG;
         exportOptions.quality = options.quality || 70;
 
+    var file = new File(options.file);
+    IMAGE.addSavedFilePath(file.fsName);
+
     activeDocument.exportDocument(
-        new File(options.file), 
+        file, 
         ExportType.SAVEFORWEB, 
         exportOptions
     );

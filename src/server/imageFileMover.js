@@ -48,13 +48,29 @@ export default class ImageFileMover
     constructor() {}
 
     /**
-     * Moves the Image and its associated files to the given processed directory.
-     * Does nothing if Image does not contain any path values.
+     * Moves the given Image instances and associated files to the given processed directory.
+     * Also writes any errors to the output directory
+     * @param {Array<Image>} images 
+     */
+    async move(images) 
+    {
+        for(const image of images)
+        {
+            if(image.errors) {
+                if(image.useErrorDirectory) {
+                    await this._moveImage(image, image.errorDirectory);
+                }
+                this._writeError(image, image.errorDirectory || image.inputDirectory, image.errors.join('\n'));
+            } else if(image.useProcessedDirectory) {
+                await this._moveImage(image, image.processedDirectory);
+            }
+        }
+    }
+    /**
      * @param {Image} image 
      * @param {string} toDirectory target directory. Absolute or relative to input or data source path.
-     * @param {string} [errorMessage] optional error message to write to error.logs
      */
-    async move(image, toDirectory, errorMessage)
+    async _moveImage(image, toDirectory)
     {
         if(!toDirectory) {
             return Promise.resolve();
@@ -72,7 +88,6 @@ export default class ImageFileMover
         console.log("Moving file to directory: " + toDirectory);
         await this._makeDirectory(toDirectory);
         this._moveToDirectory(image, toDirectory);
-        this._writeError(image, toDirectory, errorMessage);
     }
     _makeDirectory(directory) 
     {
@@ -95,7 +110,7 @@ export default class ImageFileMover
             const toPath = upath.join(directory, basename);
             move(path, toPath, err => {
                 if(err) {
-                    console.error(err + "\nImage path could not be moved to " + toPath);
+                    console.warn(err + "\nImage path could not be moved to " + toPath);
                 }
             });
         }
@@ -103,8 +118,7 @@ export default class ImageFileMover
     _getImagePaths(image) 
     {
         const paths = [
-            image.inputImagePath,
-            image.inputDataPath
+            image.inputImagePath
         ];
         return paths.filter(p => !!p); // remove empty paths
     }
@@ -117,8 +131,8 @@ export default class ImageFileMover
         fs.writeFile(logPath, [   
             `\n`,
             `Time: ${new Date().toLocaleString()}`,
+            `initialInputImagePath: ${image.initialInputImagePath}`, 
             `inputImagePath: ${image.inputImagePath}`, 
-            `inputDataPath: ${image.inputDataPath}`, 
             message
         ].join(`\n`), 
         {

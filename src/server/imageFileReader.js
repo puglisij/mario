@@ -8,65 +8,84 @@ import ImageSourceType from './imageSourceType';
 export default class ImageFileReader
 {
     /**
-     * Create a reader used to generate an Image instance.
-     * If a json file is read, data will be parsed and available on the resulting Image instance.
+     * Create a reader used to generate an Image instance for processing by Adobe host
      */
     constructor() {}
 
     /**
-     * Create a new Image instance, using the image or json file path, if given.
-     * @param {String} [inputImagePath] the image or json file path. Path should be absolute unless it is an Open File in the Adobe application.
-     * @param {String} [outputDirectory] 
-     * @param {String} [processedDirectory]
+     * Create a new Image instance for processing by Adobe host
+     * @param {String} path the image path, json file path, document name (e.g. when using Active Document), or empty string. Path should be absolute
+     * @param {ImageSource} imageSource the image source that produced the path 
      * @param {boolean} [readMetadata = false] whether to read the image files metadata (slower)
      */
-    async read(path, outputDirectory = "", processedDirectory = "", readMetadata = false)
+    async read(path, imageSource, readMetadata = false)
     {
-        let inputImagePath = path || "";
+        let { useOutputDirectory, useProcessedDirectory, useErrorDirectory } = imageSource;
+        let { outputDirectory, processedDirectory, errorDirectory } = imageSource;
+        let initialInputImagePath = path || "";
+        let inputImagePath = initialInputImagePath;
         let inputDirectory = this._isPathDefinedAndAbsolute(path) ? uncSafePath.dirname(path) : "";
-        let inputDataPath = "";
         let data = {};
         let metadata = {};
         let pipelines = [];
-        if(this._isFile(inputImagePath)) 
+        
+        try 
         {
-            if(this._isJsonFile(inputImagePath)) 
+            if(this._isFile(inputImagePath)) 
             {
-                inputDataPath = inputImagePath;
-                data = await this._readJson(inputDataPath);
-                // Grab new image source path and other paths from json, if available
-                inputImagePath = this._ensureAbsolutePath(data.inputImagePath, inputDirectory);
-                outputDirectory = this._ensureAbsolutePath(data.outputDirectory, inputDirectory);
-                processedDirectory = this._ensureAbsolutePath(data.processedDirectory, inputDirectory);
-                pipelines = data.pipelines || [];
-            }
-            if(this._isFile(inputImagePath) && readMetadata) 
-            {
-                metadata = await this._readMetadata(inputImagePath);
+                if(this._isJsonFile(inputImagePath)) 
+                {
+                    data = await this._readJson(inputImagePath);
+                    pipelines = data.pipelines || [];
+                    // Grab new image source path and other paths from json, if available
+                    inputImagePath = this._ensureAbsolutePath(data.inputImagePath, inputDirectory);
+                    outputDirectory = this._ensureAbsolutePath(data.outputDirectory, inputDirectory);
+                    processedDirectory = this._ensureAbsolutePath(data.processedDirectory, inputDirectory);
+                    errorDirectory = this._ensureAbsolutePath(data.errorDirectory, inputDirectory);
+                }
+                if(this._isFile(inputImagePath) && readMetadata) 
+                {
+                    metadata = await this._readMetadata(inputImagePath);
+                }
             }
         }
+        catch(e) 
+        {
+            image.errors.push(e.toString());
+        }
+        finally 
+        {
+            useOutputDirectory = this._isDirectory(outputDirectory) ? useOutputDirectory : false;
+            useProcessedDirectory = this._isDirectory(processedDirectory) ? useProcessedDirectory : false;
+            useErrorDirectory = this._isDirectory(errorDirectory) ? useErrorDirectory : false;
 
-        const image = new Image();
-              image.inputImagePath = inputImagePath;        
-              image.inputDataPath = inputDataPath;
-              image.inputDirectory = inputDirectory;
-              image.outputDirectory = outputDirectory;
-              image.processedDirectory = processedDirectory;
-              image.data = data;
-              image.metadata = metadata;
-              image.pipelines = pipelines;
-        return image;
+            const image = new Image();
+            image.initialInputImagePath = initialInputImagePath;
+            image.inputImagePath = inputImagePath;        
+            image.inputDirectory = inputDirectory;
+            image.outputDirectory = useOutputDirectory ? outputDirectory : "";
+            image.useOutputDirectory = useOutputDirectory;
+            image.processedDirectory = useProcessedDirectory ? processedDirectory : "";
+            image.useProcessedDirectory = useProcessedDirectory;
+            image.errorDirectory = useErrorDirectory ? errorDirectory : "";
+            image.useErrorDirectory = useErrorDirectory;
+            image.data = data;
+            image.metadata = metadata;
+            image.pipelines = pipelines;
+
+            return image;
+        }
     }
     /**
      * Reads any json from the given data source, if it is json and it exists.
      * @returns {object}
      */
-    async _readJson(inputDataPath)
+    async _readJson(jsonFilePath)
     {
         return new Promise(resolve => {
-            fs.readFile(inputDataPath, { encoding: 'utf8' }, (error, data) => {
+            fs.readFile(jsonFilePath, { encoding: 'utf8' }, (error, data) => {
                 if(error) {
-                    throw new Error(`Image json ${inputDataPath} could not be read.`);
+                    throw new Error(`Image json ${jsonFilePath} could not be read.`);
                 }
                 resolve(JSON.parse(data));
             });
@@ -116,6 +135,13 @@ export default class ImageFileReader
     _isFile(path) {
         try {
             return fs.lstatSync(path || "").isFile();
+        } catch {
+            return false;
+        }
+    }
+    _isDirectory(path) {
+        try {
+            return fs.lstatSync(path || "").isDirectory();
         } catch {
             return false;
         }

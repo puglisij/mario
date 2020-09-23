@@ -3,46 +3,15 @@ import chokidar from 'chokidar';
 import upath from 'upath';
 import isUncPath from 'is-unc-path';
 import EventEmitter from "events";
+import ImageSource from './imageSource';
 import ImageSourceType from './imageSourceType';
 import host from '../host';
-
-
-class ImageSourcePath 
-{
-    /**
-     * Data object containing path (file or directory) and valid file extensions array for new image(s)
-     * @param {string} path 
-     * @param {string[]} validExtensions 
-     */
-    constructor(path, validExtensions) 
-    {
-        this.path = path;
-        this.extensions = validExtensions;
-    }
-}
-
-class ImageSource
-{
-    /**
-     * Data object containing context information for processing new images
-     * @param {ImageSourceType} sourceType e.g. ImageSourceType.FILEWATCHER
-     * @param {ImageSourcePath} [sourcePath] e.g. { path: "C:/images" }
-     * @param {string} [outputDirectory]
-     * @param {string} [processedDirectory]
-     */
-    constructor(sourceType, sourcePath, outputDirectory, processedDirectory)
-    {
-        this.sourceType = sourceType;
-        this.sourcePath = sourcePath;
-        this.outputDirectory = outputDirectory;
-        this.processedDirectory = processedDirectory;
-    }
-}
+import utils, { EDebounceType } from '../utils';
 
 
 let nextProducerId = 0;
 /**
- * Reads images from source described by ImageTap and produces file paths for consumption
+ * Reads images from source described by ImageSource and produces file paths for consumption
  * A producer has a single source.
  * A producer will not automatically deplete when sourcing from a File Watcher
  * IMPORTANT: Multiple producers should not be created for the same set of files
@@ -56,12 +25,22 @@ export default class ImageFileProducer extends EventEmitter
         this._imageSource = imageSource;
         this._fileWatcher = null;
         this._isDepleted = false;
+
+        // NOTE: We debounce in order to collect files from file watcher and emit them 
+        // in one lump. This helps avoid issues where shared files are moved at the end
+        // of an IMAGE process pre-maturely, when the next process also needs them.
+        // This isn't the best solution, since it is a completely blind process.
+        // A better option would be to submit explicit files for processing as one 'job',
+        // via a REST api or similar interface.
+        this._q = [];
+        this._emitQFiles = utils.debounce(this._emitQFiles, 5000, EDebounceType.Trailing);
     }
     get id() {
         return this._id;
     }
     produce()
     {
+        // TODO: Split source types into their own implementation of a producer interface?
         switch(this._imageSource.sourceType) 
         {
             case ImageSourceType.FILEWATCHER: this._sourceFileWatchers(); break;
@@ -87,13 +66,20 @@ export default class ImageFileProducer extends EventEmitter
     }
     _emitFiles(files) 
     {
-        // TODO: Emit ImageSource here? Is 'id' enough?
+        // TODO: Emit JOB instead of loose files?
+        // Emit ImageSource?
         this.emit("files", this._id, files);
+    }
+    _emitQFiles()
+    {
+        const files = this._q;
+        this._q = [];
+        this._emitFiles(files);
     }
     _sourceFileWatchers() 
     {
-        const watchPathRoot = this._imageSource.sourcePath.path;
-        const watchExtensions = this._imageSource.sourcePath.extensions;
+        const watchPathRoot = this._imageSource.sourceDirectory;
+        const watchExtensions = this._imageSource.sourceExtensions;
         const watchPaths = watchExtensions.map(ext => upath.join(watchPathRoot, "*." + ext));
 
         if(isUncPath(watchPathRoot)) {
@@ -103,17 +89,18 @@ export default class ImageFileProducer extends EventEmitter
             throw Error(`Watch path: ${watchPathRoot} does not exist.`);
         }
         const watcher = chokidar.watch(watchPaths, {
-            ignored: /^\./, 
+            ignored: /^\.|^manifest/, 
             depth: 0,
             usePolling: true,
             awaitWriteFinish: {
-                stabilityThreshold: 5000,
+                stabilityThreshold: 2000,
                 pollInterval: 5000
             }
         })
         .on("add", newPath => 
         {
-            this._emitFiles([newPath]);
+            this._q.push(newPath);
+            this._emitQFiles();
         });
 
         this._fileWatcher = watcher;
@@ -123,8 +110,8 @@ export default class ImageFileProducer extends EventEmitter
      */
     _sourceDirectory() 
     {
-        const directory = this._imageSource.sourcePath.path;
-        const extensions = this._imageSource.sourcePath.extensions;
+        const directory = this._imageSource.sourceDirectory;
+        const extensions = this._imageSource.sourceExtensions;
 
         fs.readdir(directory, { encoding: "utf8" }, (error, files) => {
             if(error) {
@@ -135,6 +122,9 @@ export default class ImageFileProducer extends EventEmitter
             {
                 files = files.map(file => upath.join(directory, file));
                 files = files.filter(file => {
+                    if(upath.basename(file).startsWith("manifest")) {
+                        return false;
+                    }
                     const ext = file.split('.').pop();
                     return extensions.includes(ext);
                 });
@@ -172,59 +162,3 @@ export default class ImageFileProducer extends EventEmitter
         });
     }
 }
-/**
- * Create an ImageFileProducer instance with a file watcher as its source
- * @param {string} directory directory which will be watched for new files
- * @param {string[]} extensions an array of valid extensions to read (e.g. "psd", "jpg", etc)
- * @param {string} outputDirectory directory where pipeline outputs will be written
- * @param {string} processedDirectory directory where source files will be moved to when finished processing
- */
-ImageFileProducer.withFileWatcher = function(directory, extensions, outputDirectory, processedDirectory) 
-{
-    return new ImageFileProducer(
-        new ImageSource(ImageSourceType.FILEWATCHER, new ImageSourcePath(directory, extensions), outputDirectory, processedDirectory)
-    );
-};
-/**
- * Create an ImageFileProducer instance with a directory as its source
- * @param {string} directory directory which will be watched for new files
- * @param {string[]} extensions an array of valid extensions to read (e.g. "psd", "jpg", etc)
- */
-ImageFileProducer.withDirectory = function(directory, extensions) 
-{
-    // TODO: Add outputDirectory, and processedDirectory options here
-    // TODO: Allow use of Directory AS the Source, instead of reading its files. Which means the Producer can produce directory paths, instead of just files
-    return new ImageFileProducer(
-        new ImageSource(ImageSourceType.DIRECTORY, new ImageSourcePath(directory, extensions))
-    );
-};
-/**
- * Create an ImageFileProducer instance with files open in Adobe as the source
- */
-ImageFileProducer.withOpenFiles = function() 
-{
-    // TODO: Add outputDirectory, and processedDirectory options here
-    return new ImageFileProducer(
-        new ImageSource(ImageSourceType.OPENFILES, null)
-    );
-};
-/**
- * Create an ImageFileProducer which emits a single empty string for a file path
- */
-ImageFileProducer.withBlank = function() 
-{
-    // TODO: Add outputDirectory, and processedDirectory options here
-    return new ImageFileProducer( 
-        new ImageSource(ImageSourceType.BLANK, null)
-    );
-};
-/**
- * Create an ImageFileProducer instance with the current active file in Adobe as the source
- */
-ImageFileProducer.withActiveDocument = function() 
-{
-    // TODO: Add outputDirectory, and processedDirectory options here
-    return new ImageFileProducer(
-        new ImageSource(ImageSourceType.ACTIVEDOCUMENT, null)
-    );
-};

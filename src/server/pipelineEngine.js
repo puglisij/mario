@@ -1,8 +1,10 @@
 import EventEmitter from "events";
 import _ from '../utils';
+import ArrayMap from '../arrayMap';
 import store from '../store';
 import host from '../host';
 import Image from './image';
+import ImageSource from './imageSource';
 import ImageFileMover from './imageFileMover';
 import ImageFileReader from './imageFileReader';
 import ImageFileProducer from './imageFileProducer';
@@ -16,6 +18,7 @@ export class PipelineEngine extends EventEmitter
         super();
         this._processingMutex = false; 
         this._state = PipelineEngineState.STOPPED;
+        this._pipelineJobId = 0;
 
         /**
          * Produder Id => [Pipeline Names...]
@@ -86,105 +89,67 @@ export class PipelineEngine extends EventEmitter
         console.log(`Image File Producer ${producer.id} added.`);
     }
     /**
-     * Run the given pipeline with files from the given source
+     * Run the given pipeline using its configured file source(s)
      * @param {string} pipelineName pipeline name
-     * @param {ImageSourceType} sourceType FILEWATCHER, DIRECTORY, or OPENFILES
-     * @param {string} sourcePath if sourceType is DIRECTORY
-     * @param {string} sourceExtensions if sourceType is DIRECTORY
      */
-    run(pipelineName, sourceType, sourcePath, sourceExtensions)
+    run(pipelineName)
     {
-        this._run([pipelineName], sourceType, sourcePath, sourceExtensions);
+        this._run([pipelineName]);
     }
     /**
-     * Run all pipelines with files from the given source
-     * @param {ImageSourceType} sourceType FILEWATCHER, DIRECTORY, OPENFILES, or BLANK
-     * @param {string} sourcePath if sourceType is DIRECTORY
-     * @param {string} sourceExtensions if sourceType is DIRECTORY
+     * Run all pipelines using their configured file source(s)
      */
-    runAll(sourceType, sourcePath, sourceExtensions)
+    runAll()
     {
         this._run(
-            store.pipelines.pipelines.map(p => p.name), 
-            sourceType, 
-            sourcePath, 
-            sourceExtensions
+            store.pipelines.pipelines.map(p => p.name)
         );
     }
-    _run(pipelineNames, sourceType, sourcePath, sourceExtensions) 
+    _run(pipelineNames) 
     {
         if(!this.isStopped()) {
             console.log("Pipeline engine is already running.");
             return;
         }
-        console.log(`Running pipelines: "${pipelineNames.join(",")}" with source: ${ImageSourceType.toKey(sourceType)}`);
-
+        console.log(`Running pipelines: "${pipelineNames.join(",")}"`);
         this.state = PipelineEngineState.IDLE;
-        switch(sourceType)
-        {
-            case ImageSourceType.FILEWATCHER: 
-                this._runWithFileWatchers(pipelineNames); break;
-            case ImageSourceType.DIRECTORY: 
-                this._runWithDirectory(pipelineNames, sourcePath, sourceExtensions); break;
-            case ImageSourceType.OPENFILES: 
-                this._runWithOpenFiles(pipelineNames); break;
-            case ImageSourceType.BLANK:
-                this._runWithBlank(pipelineNames); break;
-            case ImageSourceType.ACTIVEDOCUMENT: 
-                this._runWithActiveDocument(pipelineNames); break;
-            default: 
-                console.log(`ImageSourceType ${sourceType} not recognized.`);
-                this.state = PipelineEngineState.STOPPED;
-        }
-    }
-    _runWithFileWatchers(pipelineNames)
-    {
-        // Get all unique file watchers for given pipelines
-        let watcherNames = pipelineNames.reduce((arr, name) => {
-            const pipeline = this._getConfigurationByPipelineName(name);
-            return arr.concat(pipeline.watcherNames);
-        }, []);
-        watcherNames = _.unique(watcherNames); 
 
+        // Collect all unique file sources for given pipelines
+        let fileSourceNameToPipelineNames = new ArrayMap();
+        pipelineNames.forEach(pipelineName =>
+        {
+            const pipeline = this._getConfigurationByPipelineName(pipelineName);
+            const fileSourceNames = pipeline.sourceNames;
+            for(let fileSourceName of fileSourceNames) {
+                fileSourceNameToPipelineNames.set(fileSourceName, pipeline.name);
+            }
+        });
+        // Create dictionary for convenience
+        let fileSourceNameToFileSource = new Map();
+        store.general.fileSources.forEach(fileSource => {
+            fileSourceNameToFileSource.set(fileSource.name, fileSource);
+        });
         // IMPORTANT: We Do Not want multiple producers for the same files
         // Which would happen if we looped by each pipeline and created its producers
         // since there is a many-to-one relationship between pipelines and file watchers
-        for(const watcherName of watcherNames) 
+        for(let [fileSourceName, pipelineNames] of fileSourceNameToPipelineNames.map) 
         {
-            const fileWatcher = this._getFileWatcherByName(watcherName);
-            if(!fileWatcher) {
-                console.warn(`File watcher ${watcherName} not found.`);
-                continue;
-            }
-            const pipelineNames = this._getConfigurationsByFileWatcherName(watcherName).map(p => p.name);
-            const producer = ImageFileProducer.withFileWatcher(
-                fileWatcher.path, 
-                fileWatcher.extensions,
-                fileWatcher.outputDirectory,
-                fileWatcher.processedDirectory
+            // Create producer
+            const fileSource = fileSourceNameToFileSource.get(fileSourceName);
+            const imageSource = new ImageSource(
+                fileSource.type, 
+                fileSource.sourceDirectory, 
+                fileSource.sourceExtensions,
+                fileSource.useOutputDirectory, 
+                fileSource.outputDirectory, 
+                fileSource.useProcessedDirectory,
+                fileSource.processedDirectory,
+                fileSource.useErrorDirectory,
+                fileSource.errorDirectory
             );
+            const producer = new ImageFileProducer(imageSource);
             this._addFileProducer(producer, pipelineNames);
         }
-    }
-    _runWithDirectory(pipelineNames, directory, extensions) 
-    {
-        const producer = ImageFileProducer.withDirectory(directory, extensions);
-        this._addFileProducer(producer, pipelineNames);
-    }
-    _runWithOpenFiles(pipelineNames) 
-    {
-        const producer = ImageFileProducer.withOpenFiles();
-        this._addFileProducer(producer, pipelineNames);
-    }
-    _runWithBlank(pipelineNames) 
-    {
-        const producer = ImageFileProducer.withBlank();
-        this._addFileProducer(producer, pipelineNames);
-    }
-    _runWithActiveDocument(pipelineNames) 
-    {
-        const producer = ImageFileProducer.withActiveDocument();
-        this._addFileProducer(producer, pipelineNames);
     }
     pause() {
         if(this.isProcessing()) {
@@ -212,10 +177,6 @@ export class PipelineEngine extends EventEmitter
     {
         return this._producerIdToProducer.get(producerId);
     }
-    _getFileWatcherByName(watcherName)
-    {
-        return store.general.fileWatchers.find(w => w.name === watcherName);
-    }
     _getConfigurationsByPipelineNames(pipelineNames)
     {
         return store.pipelines.pipelines.filter(p => pipelineNames.includes(p.name));
@@ -229,9 +190,14 @@ export class PipelineEngine extends EventEmitter
         const pipelineNames = this._producerIdToPipelines.get(producerId);
         return store.pipelines.pipelines.filter(p => pipelineNames.includes(p.name));
     }
-    _getConfigurationsByFileWatcherName(watcherName) 
+    _getUniqueFileSourceNamesByPipelineNames(pipelineNames)
     {
-        return store.pipelines.pipelines.filter(p => p.watcherNames.includes(watcherName));
+        // Get all unique file sources for given pipelines
+        let sourceNames = pipelineNames.reduce((arr, name) => {
+            const pipeline = this._getConfigurationByPipelineName(name);
+            return arr.concat(pipeline.sourceNames);
+        }, []);
+        return _.unique(sourceNames);
     }
     _onProducerFile(producerId, files) 
     {
@@ -254,7 +220,7 @@ export class PipelineEngine extends EventEmitter
         if(this._processingMutex) return;
         this._processingMutex = true;
         this.state = PipelineEngineState.PROCESSING;
-        console.log(`Pipeline process loop started with ${this._imageFileQ.length} images.`);
+        console.log(`Pipeline process loop started with ${this._imageFileQ.length} images in queue.`);
  
         this._runWaitOneFrame()
         .then(this._runProcessStart.bind(this))
@@ -278,16 +244,17 @@ export class PipelineEngine extends EventEmitter
     }
     async _runProcessLoop()
     {
+        let processedImages = [];
         let qFile;
         while(qFile = this._imageFileQ.pop()) 
         {
             const { file, producerId } = qFile;
             console.log(`Reading next file ${file} from producer ${producerId}.`);
 
-            // Note: image 'pipelines' property takes precedence over pipelines listed for producer
+            // NOTE: image 'pipelines' property takes precedence over pipelines listed for producer
             const imageSource = this._getProducerById(producerId).getImageSource();
-            const image = await this._imageFileReader.read(file, imageSource.outputDirectory, imageSource.processedDirectory, store.general.doReadFileMetadata);
-            const pipelines = image.pipelines ? this._getConfigurationsByPipelineNames(image.pipelines) : this._getConfigurationsByProducerId(producerId);
+            const image = await this._imageFileReader.read(file, imageSource, store.general.doReadFileMetadata);
+            const pipelines = image.pipelines.length > 0 ? this._getConfigurationsByPipelineNames(image.pipelines) : this._getConfigurationsByProducerId(producerId);
             console.log(`Processing image: ${image.inputImagePath}`);
 
             try 
@@ -300,6 +267,8 @@ export class PipelineEngine extends EventEmitter
                         continue;
                     }
 
+                    image.pipeline = pipeline.name;
+                    image.jobId = this._pipelineJobId++;
                     await this._runPipelineStart(image, pipeline);
     
                     // For each action function
@@ -307,33 +276,35 @@ export class PipelineEngine extends EventEmitter
                     {
                         this.emit("action", action.actionName);
                         let result = await host.runActionWithParameters(action.actionName, action.parameters);
-                        this.emit("actionend", action.actionName);
-
+                        
                         if(this._stopCheck(result)) break;
                         await this._pauseCheck(result, store.general.pauseAfterEveryAction);
+                        this.emit("actionend", action.actionName);
                     }
 
-                    await this._runPipelineEnd(pipeline);
+                    await this._runPipelineEnd(image, pipeline);
     
                     if(this._stopCheck()) break;
                     await this._pauseCheck(null, store.general.pauseAfterEveryPipeline);
                 }
-
-                // TODO Utilize "useProcessedDirectory" and "useOutputDirectory" options
-                this._imageFileMover.move(image, image.processedDirectory || "./Processed");
             }
             catch(e)
             {
                 console.error(e);
+                image.errors.push(e.toString());
                 await this._pauseCheck(null, store.general.pauseOnExceptions);
-                this._imageFileMover.move(image, (image.processedDirectory || "") + "./Errored", e.toString());
             }
             finally
             {
+                processedImages.push(image);
                 await this._pauseCheck(null, store.general.pauseAfterEveryImage);
                 if(this._stopCheck()) break;
             }
         }
+
+        console.log(`Moving processed images...`);
+        // Move all files after all images in queue are processed
+        this._imageFileMover.move(processedImages);
     }
     _runProcessEnd()
     {
@@ -347,7 +318,7 @@ export class PipelineEngine extends EventEmitter
      */
     _runPipelineStart(image, pipeline)
     {
-        console.log(`Pipeline '${pipeline.name}' started.`);
+        console.log(`Pipeline '${pipeline.name}' started for job ${image.jobId}.`);
         this.emit("pipelinestart", pipeline.name);
         return host.runJsxWithThrow(`
         __PIPELINE = {
@@ -360,9 +331,9 @@ export class PipelineEngine extends EventEmitter
      * @param {object} pipeline the pipeline configuration object 
      * @returns {Promise}
      */
-    _runPipelineEnd(pipeline)
+    _runPipelineEnd(image, pipeline)
     {
-        console.log(`Pipeline '${pipeline.name}' ended.`);
+        console.log(`Pipeline '${pipeline.name}' ended for job ${image.jobId}.`);
         this.emit("pipelineend", pipeline.name);
         return host.runJsxWithThrow(`
         __PIPELINE.restoreUnits && __PIPELINE.restoreUnits(); 

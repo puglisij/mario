@@ -142,6 +142,13 @@ at /public/polyfil.jsx which is imported when Mario is opened. )
 
 --- 
 
+## Use Cases
+
+1. downsizing/upsizing input images
+2. create output image using template and input image(s)
+3. export/extract a dimensional portion of input images
+4. apply filters/effects
+
 ## Glossary & Conventions
 
 ### Misc
@@ -269,7 +276,7 @@ Resulting output files/images will be written to an output directory (default is
 ### Logging 
 
 If an exception occurs in the JSX while a pipeline is running, the current IMAGE (including anything at 'inputImagePath' or 'inputImages') 
-will be moved within an error directory (Error_<type>) inside the watched directory which initiated the process. 
+will be moved within an error directory (default is "./Errored") inside the watched directory which initiated the process. 
 An error message describing the exception will also be logged within the directory. 
 
 

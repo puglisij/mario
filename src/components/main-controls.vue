@@ -27,7 +27,7 @@
                 <button class="topcoat-button--large" 
                     type="button"
                     @click="onPipelineStop"
-                    title="Stop all pipelines and file watchers."
+                    title="Stop all pipelines and file sources."
                     v-show="!isStopped" 
                     >&#9724;</button>
             </div>
@@ -35,63 +35,20 @@
                 v-show="isMainDrawerOpen"
             >
                 <div class="column is-half-tablet">
-                    <h3 class="section-title">File Source</h3>
-                    <validation-provider
-                        class="flex"
-                        tag="label"
-                        rules="required"
-                        v-slot="{ errors }"
-                    >
-                        <select class="topcoat-text-input flex-grow" v-model="imageSource.type"> 
-                            <option v-for="option in imageSourceTypeOptions" :value="option.value" :key="option.value">
-                                {{ option.text }} 
-                            </option>
-                        </select>
-                        <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
-                    </validation-provider>
-                    <validation-provider 
-                        slim
-                        :rules="{ required: isSourceADirectory, pathunc: { allowed: false }, pathexists: true }" 
-                        v-slot="{ errors }"
-                        v-if="isSourceADirectory"
-                    >
-                        <a-folder-input
-                            title="The source folder containing files for processing."
-                            :errors="errors"
-                            v-model="imageSource.directory"
-                        >
-                            Source files from this folder
-                        </a-folder-input>
-                    </validation-provider>
-                    <!-- <a-checkbox v-model="useRawDirectory">
-                        Use directory itself as the input. Don't its contents?
-                    </a-checkbox> -->
-                    <validation-provider 
-                        slim
-                        :rules="{ required: isSourceADirectory }" 
-                        v-slot="{ errors }"
-                        v-if="isSourceADirectory"
-                    >
-                        <a-extensions-input
-                            title="Either multiple image extensions, or json (exclusive). A comma delimited list."
-                            :errors="errors"
-                            v-model="imageSource.extensions"
-                        >
-                            Only these Extensions
-                        </a-extensions-input>
-                    </validation-provider>
-                </div>
-                <div class="column is-half-tablet">
                     <h3 class="section-title">Pipelines Status</h3>
                     <div>{{ pipelineEngineStateText }}</div>
                     <h3 class="section-title" v-show="pipelineActionStateText">Action</h3>
                     <div>{{ pipelineActionStateText }}</div>
                     <!-- <div v-if="isInitializing">Initializing<wait-dots/></div> -->
                 </div>
+                <div class="column is-half-tablet">
+                    <h3 class="section-title">Current File Source</h3>
+
+                </div>
             </div>
             <div class="main-controls__drawer-toggle" :class="{ active: isMainDrawerOpen }">
                 <button 
-                    class="topcoat-button" 
+                    class="topcoat-button--large" 
                     type="button"
                     @click="isMainDrawerOpen = !isMainDrawerOpen"
                 >Source &amp; Status <span>❱</span></button>
@@ -108,10 +65,6 @@ import store from "../store";
 import eventBus from "../eventBus";
 import Server from '../server';
 import PipelineEngineState from '../server/pipelineEngineState';
-import ImageSourceType from '../server/imageSourceType';
-import AFolderInput from "./a-folder-input.vue";
-import AExtensionsInput from "./a-extensions-input.vue";
-import ACheckbox from "./a-checkbox.vue";
 import WaitDots from './wait-dots.vue';
 
 export default {
@@ -119,34 +72,23 @@ export default {
     components: {
         ValidationObserver,
         ValidationProvider,
-        AFolderInput,
-        AExtensionsInput,
-        ACheckbox,
         WaitDots
     },
     data() {
         return {
             pipelineEngineState: Server.pipelineEngine.state,
             pipelineActionStateText: "",
-            isMainDrawerOpen: store.general.isMainDrawerOpen,
-            imageSource: _.simpleDeepClone(store.general.imageSource),
-            imageSourceTypeOptions: [
-                { text: "Active Document", value: ImageSourceType.ACTIVEDOCUMENT },
-                { text: "Open Files", value: ImageSourceType.OPENFILES }, 
-                { text: "Directory", value: ImageSourceType.DIRECTORY }, 
-                { text: "File Watchers", value: ImageSourceType.FILEWATCHER }, 
-                { text: "None", value: ImageSourceType.BLANK }
-            ]
+            isMainDrawerOpen: store.general.isMainDrawerOpen
         }
     },
     watch: {
-        isMainDrawerOpen: v => { store.general.isMainDrawerOpen = v; },
-        imageSource: {
-            deep: true, 
-            handler: function(v) {
-                store.general.imageSource = v;
-            }
-        }
+        isMainDrawerOpen: v => { store.general.isMainDrawerOpen = v; }
+        // imageSource: {
+        //     deep: true, 
+        //     handler: function(v) {
+        //         store.general.imageSource = v;
+        //     }
+        // }
     },
     computed: {
         canPause() {
@@ -162,9 +104,6 @@ export default {
         isProcessing() {
             return this.pipelineEngineState == PipelineEngineState.PROCESSING;
         },
-        isSourceADirectory() {
-            return this.imageSource.type == ImageSourceType.DIRECTORY;
-        },
         pipelineEngineStateText() {
             return PipelineEngineState.toKey(this.pipelineEngineState);
         }
@@ -172,7 +111,7 @@ export default {
     created() 
     {
         eventBus.$on("pipeline-play", pipelineName => {
-            Server.pipelineEngine.run(pipelineName, this.imageSource.type, this.imageSource.directory, this.imageSource.extensions);
+            Server.pipelineEngine.run(pipelineName);
         });
         Server.pipelineEngine.on("state", state => {
             this.pipelineEngineState = state;
@@ -193,7 +132,7 @@ export default {
                 name: "confirm",
                 message: "This will run all pipelines with the given source. Continue?",
                 onYes: () => {
-                    Server.pipelineEngine.runAll(this.imageSource.type, this.imageSource.directory, this.imageSource.extensions);
+                    Server.pipelineEngine.runAll();
                 }
             });
         },

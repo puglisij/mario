@@ -43,6 +43,7 @@ export default {
         },
         onSelect(actionName) 
         {
+            // TODO: Wait spinner
             Server.actions.getActionDescriptorByName(actionName)
             .then(actionDescriptor => {
                 this.$emit('onSelect', actionDescriptor);
