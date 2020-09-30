@@ -3,7 +3,27 @@ import upath from 'upath';
 import uncSafePath from '../unc-safe-path';
 import fs from 'fs';
 import Image from './image';
-import ImageSourceType from './imageSourceType';
+
+
+/**
+ * Recursive directory creation. Same signature as fs.mkdir()
+ * This exists because { recursive: true } option not supported prior to Node v10.22
+ * @param {*} dirPath 
+ * @param {*} mode 
+ * @param {*} callback 
+ */
+function mkdirp(dirPath, mode, callback) 
+{
+    fs.mkdir(dirPath, mode, function(err) {
+        if (err && err.code === 'ENOENT') {
+            const parentPath = upath.dirname(dirPath);
+            mkdirp(parentPath, mode, callback);
+            fs.mkdir(dirPath, mode, callback);
+        } else {
+            callback && callback(err);
+        }
+    });
+}
 
 export default class ImageFileReader
 {
@@ -14,6 +34,7 @@ export default class ImageFileReader
 
     /**
      * Create a new Image instance for processing by Adobe host
+     * NOTE: When 'path' is a json file, directories will be automatically created for output, processed, and error directories
      * @param {String} path the image path, json file path, document name (e.g. when using Active Document), or empty string. Path should be absolute
      * @param {ImageSource} imageSource the image source that produced the path 
      * @param {boolean} [readMetadata = false] whether to read the image files metadata (slower)
@@ -28,7 +49,8 @@ export default class ImageFileReader
         let data = {};
         let metadata = {};
         let pipelines = [];
-        
+        let image = new Image();
+
         try 
         {
             if(this._isFile(inputImagePath)) 
@@ -37,11 +59,16 @@ export default class ImageFileReader
                 {
                     data = await this._readJson(inputImagePath);
                     pipelines = data.pipelines || [];
+                    pipelines = (typeof pipelines === "string") ? pipelines.split(',') : pipelines;
+                    
                     // Grab new image source path and other paths from json, if available
                     inputImagePath = this._ensureAbsolutePath(data.inputImagePath, inputDirectory);
                     outputDirectory = this._ensureAbsolutePath(data.outputDirectory, inputDirectory);
                     processedDirectory = this._ensureAbsolutePath(data.processedDirectory, inputDirectory);
                     errorDirectory = this._ensureAbsolutePath(data.errorDirectory, inputDirectory);
+                    useOutputDirectory = await this._makeDirectory(outputDirectory);
+                    useProcessedDirectory = await this._makeDirectory(processedDirectory);
+                    useErrorDirectory = await this._makeDirectory(errorDirectory);
                 }
                 if(this._isFile(inputImagePath) && readMetadata) 
                 {
@@ -55,20 +82,15 @@ export default class ImageFileReader
         }
         finally 
         {
-            useOutputDirectory = this._isDirectory(outputDirectory) ? useOutputDirectory : false;
-            useProcessedDirectory = this._isDirectory(processedDirectory) ? useProcessedDirectory : false;
-            useErrorDirectory = this._isDirectory(errorDirectory) ? useErrorDirectory : false;
-
-            const image = new Image();
             image.initialInputImagePath = initialInputImagePath;
             image.inputImagePath = inputImagePath;        
             image.inputDirectory = inputDirectory;
-            image.outputDirectory = useOutputDirectory ? outputDirectory : "";
             image.useOutputDirectory = useOutputDirectory;
-            image.processedDirectory = useProcessedDirectory ? processedDirectory : "";
+            image.outputDirectory = useOutputDirectory ? outputDirectory : "";
             image.useProcessedDirectory = useProcessedDirectory;
-            image.errorDirectory = useErrorDirectory ? errorDirectory : "";
+            image.processedDirectory = useProcessedDirectory ? processedDirectory : "";
             image.useErrorDirectory = useErrorDirectory;
+            image.errorDirectory = useErrorDirectory ? errorDirectory : "";
             image.data = data;
             image.metadata = metadata;
             image.pipelines = pipelines;
@@ -133,17 +155,25 @@ export default class ImageFileReader
         return upath.extname(path) === ".json";
     }
     _isFile(path) {
-        try {
-            return fs.lstatSync(path || "").isFile();
-        } catch {
-            return false;
-        }
+        return fs.lstatSync(path || "").isFile();
     }
     _isDirectory(path) {
-        try {
-            return fs.lstatSync(path || "").isDirectory();
-        } catch {
-            return false;
-        }
+        return fs.lstatSync(path || "").isDirectory();
+    }
+    _makeDirectory(directory) 
+    {
+        return new Promise((resolve, reject) => {
+            if(!directory) {
+                resolve(false);
+                return;
+            }
+            mkdirp(directory, null, err => {
+                if(err && err.code != "EEXIST") {
+                    reject(err + "\nCould not create directory.");
+                } else {
+                    resolve(true);
+                }
+            });
+        });
     }
 }

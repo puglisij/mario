@@ -289,6 +289,7 @@ An error message describing the exception will also be logged within the directo
 - Sync git version tags with manifest.xml 
 - Expand REST API to support remote image processing
 - Move actions out extension package and into an external, configurable directory. This would allow the Extendscript actions to be shared by other Panels.
+- Update UI so file sources can collapse
 
 ---
 

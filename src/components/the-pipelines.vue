@@ -43,6 +43,7 @@
                         :name.sync="pipeline.name"
                         :sourceNames.sync="pipeline.sourceNames"
                         :disabled.sync="pipeline.disabled"
+                        :collapsed.sync="pipeline.collapsed"
                         :pipelines="pipelines"
                         @pipeline-delete="onPipelineDelete"
                         @pipeline-edit="onPipelineEdit"
@@ -178,6 +179,7 @@ export default {
                 name: "",
                 sourceNames: [], 
                 disabled: false,
+                collapsed: false,
                 actions: []
             });
         },

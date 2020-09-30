@@ -1,139 +1,165 @@
 <template>
     <div class="source">
-        <label v-if="canEditName">
-            <div class="label">Name</div>
-            <validation-provider 
-                :rules="{ required: true, custom: { fn: validateName } }" 
+        <div class="source-head">
+            <span class="source-handle" title="Drag to re-order">&#9776;</span>
+            <span v-if="localSource.collapsed">{{localSource.name}}</span>
+            <button 
+                class="topcoat-button--large--quiet expand right"
+                :class="{ open: !localSource.collapsed }"
+                @click="localSource.collapsed = !localSource.collapsed"
+            ><i>&#10097;</i></button>
+        </div>
+
+        <div class="source-body" v-if="!localSource.collapsed">
+            <label v-if="canEditName">
+                <div class="label">Name</div>
+                <validation-provider 
+                    :rules="{ required: true, custom: { fn: validateName } }" 
+                    v-slot="{ errors }"
+                >
+                    <input class="topcoat-text-input full-width" 
+                        type="text" 
+                        placeholder="My Image Source Name" 
+                        title="This can be referenced by Pipelines"
+                        v-model="localSource.name"
+                    />
+                    <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
+                </validation-provider>
+            </label>
+
+            <!-- Source Type -->
+            <validation-provider
+                tag="label"
+                :rules="{ custom: { fn: validateType }}"
                 v-slot="{ errors }"
             >
-                <input class="topcoat-text-input full-width" 
-                    type="text" 
-                    placeholder="My Image Source Name" 
-                    title="This can be referenced by Pipelines"
-                    v-model="localSource.name"
-                />
+                <div class="label">Source Type</div>
+                <select class="topcoat-text-input flex-grow" v-model="localSource.type"> 
+                    <option v-for="option in imageSourceTypeOptions" 
+                        :value="option.value" 
+                        :key="option.value"
+                    >
+                        {{ option.text }} 
+                    </option>
+                </select>
                 <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
             </validation-provider>
-        </label>
 
-        <!-- Source Type -->
-        <validation-provider
-            tag="label"
-            :rules="{ custom: { fn: validateType }}"
-            v-slot="{ errors }"
-        >
-            <div class="label">Source Type</div>
-            <select class="topcoat-text-input flex-grow" v-model="localSource.type"> 
-                <option v-for="option in imageSourceTypeOptions" 
-                    :value="option.value" 
-                    :key="option.value"
+            <!-- Source folder -->
+            <validation-provider 
+                slim
+                :rules="{ required: isSourceExternalFiles, 
+                    pathunc: false, 
+                    pathrelative: { allowed: false },
+                    pathexists: true, 
+                    custom: { fn: validateSourceDirectory } }" 
+                v-slot="{ errors }"
+                v-if="isSourceExternalFiles"
+            >
+                <a-folder-input
+                    title="The source folder containing files for processing."
+                    :errors="errors"
+                    v-model="localSource.sourceDirectory"
                 >
-                    {{ option.text }} 
-                </option>
-            </select>
-            <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
-        </validation-provider>
+                    Source files from this Folder
+                </a-folder-input>
+            </validation-provider>
 
-        <!-- Source folder -->
-        <validation-provider 
-            slim
-            :rules="{ required: isSourceExternalFiles, pathunc: false, pathexists: true, custom: { fn: validatePath }}" 
-            v-slot="{ errors }"
-            v-if="isSourceExternalFiles"
-        >
-            <a-folder-input
-                title="The source folder containing files for processing."
-                :errors="errors"
-                v-model="localSource.sourceDirectory"
+            <!-- Processed folder -->
+            <a-checkbox v-model="localSource.useProcessedDirectory" v-if="isSourceExternalFiles">
+                Use Processed Folder?
+            </a-checkbox>
+            <validation-provider 
+                slim
+                :rules="{ required: localSource.useProcessedDirectory && isSourceExternalFiles, 
+                    pathunc: { allowed: false }, 
+                    pathrelative: { allowed: false }, 
+                    pathexists: true }" 
+                v-slot="{ errors }"
+                v-if="localSource.useProcessedDirectory && isSourceExternalFiles"
             >
-                Source files from this Folder
-            </a-folder-input>
-        </validation-provider>
+                <a-folder-input
+                    title="Source files will be moved here after pipeline(s) have run."
+                    :errors="errors"
+                    v-model="localSource.processedDirectory"
+                >
+                    Move processed files to this Folder
+                </a-folder-input>
+            </validation-provider>
 
-        <!-- Processed folder -->
-        <a-checkbox v-model="localSource.useProcessedDirectory" v-if="isSourceExternalFiles">
-            Use Processed Folder?
-        </a-checkbox>
-        <validation-provider 
-            slim
-            :rules="{ required: localSource.useProcessedDirectory && isSourceExternalFiles, pathunc: { allowed: false }, pathexists: true }" 
-            v-slot="{ errors }"
-            v-if="localSource.useProcessedDirectory && isSourceExternalFiles"
-        >
-            <a-folder-input
-                title="Source files will be moved here after pipeline(s) have run."
-                :errors="errors"
-                v-model="localSource.processedDirectory"
+            <!-- Output folder -->
+            <a-checkbox v-model="localSource.useOutputDirectory">
+                Use Output Folder?
+            </a-checkbox>
+            <validation-provider 
+                slim
+                :rules="{ required: localSource.useOutputDirectory, 
+                    pathunc: { allowed: false }, 
+                    pathrelative: { allowed: false },
+                    pathexists: true }" 
+                v-slot="{ errors }"
+                v-if="localSource.useOutputDirectory"
             >
-                Move processed files to this Folder
-            </a-folder-input>
-        </validation-provider>
+                <a-folder-input
+                    title="Files generated by pipeline(s) will be written here."
+                    :errors="errors"
+                    v-model="localSource.outputDirectory"
+                >
+                    Output files to this Folder
+                </a-folder-input>
+            </validation-provider>
 
-        <!-- Output folder -->
-        <a-checkbox v-model="localSource.useOutputDirectory">
-            Use Output Folder?
-        </a-checkbox>
-        <validation-provider 
-            slim
-            :rules="{ required: localSource.useOutputDirectory, pathunc: { allowed: false }, pathexists: true }" 
-            v-slot="{ errors }"
-            v-if="localSource.useOutputDirectory"
-        >
-            <a-folder-input
-                title="Files generated by pipeline(s) will be written here."
-                :errors="errors"
-                v-model="localSource.outputDirectory"
+            <!-- Error folder -->
+            <a-checkbox v-model="localSource.useErrorDirectory" v-if="isSourceExternalFiles">
+                Use Error Folder?
+            </a-checkbox>
+            <validation-provider 
+                slim
+                :rules="{ required: localSource.useErrorDirectory && isSourceExternalFiles, 
+                    pathunc: { allowed: false }, 
+                    pathrelative: { allowed: false },
+                    pathexists: true }" 
+                v-slot="{ errors }"
+                v-if="localSource.useErrorDirectory && isSourceExternalFiles"
             >
-                Output files to this Folder
-            </a-folder-input>
-        </validation-provider>
+                <a-folder-input
+                    title="Used when an error is encountered during processing."
+                    :errors="errors"
+                    v-model="localSource.errorDirectory"
+                >
+                    Move errored files and write error logs to this Folder
+                </a-folder-input>
+            </validation-provider>
 
-        <!-- Error folder -->
-        <a-checkbox v-model="localSource.useErrorDirectory" v-if="isSourceExternalFiles">
-            Use Error Folder?
-        </a-checkbox>
-        <validation-provider 
-            slim
-            :rules="{ required: localSource.useErrorDirectory && isSourceExternalFiles, pathunc: { allowed: false }, pathexists: true }" 
-            v-slot="{ errors }"
-            v-if="localSource.useErrorDirectory && isSourceExternalFiles"
-        >
-            <a-folder-input
-                title="Used when an error is encountered during processing."
-                :errors="errors"
-                v-model="localSource.errorDirectory"
+            <!-- Extensions -->
+            <validation-provider 
+                slim
+                rules="required" 
+                v-slot="{ errors }"
             >
-                Move errored files and write error logs to this Folder
-            </a-folder-input>
-        </validation-provider>
-
-        <!-- Extensions -->
-        <validation-provider 
-            slim
-            rules="required" 
-            v-slot="{ errors }"
-        >
-            <a-extensions-input 
-                title="Either multiple file extensions, or json (exclusive). A comma delimited list."
-                :errors="errors"
-                v-model="localSource.sourceExtensions"
-            >   
-                Only these file extensions
-            </a-extensions-input>
-        </validation-provider>
-        
-        <button class="topcoat-button--large--quiet" type="button"
-            @click.prevent="onDelete"
-        >X</button>
+                <a-extensions-input 
+                    title="Either multiple file extensions, or json (exclusive). A comma delimited list."
+                    :errors="errors"
+                    v-model="localSource.sourceExtensions"
+                >   
+                    Only these file extensions
+                </a-extensions-input>
+            </validation-provider>
+            
+            <button class="topcoat-button--large--quiet" type="button"
+                @click.prevent="onDelete"
+            >X</button>
+        </div>
     </div>
 </template>
 
 <script>
 import { ValidationProvider, ValidationObserver } from "vee-validate";
 
+import upath from "upath";
 import _ from "../utils";
-import ImageSource from '../server/imageSource';
-import ImageSourceType from '../server/imageSourceType';
+import ImageSource from "../server/imageSource";
+import ImageSourceType from "../server/imageSourceType";
 import AFolderInput from "./a-folder-input.vue";
 import AExtensionsInput from "./a-extensions-input.vue";
 import ACheckbox from "./a-checkbox.vue";
@@ -186,7 +212,8 @@ export default {
     watch: {
         localSource: {
             deep: true,
-            handler: function(v) {
+            handler: function(v) 
+            {
                 this.$emit("change", v);
             }
         }
@@ -199,13 +226,14 @@ export default {
                 message: "Please select a source type"
             }
         },
-        validatePath(value) 
+        validateSourceDirectory(value) 
         {
             // Validate that a image source does not exist already for directory.
             // Multiple file producers for the same files can cause issues.
-            const sourceDirectory = value.trim();
-            // TODO: Compare normalized, lowercased paths
-            const found = this.sources.filter(s => s.sourceDirectory == sourceDirectory).length;
+            const sourceDirectory = value.trim().toLowerCase();
+            const found = this.sources.filter(s => {
+                return upath.normalize(s.sourceDirectory.toLowerCase()) === upath.normalize(sourceDirectory);
+            }).length;
 
             return {
                 valid: found === 1,

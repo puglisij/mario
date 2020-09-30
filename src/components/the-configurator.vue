@@ -44,14 +44,21 @@
             </section>
             <h3 class="section-title">File Sources</h3>
             <section class="section-content">
-                <a-file-source
-                    v-for="(source, index) in fileSources"
-                    :key="source.id"
-                    v-model="fileSources[index]"
-                    :sources="fileSources"
-                    @change="onSourceChange"
-                    @delete="onDeleteSource"
-                ></a-file-source>
+                <draggable 
+                    v-model="fileSources"
+                    draggable=".source"
+                    handle=".source-handle"
+                    group="fileSources" 
+                >
+                    <a-file-source
+                        v-for="(source, index) in fileSources"
+                        :key="source.id"
+                        v-model="fileSources[index]"
+                        :sources="fileSources"
+                        @change="onSourceChange"
+                        @delete="onDeleteSource"
+                    ></a-file-source>
+                </draggable>
             </section>
             <div class="configurator-buttons">
                 <button 
@@ -72,6 +79,7 @@
 
 <script>
 import { ValidationProvider, ValidationObserver } from "vee-validate";
+import Draggable from 'vuedraggable';
 
 import _ from "../utils";
 import store from "../store";
@@ -88,6 +96,7 @@ import Server from '../server';
 export default {
     name: "TheConfigurator",
     components: {
+        Draggable,
         ValidationObserver,
         ValidationProvider,
         AFolderDialogButton,

@@ -18,7 +18,6 @@ export class PipelineEngine extends EventEmitter
         super();
         this._processingMutex = false; 
         this._state = PipelineEngineState.STOPPED;
-        this._pipelineJobId = 0;
 
         /**
          * Produder Id => [Pipeline Names...]
@@ -138,6 +137,7 @@ export class PipelineEngine extends EventEmitter
             const fileSource = fileSourceNameToFileSource.get(fileSourceName);
             const imageSource = new ImageSource(
                 fileSource.type, 
+                fileSource.name,
                 fileSource.sourceDirectory, 
                 fileSource.sourceExtensions,
                 fileSource.useOutputDirectory, 
@@ -240,35 +240,43 @@ export class PipelineEngine extends EventEmitter
     }
     _runProcessStart()
     {
+        this.emit("processstart");
         return host.runJsxWithThrow(`app.displayDialogs = DialogModes.NO;`);
     }
     async _runProcessLoop()
     {
+        // TODO: Split this function out into separate class(s) (e.g. ImageProcessor)
+        // where every responsibility is handled by only one class and each individual kind of error can only occur in one class
         let processedImages = [];
         let qFile;
         while(qFile = this._imageFileQ.pop()) 
         {
             const { file, producerId } = qFile;
             console.log(`Reading next file ${file} from producer ${producerId}.`);
+            this.emit("processimage", file);
 
             // NOTE: image 'pipelines' property takes precedence over pipelines listed for producer
-            const imageSource = this._getProducerById(producerId).getImageSource();
+            const producer =  this._getProducerById(producerId);
+            const imageSource = producer.getImageSource();
             const image = await this._imageFileReader.read(file, imageSource, store.general.doReadFileMetadata);
-            const pipelines = image.pipelines.length > 0 ? this._getConfigurationsByPipelineNames(image.pipelines) : this._getConfigurationsByProducerId(producerId);
+            const pipelines = (image.pipelines.length > 0) 
+                ? this._getConfigurationsByPipelineNames(image.pipelines) 
+                : this._getConfigurationsByProducerId(producerId);
             console.log(`Processing image: ${image.inputImagePath}`);
+            console.dir(_.simpleDeepClone(image));
 
-            try 
+            // For each Pipeline configuration
+            for(const pipeline of pipelines) 
             {
-                // For each Pipeline configuration
-                for(const pipeline of pipelines) 
-                {
-                    if(pipeline.disabled) {
-                        console.log(`Skipping disabled pipeline '${pipeline.name}'`);
-                        continue;
-                    }
+                if(pipeline.disabled) {
+                    console.log(`Skipping disabled pipeline '${pipeline.name}'`);
+                    continue;
+                }
 
+                try 
+                {
                     image.pipeline = pipeline.name;
-                    image.jobId = this._pipelineJobId++;
+                    image.jobId = _.guid();
                     await this._runPipelineStart(image, pipeline);
     
                     // For each action function
@@ -281,33 +289,37 @@ export class PipelineEngine extends EventEmitter
                         await this._pauseCheck(result, store.general.pauseAfterEveryAction);
                         this.emit("actionend", action.actionName);
                     }
-
+                }
+                catch(e)
+                {
+                    console.error(e);
+                    image.errors.push(e.toString());
+                    await this._pauseCheck(null, store.general.pauseOnExceptions);
+                }
+                finally
+                {
                     await this._runPipelineEnd(image, pipeline);
-    
+
+                    if(image.errors.length) break;
                     if(this._stopCheck()) break;
                     await this._pauseCheck(null, store.general.pauseAfterEveryPipeline);
                 }
             }
-            catch(e)
-            {
-                console.error(e);
-                image.errors.push(e.toString());
-                await this._pauseCheck(null, store.general.pauseOnExceptions);
-            }
-            finally
-            {
-                processedImages.push(image);
-                await this._pauseCheck(null, store.general.pauseAfterEveryImage);
-                if(this._stopCheck()) break;
-            }
+            
+            processedImages.push(image);
+            await this._pauseCheck(null, store.general.pauseAfterEveryImage);
+            if(this._stopCheck()) break;
         }
 
-        console.log(`Moving processed images...`);
-        // Move all files after all images in queue are processed
-        this._imageFileMover.move(processedImages);
+        if(!this._stopCheck())
+        {
+            console.log(`Moving ${processedImages.length} processed images...`);
+            this._imageFileMover.move(processedImages);
+        }
     }
     _runProcessEnd()
     {
+        this.emit("processend");
         return host.runJsxWithThrow(`$.gc();`);
     }
     /**
@@ -335,7 +347,7 @@ export class PipelineEngine extends EventEmitter
     {
         console.log(`Pipeline '${pipeline.name}' ended for job ${image.jobId}.`);
         this.emit("pipelineend", pipeline.name);
-        return host.runJsxWithThrow(`
+        return host.runJsx(`
         __PIPELINE.restoreUnits && __PIPELINE.restoreUnits(); 
         IMAGE=null;
         `);

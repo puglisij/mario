@@ -144,13 +144,6 @@ h4 {
     flex-grow: 1;
     flex-shrink: 1;
     padding: .5rem;
-
-    @at-root .dark & {
-        border: 1px solid $dark-section-border;
-    }
-    @at-root .light & {
-        border: 1px solid $light-section-border;
-    }
 }
 .section-title {
     font-weight: bold;
@@ -233,6 +226,13 @@ $space-2: $column-gap * 2;
 .ml-auto { margin-left: auto }
 .mr-auto { margin-right: auto }
 .mx-auto { margin-left: auto; margin-right: auto; }
+
+.left {
+    float: left;
+}
+.right {
+    float: right;
+}
 
 //-------------------
 // Topcoat Overrides
@@ -358,6 +358,11 @@ label {
         background: rgba(255,0,0,0.03);
     }
 }
+
+.pipeline-body,
+.source-body {
+    padding-left: 2rem;
+}
 /*
     -----------------------------------------------
     | Handle | Expand | Data                      |
@@ -365,7 +370,6 @@ label {
     |        |        | Parameters                |
     _______________________________________________
 */
-.pipeline,
 .action {
     align-items: flex-start;
     display: flex;
@@ -392,25 +396,26 @@ label {
 
 .pipeline-handle,
 .action-handle,
-.action-expand {
+.source-handle,
+.expand {
     padding-left: $column-gap * 2;
     padding-right: $column-gap * 2;
 }
 .pipeline-handle,
-.action-handle {
+.action-handle,
+.source-handle {
     cursor: row-resize;
 }
-.action-expand {
+.expand {
     cursor: pointer;
     i {
-        opacity: .2;
+        font-style: normal;
     }
-    &.show i {
-        opacity: 1
+    &.open {
+        transform: rotateZ(90deg);
     }
 }
 
-.pipeline-data,
 .action-data {
     display: block;
     flex-grow: 1;

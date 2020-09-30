@@ -1,9 +1,29 @@
 <template>
-    <div class="pipeline" :class="{ disabled: disabled }">
-        <span class="pipeline-handle"
-            title="Drag to re-order">&#9776;</span>
+    <div class="pipeline" :class="{ disabled: disabled, collapsed: collapsed }">
+        <div class="pipeline-head">
+            <span 
+                class="pipeline-handle"
+                title="Drag to re-order"
+            >&#9776;</span>
+            <button 
+                class="topcoat-button--large--quiet mx1" 
+                type="button"
+                title="Run this pipeline with its configured source(s)"
+                v-if="collapsed"
+                @click="onPlay"
+                :disabled="disabled_"
+            >&#9654;</button>
+            <span 
+                v-if="collapsed_"
+            >{{name_}}</span>
+            <button 
+                class="topcoat-button--large--quiet expand right"
+                :class="{ open: !collapsed }"
+                @click="collapsed_ = !collapsed_"
+            ><i>&#10097;</i></button>
+        </div>
 
-        <div class="pipeline-data">
+        <div class="pipeline-body" v-if="!collapsed_">
             <validation-provider
                 tag="label"
                 :rules="{ required: true, custom: { fn: validateName } }" 
@@ -41,14 +61,16 @@
             <button 
                 class="topcoat-button--large--quiet" 
                 type="button"
-                @click="onEdit"
-            >Edit</button>
+                title="Run this pipeline with its configured source(s)"
+                @click="onPlay"
+                @disabled="disabled_"
+                :disabled="disabled_"
+            >&#9654;</button>
             <button 
                 class="topcoat-button--large--quiet" 
                 type="button"
-                title="Run this pipeline on selected file source"
-                @click="onPlay"
-            >&#9654;</button>
+                @click="onEdit"
+            >Edit</button>
             <button 
                 class="topcoat-button--large--quiet" 
                 type="button"
@@ -91,7 +113,10 @@ export default {
             type: Boolean,
             required: true
         },
-        // 
+        collapsed: {
+            type: Boolean,
+            required: true
+        },
         pipelines: {
             type: Array, 
             required: true
@@ -109,6 +134,10 @@ export default {
         disabled_: {
             get() { return this.disabled; },
             set(v) { this.$emit("update:disabled", v); }
+        },
+        collapsed_: {
+            get() { return this.collapsed; },
+            set(v) { this.$emit("update:collapsed", v); }
         }
     },
     methods: {
@@ -124,9 +153,9 @@ export default {
         },
         validateSourceNames(names) 
         {
-            // TODO: Remove reference to store here
             // Ensure file source exists by each name
             const missingNames = names.filter(n => {
+                // TODO: Remove reference to store here
                 return !store.general.fileSources.find(w => w.name === n); 
             });
             return {

@@ -4,25 +4,7 @@ import fs from 'fs';
 import rimraf from 'rimraf';
 import Image from './image';
 
-/**
- * Recursive directory creation. Same signature as fs.mkdir()
- * This exists because { recursive: true } option not supported prior to Node v10.22
- * @param {*} dirPath 
- * @param {*} mode 
- * @param {*} callback 
- */
-function mkdirp(dirPath, mode, callback) 
-{
-    fs.mkdir(dirPath, mode, function(err) {
-        if (err && err.code === 'ENOENT') {
-            const parentPath = path.dirname(dirPath);
-            mkdirp(parentPath, mode, callback);
-            fs.mkdir(dirPath, mode, callback);
-        } else {
-            callback && callback(err);
-        }
-    });
-}
+
 /**
  * Force deletes the destination file/directory recursively and renames the source path to the destination
  * @param {*} fromPath 
@@ -56,12 +38,13 @@ export default class ImageFileMover
     {
         for(const image of images)
         {
-            if(image.errors) {
+            if(image.errors.length) {
                 if(image.useErrorDirectory) {
                     await this._moveImage(image, image.errorDirectory);
                 }
                 this._writeError(image, image.errorDirectory || image.inputDirectory, image.errors.join('\n'));
             } else if(image.useProcessedDirectory) {
+                // TODO: Uncomment next line after Debugging
                 await this._moveImage(image, image.processedDirectory);
             }
         }
@@ -72,9 +55,6 @@ export default class ImageFileMover
      */
     async _moveImage(image, toDirectory)
     {
-        if(!toDirectory) {
-            return Promise.resolve();
-        }
         if(!upath.isAbsolute(toDirectory)) 
         {
             if(!image.inputDirectory) {
@@ -85,32 +65,25 @@ export default class ImageFileMover
             }
         }
 
-        console.log("Moving file to directory: " + toDirectory);
-        await this._makeDirectory(toDirectory);
         this._moveToDirectory(image, toDirectory);
-    }
-    _makeDirectory(directory) 
-    {
-        return new Promise((resolve, reject) => {
-            mkdirp(directory, null, err => {
-                if(err && err.code != "EEXIST") {
-                    reject(err + "\nImage move failed. Could not create directory.");
-                } else {
-                    resolve();
-                }
-            });
-        });
     }
     _moveToDirectory(image, directory) 
     {
         const paths = this._getImagePaths(image);
+        console.log(`Moving paths:\n\t${paths.join('\n\t')}\nTo directory\n\t${directory}`);
+
         for(const path of paths) 
         {
             const basename = upath.basename(path);
             const toPath = upath.join(directory, basename);
             move(path, toPath, err => {
                 if(err) {
-                    console.warn(err + "\nImage path could not be moved to " + toPath);
+                    const message = err + "\nImage path could not be moved to " + toPath;
+                    if(err.code == "ENOENT") {
+                        console.log(message)
+                    } else {
+                        console.warn(message);
+                    }
                 }
             });
         }
@@ -118,7 +91,8 @@ export default class ImageFileMover
     _getImagePaths(image) 
     {
         const paths = [
-            image.inputImagePath
+            image.inputImagePath,
+            (image.initialInputImagePath !== image.inputImagePath) ? image.initialInputImagePath : null
         ];
         return paths.filter(p => !!p); // remove empty paths
     }

@@ -89,7 +89,7 @@ export default class ImageFileProducer extends EventEmitter
             throw Error(`Watch path: ${watchPathRoot} does not exist.`);
         }
         const watcher = chokidar.watch(watchPaths, {
-            ignored: /^\.|^manifest/, 
+            ignored: /^\./, 
             depth: 0,
             usePolling: true,
             awaitWriteFinish: {
@@ -99,6 +99,9 @@ export default class ImageFileProducer extends EventEmitter
         })
         .on("add", newPath => 
         {
+            if(upath.basename(newPath).startsWith("manifest")) {
+                return;
+            }
             this._q.push(newPath);
             this._emitQFiles();
         });

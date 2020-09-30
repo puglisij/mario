@@ -244,8 +244,8 @@ export class Actions
 
         // TODO: Cache these imports along with ActionDescriptors
         //      Use checksum to indicate changes
-        await this._import(global.appBuiltinActionsPath);
         await this._import(store.general.pathToUserActions);
+        await this._import(global.appBuiltinActionsPath);
 
         console.log("Import actions exited.");
     }

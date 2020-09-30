@@ -60,7 +60,7 @@ export default class Image
          * The current job id being processed for this Image. 
          * This is unique to the current pipeline iteration for this Image instance
          */
-        this.jobId = 0;
+        this.jobId = "";
         /**
          * An array of error messages encountered during processing, if applicable
          * @type {Array<string>} 

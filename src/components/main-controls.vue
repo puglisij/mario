@@ -42,8 +42,8 @@
                     <!-- <div v-if="isInitializing">Initializing<wait-dots/></div> -->
                 </div>
                 <div class="column is-half-tablet">
-                    <h3 class="section-title">Current File Source</h3>
-
+                    <h3 class="section-title" v-if="pipelinefilePathText">Current Source Path</h3>
+                    <div>{{ pipelinefilePathText }}</div>
                 </div>
             </div>
             <div class="main-controls__drawer-toggle" :class="{ active: isMainDrawerOpen }">
@@ -78,6 +78,7 @@ export default {
         return {
             pipelineEngineState: Server.pipelineEngine.state,
             pipelineActionStateText: "",
+            pipelinefilePathText: "",
             isMainDrawerOpen: store.general.isMainDrawerOpen
         }
     },
@@ -122,6 +123,13 @@ export default {
         Server.pipelineEngine.on("actionend", actionName => {
             this.pipelineActionStateText = "";
         });
+        Server.pipelineEngine.on("processimage", filePath => {
+            this.pipelinefilePathText = filePath;
+        });
+        Server.pipelineEngine.on("processend", () => {
+            this.pipelineActionStateText = "";
+            this.pipelinefilePathText = "";
+        })
     },
     methods: {
         /**
@@ -130,7 +138,7 @@ export default {
         onPipelineRun() {
             this.$dialog.openConfirm({
                 name: "confirm",
-                message: "This will run all pipelines with the given source. Continue?",
+                message: "This will run all pipelines with their configured sources. Continue?",
                 onYes: () => {
                     Server.pipelineEngine.runAll();
                 }

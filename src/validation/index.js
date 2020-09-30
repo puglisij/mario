@@ -1,4 +1,5 @@
 import fs from 'fs';
+import upath from 'upath';
 import { configure, setInteractionMode, extend } from 'vee-validate';
 
 setInteractionMode("custom", context => {
@@ -45,6 +46,19 @@ extend('pathunc', {
     },
     params: ['allowed'],
     message: `Path cannot be a UNC path.`
+})
+
+extend('pathrelative', {
+    validate(value, args) {
+        const allowed = typeof args.allowed === "boolean" ? args.allowed : JSON.parse(args.allowed.toLowerCase());
+        const path = value.trim();
+        if(!allowed) {
+            return upath.isAbsolute(path);
+        }
+        return true;
+    },
+    params: ['allowed'],
+    message: `Path must be absolute.`
 })
 
 extend('custom', {
