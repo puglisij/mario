@@ -117,7 +117,7 @@ export class PipelineEngine extends EventEmitter
         let fileSourceNameToPipelineNames = new ArrayMap();
         pipelineNames.forEach(pipelineName =>
         {
-            const pipeline = this._getConfigurationByPipelineName(pipelineName);
+            const pipeline = store.pipelines.getByName(pipelineName);
             const fileSourceNames = pipeline.sourceNames;
             for(let fileSourceName of fileSourceNames) {
                 fileSourceNameToPipelineNames.set(fileSourceName, pipeline.name);
@@ -177,27 +177,10 @@ export class PipelineEngine extends EventEmitter
     {
         return this._producerIdToProducer.get(producerId);
     }
-    _getConfigurationsByPipelineNames(pipelineNames)
-    {
-        return store.pipelines.pipelines.filter(p => pipelineNames.includes(p.name));
-    }
-    _getConfigurationByPipelineName(pipelineName) 
-    {
-        return store.pipelines.pipelines.find(p => p.name === pipelineName);
-    }
-    _getConfigurationsByProducerId(producerId) 
+    _getPipelineConfigurationsByProducerId(producerId) 
     {
         const pipelineNames = this._producerIdToPipelines.get(producerId);
-        return store.pipelines.pipelines.filter(p => pipelineNames.includes(p.name));
-    }
-    _getUniqueFileSourceNamesByPipelineNames(pipelineNames)
-    {
-        // Get all unique file sources for given pipelines
-        let sourceNames = pipelineNames.reduce((arr, name) => {
-            const pipeline = this._getConfigurationByPipelineName(name);
-            return arr.concat(pipeline.sourceNames);
-        }, []);
-        return _.unique(sourceNames);
+        return store.pipelines.getByNames(pipelineNames);
     }
     _onProducerFile(producerId, files) 
     {
@@ -221,7 +204,7 @@ export class PipelineEngine extends EventEmitter
         this._processingMutex = true;
         this.state = PipelineEngineState.PROCESSING;
         console.log(`Pipeline process loop started with ${this._imageFileQ.length} images in queue.`);
- 
+
         this._runWaitOneFrame()
         .then(this._runProcessStart.bind(this))
         .then(this._runProcessLoop.bind(this))
@@ -255,13 +238,16 @@ export class PipelineEngine extends EventEmitter
             console.log(`Reading next file ${file} from producer ${producerId}.`);
             this.emit("processimage", file);
 
+            if(this._stopCheck()) break;
+            await this._pauseCheck();
+
             // NOTE: image 'pipelines' property takes precedence over pipelines listed for producer
             const producer =  this._getProducerById(producerId);
             const imageSource = producer.getImageSource();
             const image = await this._imageFileReader.read(file, imageSource, store.general.doReadFileMetadata);
             const pipelines = (image.pipelines.length > 0) 
-                ? this._getConfigurationsByPipelineNames(image.pipelines) 
-                : this._getConfigurationsByProducerId(producerId);
+                ? store.pipelines.getByNames(image.pipelines) 
+                : this._getPipelineConfigurationsByProducerId(producerId);
             console.log(`Processing image: ${image.inputImagePath}`);
             console.dir(_.simpleDeepClone(image));
 

@@ -1,6 +1,8 @@
 import Conf from 'conf';
 import { EventEmitter } from 'events'
 
+import _ from '../utils';
+
 const projectName = "Mario";
 /**
  * General app configuration data 
@@ -71,6 +73,9 @@ const general = new Conf({
         }
     }
 });
+const generalDecorator = {
+
+};
 
 /**
  * Pipeline configurations 
@@ -95,7 +100,25 @@ const pipelines = new Conf({
         }
     }
 });
-
+const pipelinesDecorator = {
+    getByNames(pipelineNames)
+    {
+        return this.pipelines.filter(p => pipelineNames.includes(p.name));
+    },
+    getByName(pipelineName) 
+    {
+        return this.pipelines.find(p => p.name === pipelineName);
+    },
+    getUniqueFileSourceNamesByPipelineNames(pipelineNames)
+    {
+        // Get all unique file sources for given pipelines
+        let sourceNames = pipelineNames.reduce((arr, name) => {
+            const pipeline = this.getByName(name);
+            return arr.concat(pipeline.sourceNames);
+        }, []);
+        return _.unique(sourceNames);
+    }
+};
 
 
 /**
@@ -105,14 +128,6 @@ const pipelines = new Conf({
  */
 const ConfigurationProxy = (configurationInstance, configurationObject, events) => {
 	const handler = {
-		// get(target, property, receiver) {
-		// 	try {
-        //         // Also Proxy nested properties
-		// 		return new Proxy(target[property], handler);
-		// 	} catch {
-        //         return Reflect.get(target, property);
-		// 	}
-        // },
         set(target, property, value) 
         {
             if(typeof target[property] !== typeof value) {
@@ -148,13 +163,13 @@ const store = new EventEmitter();
  * NOTE: Only set root level properties or settings will be be saved to file
  * NOTE: Properties are set by Reference.
  */
-store.general = ConfigurationProxy(general, general.store, store);
+store.general = ConfigurationProxy(general, Object.assign(general.store, generalDecorator), store);
 /**
  * Pipeline configuration storage
  * NOTE: Only set root level properties or settings will be be saved to file
  * NOTE: Properties are set by Reference.
  */
-store.pipelines = ConfigurationProxy(pipelines, pipelines.store, store);
+store.pipelines = ConfigurationProxy(pipelines, Object.assign(pipelines.store, pipelinesDecorator), store);
 
 
 export default store;

@@ -1,29 +1,8 @@
 import upath from 'upath';
 import uncSafePath from '../unc-safe-path';
 import fs from 'fs';
-import rimraf from 'rimraf';
+import fsx from '../fsx';
 import Image from './image';
-
-
-/**
- * Force deletes the destination file/directory recursively and renames the source path to the destination
- * @param {*} fromPath 
- * @param {*} toPath 
- * @param {*} callback 
- */
-function move(fromPath, toPath, callback)
-{
-    rimraf(toPath, err => 
-    {
-        if(err) {
-            callback(err);
-            return;
-        }
-        fs.rename(fromPath, toPath, err => {
-            callback(err);
-        });
-    });
-}
 
 export default class ImageFileMover 
 {
@@ -76,11 +55,11 @@ export default class ImageFileMover
         {
             const basename = upath.basename(path);
             const toPath = upath.join(directory, basename);
-            move(path, toPath, err => {
+            fsx.overwrite(path, toPath, err => {
                 if(err) {
                     const message = err + "\nImage path could not be moved to " + toPath;
                     if(err.code == "ENOENT") {
-                        console.log(message)
+                        console.log(message);
                     } else {
                         console.warn(message);
                     }

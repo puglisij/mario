@@ -2,28 +2,11 @@ import exiftool from 'node-exiftool';
 import upath from 'upath';
 import uncSafePath from '../unc-safe-path';
 import fs from 'fs';
+import fsx from '../fsx';
 import Image from './image';
 
 
-/**
- * Recursive directory creation. Same signature as fs.mkdir()
- * This exists because { recursive: true } option not supported prior to Node v10.22
- * @param {*} dirPath 
- * @param {*} mode 
- * @param {*} callback 
- */
-function mkdirp(dirPath, mode, callback) 
-{
-    fs.mkdir(dirPath, mode, function(err) {
-        if (err && err.code === 'ENOENT') {
-            const parentPath = upath.dirname(dirPath);
-            mkdirp(parentPath, mode, callback);
-            fs.mkdir(dirPath, mode, callback);
-        } else {
-            callback && callback(err);
-        }
-    });
-}
+
 
 export default class ImageFileReader
 {
@@ -167,9 +150,9 @@ export default class ImageFileReader
                 resolve(false);
                 return;
             }
-            mkdirp(directory, null, err => {
-                if(err && err.code != "EEXIST") {
-                    reject(err + "\nCould not create directory.");
+            fsx.mkdir(directory, { recursive: true }, err => {
+                if(err && err.code !== "ENOENT") {
+                    reject(`${err}\nCould not create directory.`);
                 } else {
                     resolve(true);
                 }

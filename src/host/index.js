@@ -42,6 +42,7 @@ class Host
             Working Path: ${appGlobal.appWorkingPath}\n
             Default Log Path: ${appGlobal.appDefaultLogPath}\n
             Builtin Action Path: ${appGlobal.appBuiltinActionsPath}\n
+            Temporary Path: ${appGlobal.appTemporaryPath}\n
             Creative Suite API Version: ${apiVersion.major}.${apiVersion.minor}.${apiVersion.micro}\n
             OS: ${this.interface.getOSInformation()}`);
             

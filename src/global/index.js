@@ -5,10 +5,12 @@ const appInstallPath = upath.normalize(new CSInterface().getSystemPath(SystemPat
 const appWorkingPath = upath.join(appInstallPath, process.env.VUE_APP_HOST_DIR);
 const appDefaultLogPath = upath.join(appWorkingPath, "logs");
 const appBuiltinActionsPath = upath.join(appWorkingPath, "actions");
+const appTemporaryPath = upath.join(appWorkingPath, "tmp");
 
 export default {
     appInstallPath, 
     appWorkingPath,
     appDefaultLogPath,
-    appBuiltinActionsPath
+    appBuiltinActionsPath,
+    appTemporaryPath
 }
