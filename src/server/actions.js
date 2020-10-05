@@ -8,6 +8,7 @@ import store from '../store';
 import host from '../host';
 import global from '../global';
 import FolderTreeNode from '../folderTree';
+import { resolve } from 'path';
 
 const ROOT_ACTION_DIRECTORY = "actions";
 const ROOT_ACTION_NAMESPACE = "action";
@@ -26,7 +27,7 @@ export class ActionDescriptor
     }
     /**
      * Translate JSDocDescription object to ActionDescriptor
-     * @param {JSDocDescription} jsDocDescription the description object returned by JSDoc
+     * @param {JSDocDescription} jsDocDescription the description returned by JSDoc
      */
     static fromJSDocDescription(jsdocDescription)
     {
@@ -52,7 +53,7 @@ export class ActionDescriptor
         */
         
         // TODO Make this function another class?
-        const description = jsdocDescription.find(x => x.kind === "function");
+        const description = jsdocDescription;
         const descriptor = new ActionDescriptor();
               descriptor.name = description.longname;
               descriptor.description = description.description;
@@ -103,38 +104,64 @@ class ActionParameterCurator
  */
 class ActionFileDescriptionReader 
 {
+    static _actionNameToJsDoc = new Map();
     /**
-     * Returns mapping of fully qualified action names to their JSXDocDescription
-     * @param {Action} action
-     * @returns {jsdocDescription}
+     * Reads and caches the JsDocDescription's for all the given actions
+     * @param {Action[]} actions 
      */
-    static read(action)
+    static async readAll(actions) 
     {
-        const { name, absolutePath } = action;
-        return this._readJSDocDescription(absolutePath)
-        .then(description => {
-            return description;
+        return jsdoc.explain({
+            cache: true,
+            files: actions.map(a => a.absolutePath)
+        })
+        .then(descriptions => 
+        {
+            for(let i = 0; i < descriptions.length; ++i) 
+            {
+                const description = descriptions[i];
+                if(this._isFunction(description)) {
+                    this._actionNameToJsDoc.set(description.longname, description);
+                }
+            }
         });
     }
     /**
-     * Returns the JSDoc object describing the particulars of the given action
-     * @param {string} actionPath the absolute action path e.g. C:/actions/action.saveDocument.jsx
+     * Caches and returns the JsDocDescription for the given action
+     * @param {Action} action
      * @returns {JSDocDescription}
      */
-    static _readJSDocDescription(actionPath)
+    static read(action)
     {
-        //TODO: Use jsdoc-api cache
-        return jsdoc.explain({
-            cache: true,
-            files: [actionPath]
-        });
-        // return jsdocx.parse(actionPath, {
-        //         undocumented: false // include undocumented symbols
-        //         //output: "output/path" // path for JSON to be created (cache)
-        //     })
-        //     .then(description => {
-        //         return description;
-        //     });
+        let description = this._actionNameToJsDoc.get(action.name);
+        if(!description) {
+            console.warn(`JSDoc description not found for action ${action.name}. Do you need to re-load actions?`);
+            return {};
+        }
+        return description;
+    }
+    // FUNCTIONS:
+    // scope: "static"
+    // kind: "function"
+    // memberof: "action"
+    static _isFunction(jsdocDescription) 
+    {
+        return jsdocDescription.scope === "static"
+            && jsdocDescription.kind === "function"
+            && jsdocDescription.memberof === "action";
+    }
+    // ENUMERATIONS:
+    // name starts with capital letter
+    // scope: "global"
+    // kind: "member"
+    // memberof: undefined
+    // isEnum: true (only if @enum is in comment)
+    static _isEnum(jsdocDescription) 
+    {
+        return jsdocDescription.scope === "global"
+            && jsdocDescription.kind === "member"
+            && jsdocDescription.isEnum === true
+            && typeof jsdocDescription.memberof === undefined;
     }
 }
 
@@ -242,8 +269,6 @@ export class Actions
     {
         console.log("Import actions started.");
 
-        // TODO: Cache these imports along with ActionDescriptors
-        //      Use checksum to indicate changes
         await this._import(store.general.pathToUserActions);
         await this._import(global.appBuiltinActionsPath);
 
@@ -264,6 +289,8 @@ export class Actions
             this._actionTree.insert(actionPath, false);
             console.log("Action: " + actions[i].name);
         }
+        // Async read and cache jsdoc info
+        ActionFileDescriptionReader.readAll(actions);
 
         return host.runJsx(importString  + "act = action;");
     }
@@ -293,10 +320,10 @@ export class Actions
             throw new Error(`Action doesnt exist by name ${actionName}`);
         }
 
-        return ActionFileDescriptionReader.read(action)
-        .then(jsDocDescription => {
-            return ActionDescriptor.fromJSDocDescription(jsDocDescription);
+        return new Promise(resolve => {
+            const d = ActionFileDescriptionReader.read(action)
+            const descriptor = ActionDescriptor.fromJSDocDescription(d);
+            resolve(descriptor);
         });
     }
-
 }
