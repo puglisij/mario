@@ -1,5 +1,4 @@
 import upath from 'upath';
-import uncSafePath from '../unc-safe-path';
 import fs from 'fs';
 import fsx from '../fsx';
 import Image from './image';
@@ -18,10 +17,13 @@ export default class ImageFileMover
         for(const image of images)
         {
             if(image.errors.length) {
+                const errorDirectory = image.errorDirectory || image.inputDirectory;
+                if(errorDirectory) {
+                    this._writeError(image, errorDirectory, image.errors.join('\n'));
+                }
                 if(image.useErrorDirectory) {
                     await this._moveImage(image, image.errorDirectory);
                 }
-                this._writeError(image, image.errorDirectory || image.inputDirectory, image.errors.join('\n'));
             } else if(image.useProcessedDirectory) {
                 // TODO: Uncomment next line after Debugging
                 await this._moveImage(image, image.processedDirectory);
@@ -40,7 +42,7 @@ export default class ImageFileMover
                 console.log("Image not moved. Move directory was relative but input directory was not defined.");
                 return Promise.resolve();
             } else {
-                toDirectory = uncSafePath.join(image.inputDirectory, toDirectory);
+                toDirectory = upath.join(image.inputDirectory, toDirectory);
             }
         }
 

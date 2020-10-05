@@ -36,24 +36,45 @@ export default class ImageFileReader
 
         try 
         {
-            if(this._isFile(inputImagePath)) 
+            if(this._doesFileExist(inputImagePath)) 
             {
-                if(this._isJsonFile(inputImagePath)) 
+                if(this._doesPathHaveJsonExtension(inputImagePath)) 
                 {
                     data = await this._readJson(inputImagePath);
                     pipelines = data.pipelines || [];
                     pipelines = (typeof pipelines === "string") ? pipelines.split(',') : pipelines;
-                    
                     // Grab new image source path and other paths from json, if available
-                    inputImagePath = this._ensureAbsolutePath(data.inputImagePath, inputDirectory);
-                    outputDirectory = this._ensureAbsolutePath(data.outputDirectory, inputDirectory);
-                    processedDirectory = this._ensureAbsolutePath(data.processedDirectory, inputDirectory);
-                    errorDirectory = this._ensureAbsolutePath(data.errorDirectory, inputDirectory);
+                    inputImagePath = data.inputImagePath || "";
+                    outputDirectory = data.outputDirectory || outputDirectory;
+                    processedDirectory = data.processedDirectory || processedDirectory;
+                    errorDirectory = data.errorDirectory || errorDirectory;
+
+                    inputImagePath = this._ensureAbsolutePath(inputImagePath, inputDirectory);
+                    outputDirectory = this._ensureAbsolutePath(outputDirectory, inputDirectory);
+                    processedDirectory = this._ensureAbsolutePath(processedDirectory, inputDirectory);
+                    errorDirectory = this._ensureAbsolutePath(errorDirectory, inputDirectory);
+
                     useOutputDirectory = await this._makeDirectory(outputDirectory);
                     useProcessedDirectory = await this._makeDirectory(processedDirectory);
                     useErrorDirectory = await this._makeDirectory(errorDirectory);
+
+                    // Blank paths if directory doesn't exist
+                    outputDirectory = useOutputDirectory ? outputDirectory : "";
+                    processedDirectory = useProcessedDirectory ? processedDirectory : "";
+                    errorDirectory = useErrorDirectory ? errorDirectory : "";
+
+                    if (uncSafePath.isAncestor(inputImagePath, inputDirectory) 
+                        && (useProcessedDirectory || useErrorDirectory)) 
+                    {
+                            // Otherwise ImageFileMOver would attempt to move the root/source directory
+                        throw new Error(`JSON inputImagePath cannot be ancestor directory of or same as input directory when using errorDirectory or processedDirectory options.`);
+                    }
+
+                    // TODO: Where are errors written when errorDirectory & inputDirectory are blank?
+                    // TODO: Test unc input paths are rejected?
+                    // Test invalid input file/permissions?
                 }
-                if(this._isFile(inputImagePath) && readMetadata) 
+                if(this._doesFileExist(inputImagePath) && readMetadata) 
                 {
                     metadata = await this._readMetadata(inputImagePath);
                 }
@@ -68,12 +89,12 @@ export default class ImageFileReader
             image.initialInputImagePath = initialInputImagePath;
             image.inputImagePath = inputImagePath;        
             image.inputDirectory = inputDirectory;
+            image.outputDirectory = outputDirectory;
+            image.processedDirectory = processedDirectory;
+            image.errorDirectory = errorDirectory;
             image.useOutputDirectory = useOutputDirectory;
-            image.outputDirectory = useOutputDirectory ? outputDirectory : "";
             image.useProcessedDirectory = useProcessedDirectory;
-            image.processedDirectory = useProcessedDirectory ? processedDirectory : "";
             image.useErrorDirectory = useErrorDirectory;
-            image.errorDirectory = useErrorDirectory ? errorDirectory : "";
             image.data = data;
             image.metadata = metadata;
             image.pipelines = pipelines;
@@ -102,10 +123,6 @@ export default class ImageFileReader
      */
     async _readMetadata(inputImagePath)
     {
-        if(!this._isFile(inputImagePath)) {
-            return Promise.resolve();
-        }
-
         let ep = new exiftool.ExiftoolProcess();
         let processid = 0;
 
@@ -131,17 +148,30 @@ export default class ImageFileReader
         }
         return upath.isAbsolute(path) ? path : upath.join(parentDirectory, path);
     }
-    _itExists(path) {
-        return fs.existsSync(path || "");
-    }
-    _isJsonFile(path) {
+    _doesPathHaveJsonExtension(path) {
         return upath.extname(path) === ".json";
     }
-    _isFile(path) {
-        return fs.lstatSync(path || "").isFile();
+    _doesFileExist(path) {
+        try {
+            return fs.lstatSync(path || "").isFile();
+        } catch(e) {
+            if(e && e.code == "ENOENT") {
+                return false;
+            } else {
+                throw e;
+            }
+        }
     }
-    _isDirectory(path) {
-        return fs.lstatSync(path || "").isDirectory();
+    _doesDirectoryExist(path) {
+        try {
+            return fs.lstatSync(path || "").isDirectory();
+        } catch(e) {
+            if(e && e.code == "ENOENT") {
+                return false;
+            } else {
+                throw e;
+            }
+        }
     }
     _makeDirectory(directory) 
     {

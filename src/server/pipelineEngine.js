@@ -269,6 +269,7 @@ export class PipelineEngine extends EventEmitter
                     for(const action of pipeline.actions) 
                     {
                         this.emit("action", action.actionName);
+                        console.log(`Action: ${action.actionName}`);
                         let result = await host.runActionWithParameters(action.actionName, action.parameters);
                         
                         if(this._stopCheck(result)) break;

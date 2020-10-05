@@ -42,9 +42,11 @@ context('imageFileReader', function()
             _imageSource.errorDirectory = "";
         });
 
-        // TODO: Test
-        // - unc input paths
-        // - invalid input file/permissions
+        /*
+            TODO:
+                - Test unc input paths are rejected
+                - Test invalid input file/permissions
+        */
 
         context('with basic json values', function() 
         {

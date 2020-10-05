@@ -11,6 +11,19 @@ function isUncPath(val)
 }
 
 /**
+ * Normalizes and compares the two paths to determine 
+ * if the given child is a child path of the given ancestor
+ * @param {string} descendant 
+ * @param {string} ancestor 
+ */
+function isAncestor(ancestor, descendant)
+{
+    const relative = upath.relative(ancestor, descendant);
+    // If not ancestor, beginning of path will contain directory traversal (e.g. ../../)
+    return descendant.endsWith(relative);
+}
+
+/**
  * Same as upath.dirname except ensures that double slash is maintained for UNC paths
  * @param {string} val the path string
  */
@@ -44,6 +57,7 @@ function _preserveUnc(originalPath, newPath)
 }
 
 export default {
+    isAncestor,
     isUncPath,
     dirname,
     normalize, 

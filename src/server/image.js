@@ -11,7 +11,7 @@ export default class Image
          * The path value that initiated this Image process.
          * Depending on the File Source, this will be one of the following:
          * 1) the absolute input file/directory path
-         * 2) the file/document name full path is not available (e.g. an un-saved active document).
+         * 2) the file/document name when full path is not available (e.g. an un-saved active document).
          * 3) empty string (e.g. File Source is Blank)
          */
         this.initialInputImagePath = "";

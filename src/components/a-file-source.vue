@@ -214,6 +214,13 @@ export default {
             deep: true,
             handler: function(v) 
             {
+                // Enforce Rules
+                if(!this.isSourceExternalFiles) {
+                    v.useErrorDirectory = false;
+                    v.errorDirectory = "";
+                    v.useProcessedDirectory = false;
+                    v.processedDirectory = "";
+                }
                 this.$emit("change", v);
             }
         }
@@ -228,8 +235,8 @@ export default {
         },
         validateSourceDirectory(value) 
         {
-            // Validate that a image source does not exist already for directory.
-            // Multiple file producers for the same files can cause issues.
+            // Validate that a image source does not exist already for directory,
+            // as multiple file producers for the same files can cause issues.
             const sourceDirectory = value.trim().toLowerCase();
             const found = this.sources.filter(s => {
                 return upath.normalize(s.sourceDirectory.toLowerCase()) === upath.normalize(sourceDirectory);
