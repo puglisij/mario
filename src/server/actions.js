@@ -15,6 +15,7 @@ const ROOT_ACTION_NAMESPACE = "action";
 
 /**
  * Describes a JSX Actions signature in full, including parameters
+ * READONLY
  */
 export class ActionDescriptor
 {
@@ -27,9 +28,9 @@ export class ActionDescriptor
     }
     /**
      * Translate JSDocDescription object to ActionDescriptor
-     * @param {JSDocDescription} jsDocDescription the description returned by JSDoc
+     * @param {JSDocDescription} jsDocDescription the "function" description returned by JSDoc
      */
-    static fromJSDocDescription(jsdocDescription)
+    static fromJSDoc(jsdocDescription)
     {
         /*
             Example JSDoc Output:
@@ -52,28 +53,39 @@ export class ActionDescriptor
             }
         */
         
-        // TODO Make this function another class?
-        const description = jsdocDescription;
+        const d = jsdocDescription;
         const descriptor = new ActionDescriptor();
-              descriptor.name = description.longname;
-              descriptor.description = description.description;
-              descriptor.params = description.params; // TODO convert to ActionParameter
-              descriptor.path = description.meta.path;
+              descriptor.name = d.longname;
+              descriptor.description = d.description;
+              descriptor.params = d.params ? d.params.map(p => ActionParameter.fromJSDoc(p)) : [];
+              descriptor.path = d.meta.path;
         return descriptor;
     }
 }
 /**
  * Describes an (Input) parameter to a JSX Action function
+ * READONLY
  */
 export class ActionParameter 
 {
     constructor() 
     {
-        this.description = "";
         this.name = "";
+        this.description = "";
         this.typeNames = [];
         this.isRequired = false;
         this.defaultValue = null;
+    }
+    static fromJSDoc(jsdocParameter) {
+        const { name, description, defaultValue, optional, type } = jsdocParameter;
+        const param = new ActionParameter();
+        param.name = name;
+        param.description = description;
+        param.defaultValue = defaultValue || null;
+        param.isRequired = !(optional === true);
+        param.typeNames = type.names.slice(0);
+
+        return param;
     }
 }
 
@@ -322,7 +334,7 @@ export class Actions
 
         return new Promise(resolve => {
             const d = ActionFileDescriptionReader.read(action)
-            const descriptor = ActionDescriptor.fromJSDocDescription(d);
+            const descriptor = ActionDescriptor.fromJSDoc(d);
             resolve(descriptor);
         });
     }

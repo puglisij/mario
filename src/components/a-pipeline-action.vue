@@ -2,12 +2,7 @@
     <div class="action">
         <span class="action-handle"
             title="Drag to re-order">&#9776;</span>
-        <button class="topcoat-button--large--quiet expand mr1"
-                :class="{ open: showParameters }"
-                :title="(showParameters ? 'Hide' : 'Show') + ' Parameters'"
-                @click="toggleParameters"
-            ><i>&#10097;</i></button>
-
+        
         <div class="action-data">
             <div class="action-name">
                 <input class="topcoat-text-input mr1" 
@@ -21,6 +16,11 @@
                     type="button" 
                     title="Delete this action"
                     @click="onActionDelete">X</button>
+                <button class="topcoat-button--large--quiet expand ml1"
+                    :class="{ open: showParameters }"
+                    :title="(showParameters ? 'Hide' : 'Show') + ' Parameters'"
+                    @click="toggleParameters"
+                ><i>&#10097;</i></button>
             </div>
 
             <div class="action-parameters" v-if="showParameters">

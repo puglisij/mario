@@ -41,7 +41,7 @@ export default class Image
         this.errorDirectory = "";
         this.useErrorDirectory = false;
         /**
-         * External data (stored outside file) metadata necessary for processing
+         * External data (stored outside file) metadata necessary for processing, as sourced from JSON
          */
         this.data = {};     
         /**

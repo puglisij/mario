@@ -235,8 +235,9 @@ export default {
         },
         onActionAdd(event)
         {
-            // TODO: Action name should be selected from a list and non-editable
+            // TODO: Action name should be selected from a list (and non-editable?)
             // TODO: Action parameters should be fixed/baked-in and only values editable
+            // TODO: Should use normal Class instances here ActionDescriptor & ActionParameter?
             this.$dialog.open({
                 component: SelectPipelineAction, 
                 listeners: {
