@@ -7,8 +7,7 @@ import Image from './image';
 import ImageSource from './imageSource';
 import ImageFileMover from './imageFileMover';
 import ImageFileReader from './imageFileReader';
-import ImageFileProducer from './imageFileProducer';
-import ImageSourceType from './imageSourceType';
+import ImageFileProducers from './imageFileProducers';
 import PipelineEngineState from './pipelineEngineState';
 
 export class PipelineEngine extends EventEmitter
@@ -26,16 +25,6 @@ export class PipelineEngine extends EventEmitter
         };
 
         /**
-         * Produder Id => [Pipeline Names...]
-         */
-        this._producerIdToPipelines = new Map();
-        /**
-         * Producer Id => ImageFileProducer instance
-         */
-        this._producerIdToProducer = new Map();
-        this._producerIdsWhichDepleted = [];
-
-        /**
          * With objects of form 
          * {
          *      producerId: id of the ImageFileProducer which emitted the file path
@@ -45,6 +34,7 @@ export class PipelineEngine extends EventEmitter
         this._imageFileQ = [];
         this._imageFileReader = new ImageFileReader();
         this._imageFileMover = new ImageFileMover();
+        this._imageFileProducers = new ImageFileProducers();
     }
     /**
      * @returns {Promise}
@@ -57,41 +47,8 @@ export class PipelineEngine extends EventEmitter
     {
         // stop any processing
         // destroy all producers
-        this._destroyAllProducers();
+        this._imageFileProducers.destroyAll();
         this.state = PipelineEngineState.STOPPED;
-    }
-    _destroyDepletedProducers()
-    {
-        this._destroyProducers(this._producerIdsWhichDepleted);
-        this._producerIdsWhichDepleted = [];
-    }
-    _destroyAllProducers()
-    {
-        const producerIds = [...this._producerIdToProducer.keys()];
-        this._destroyProducers(producerIds);
-    }
-    _destroyProducers(producerIds)
-    {
-        producerIds = producerIds.filter(id => this._producerIdToProducer.has(id));
-        for(const producerId of producerIds) 
-        {
-            this._producerIdToProducer.get(producerId).destroy();
-            this._producerIdToProducer.delete(producerId);
-            this._producerIdToPipelines.delete(producerId);
-
-            console.log(`Image File Producer ${producerId} destroyed.`);
-        }
-    }
-    _addFileProducer(producer, pipelineNames) 
-    {
-        this._producerIdToPipelines.set(producer.id, pipelineNames);
-        this._producerIdToProducer.set(producer.id, producer);
-
-        producer.on("files", this._onProducerFile.bind(this));
-        producer.on("depleted", this._onProducerDepleted.bind(this));
-        producer.produce();
-
-        console.log(`Image File Producer ${producer.id} added.`);
     }
     /**
      * Run the given pipeline using its configured file source(s)
@@ -119,42 +76,16 @@ export class PipelineEngine extends EventEmitter
         console.log(`Running pipelines: "${pipelineNames.join(",")}"`);
         this.state = PipelineEngineState.IDLE;
 
-        // Collect all unique file sources for given pipelines
-        let fileSourceNameToPipelineNames = new ArrayMap();
-        pipelineNames.forEach(pipelineName =>
-        {
-            const pipeline = store.pipelines.getByName(pipelineName);
-            const fileSourceNames = pipeline.sourceNames;
-            for(let fileSourceName of fileSourceNames) {
-                fileSourceNameToPipelineNames.set(fileSourceName, pipeline.name);
-            }
-        });
-        // Create dictionary for convenience
-        let fileSourceNameToFileSource = new Map();
-        store.general.fileSources.forEach(fileSource => {
-            fileSourceNameToFileSource.set(fileSource.name, fileSource);
-        });
+        const fileSourceNameToPipelineNames = store.pipelines.getFileSourceNameToPipelineNameMap();
         // IMPORTANT: We Do Not want multiple producers for the same files
         // Which would happen if we looped by each pipeline and created its producers
         // since there is a many-to-one relationship between pipelines and file watchers
         for(let [fileSourceName, pipelineNames] of fileSourceNameToPipelineNames.map) 
         {
             // Create producer
-            const fileSource = fileSourceNameToFileSource.get(fileSourceName);
-            const imageSource = new ImageSource(
-                fileSource.type, 
-                fileSource.name,
-                fileSource.sourceDirectory, 
-                fileSource.sourceExtensions,
-                fileSource.useOutputDirectory, 
-                fileSource.outputDirectory, 
-                fileSource.useProcessedDirectory,
-                fileSource.processedDirectory,
-                fileSource.useErrorDirectory,
-                fileSource.errorDirectory
-            );
-            const producer = new ImageFileProducer(imageSource);
-            this._addFileProducer(producer, pipelineNames);
+            const fileSource = store.general.getFileSourceByName(fileSourceName);
+            const imageSource = ImageSource.fromFileSource(fileSource);
+            this._imageFileProducers.startProducer(imageSource, pipelineNames);
         }
     }
     pause() {
@@ -173,20 +104,16 @@ export class PipelineEngine extends EventEmitter
     }
     _stopIfNoProducers()
     {
-        if(this._producerIdToProducer.size === 0) {
+        if(!this._imageFileProducers.hasProducers()) {
             this.state = PipelineEngineState.STOPPED;
         }
     }
-
 
     _clearFileQ() {
         console.log(`Image File Queue cleared.`);
         this._imageFileQ = [];
     }
-    _getProducerById(producerId)
-    {
-        return this._producerIdToProducer.get(producerId);
-    }
+    
     _getPipelineConfigurationsByProducerId(producerId) 
     {
         const pipelineNames = this._producerIdToPipelines.get(producerId);
@@ -204,10 +131,6 @@ export class PipelineEngine extends EventEmitter
         this._imageFileQ = this._imageFileQ.concat(qFiles);
         this._process();
     }
-    _onProducerDepleted(producerId) 
-    {
-        this._producerIdsWhichDepleted.push(producerId);
-    }
     _process()
     {
         if(!this._imageFileQ.length) return;
@@ -223,7 +146,6 @@ export class PipelineEngine extends EventEmitter
         .then(this._runProcessEnd.bind(this))
         .then(() => {
             this.state = PipelineEngineState.IDLE;
-            this._destroyDepletedProducers();
             this._stopIfNoProducers();
             this._clearFileQ();
             this._processingMutex = false;

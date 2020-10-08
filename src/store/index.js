@@ -1,4 +1,5 @@
 import Conf from 'conf';
+import { get } from 'core-js/fn/dict';
 import { EventEmitter } from 'events'
 
 import _ from '../utils';
@@ -84,7 +85,10 @@ const general = new Conf({
     }
 });
 const generalDecorator = {
-
+    getFileSourceByName(name) 
+    {
+        return this.fileSources.find(s => s.name === name);
+    }
 };
 
 /**
@@ -127,6 +131,24 @@ const pipelinesDecorator = {
             return arr.concat(pipeline.sourceNames);
         }, []);
         return _.unique(sourceNames);
+    },
+    /**
+     * Returns unique mapping of file source name -> pipeline name
+     * @returns {ArrayMap<string, string>}
+     */
+    getFileSourceNameToPipelineNameMap() 
+    {
+        // Collect all unique file sources for given pipelines
+        let fileSourceNameToPipelineNames = new ArrayMap();
+        pipelineNames.forEach(pipelineName =>
+        {
+            const pipeline = this.getByName(pipelineName);
+            const fileSourceNames = pipeline.sourceNames;
+            for(let fileSourceName of fileSourceNames) {
+                fileSourceNameToPipelineNames.set(fileSourceName, pipeline.name);
+            }
+        });
+        return fileSourceNameToPipelineNames;
     }
 };
 

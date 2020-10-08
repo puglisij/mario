@@ -38,4 +38,26 @@ export default class ImageSource
         this.useErrorDirectory = useErrorDirectory;
         this.errorDirectory = errorDirectory;
     }
+
+    /**
+     * Convert file source configuration object to ImageSource instance
+     * @param {*} fileSource 
+     * @returns {ImageSource}
+     */
+    static fromFileSource(fileSource) 
+    {
+        const imageSource = new ImageSource(
+            fileSource.type, 
+            fileSource.name,
+            fileSource.sourceDirectory, 
+            fileSource.sourceExtensions,
+            fileSource.useOutputDirectory, 
+            fileSource.outputDirectory, 
+            fileSource.useProcessedDirectory,
+            fileSource.processedDirectory,
+            fileSource.useErrorDirectory,
+            fileSource.errorDirectory
+        );
+        return imageSource;
+    }
 }
