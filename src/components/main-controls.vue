@@ -37,13 +37,15 @@
                 <div class="column is-half-tablet">
                     <h3 class="section-title">Pipelines Status</h3>
                     <div>{{ pipelineEngineStateText }}</div>
-                    <h3 class="section-title" v-show="pipelineActionStateText">Action</h3>
-                    <div>{{ pipelineActionStateText }}</div>
+                    <h3 class="section-title" v-if="pipelinefilePathText">Current Source Path</h3>
+                    <div>{{ pipelinefilePathText }}</div>
                     <!-- <div v-if="isInitializing">Initializing<wait-dots/></div> -->
                 </div>
                 <div class="column is-half-tablet">
-                    <h3 class="section-title" v-if="pipelinefilePathText">Current Source Path</h3>
-                    <div>{{ pipelinefilePathText }}</div>
+                    <h3 class="section-title" v-show="pipelineText">Pipeline</h3>
+                    <div>{{ pipelineText }}</div>
+                    <h3 class="section-title" v-show="pipelineActionText">Action</h3>
+                    <div>{{ pipelineActionText }}</div>
                 </div>
             </div>
             <div class="main-controls__drawer-toggle" :class="{ active: isMainDrawerOpen }">
@@ -77,7 +79,8 @@ export default {
     data() {
         return {
             pipelineEngineState: Server.pipelineEngine.state,
-            pipelineActionStateText: "",
+            pipelineText: "",
+            pipelineActionText: "",
             pipelinefilePathText: "",
             isMainDrawerOpen: store.general.isMainDrawerOpen
         }
@@ -117,17 +120,24 @@ export default {
         Server.pipelineEngine.on("state", state => {
             this.pipelineEngineState = state;
         });
+        Server.pipelineEngine.on("pipelinestart", pipelineName => {
+            this.pipelineText = pipelineName;
+        });
+        Server.pipelineEngine.on("pipelineend", pipelineName => {
+            this.pipelineText = "";
+        });
         Server.pipelineEngine.on("action", actionName => {
-            this.pipelineActionStateText = actionName;
+            this.pipelineActionText = actionName;
         });
         Server.pipelineEngine.on("actionend", actionName => {
-            this.pipelineActionStateText = "";
+            this.pipelineActionText = "";
         });
         Server.pipelineEngine.on("processimage", filePath => {
             this.pipelinefilePathText = filePath;
         });
         Server.pipelineEngine.on("processend", () => {
-            this.pipelineActionStateText = "";
+            this.pipelineText = "";
+            this.pipelineActionText = "";
             this.pipelinefilePathText = "";
         })
     },

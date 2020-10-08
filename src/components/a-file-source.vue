@@ -221,6 +221,10 @@ export default {
                     v.useProcessedDirectory = false;
                     v.processedDirectory = "";
                 }
+                v.outputDirectory = v.useOutputDirectory ? v.outputDirectory : "";
+                v.processedDirectory = v.useProcessedDirectory ? v.processedDirectory : "";
+                v.errorDirectory = v.useErrorDirectory ? v.errorDirectory : "";
+                
                 this.$emit("change", v);
             }
         }

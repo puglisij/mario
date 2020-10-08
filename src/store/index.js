@@ -3,6 +3,8 @@ import { EventEmitter } from 'events'
 
 import _ from '../utils';
 
+// TODO: Split General & Pipelines into their own Classes (and files)
+
 const projectName = "Mario";
 /**
  * General app configuration data 
@@ -39,6 +41,14 @@ const general = new Conf({
         logDirectory: { 
             type: "string",
             default: ""
+        },
+        runHttpServer: {
+            type: "boolean",
+            default: false
+        },
+        serverPort: {
+            type: "number",
+            default: 3001
         },
         pathToUserActions: {
             type: "string",

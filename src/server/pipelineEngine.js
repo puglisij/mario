@@ -18,6 +18,12 @@ export class PipelineEngine extends EventEmitter
         super();
         this._processingMutex = false; 
         this._state = PipelineEngineState.STOPPED;
+        this._job = {
+            id: null, 
+            pipeline: "", 
+            action: "",
+            file: ""
+        };
 
         /**
          * Produder Id => [Pipeline Names...]
@@ -173,6 +179,10 @@ export class PipelineEngine extends EventEmitter
     }
 
 
+    _clearFileQ() {
+        console.log(`Image File Queue cleared.`);
+        this._imageFileQ = [];
+    }
     _getProducerById(producerId)
     {
         return this._producerIdToProducer.get(producerId);
@@ -200,11 +210,13 @@ export class PipelineEngine extends EventEmitter
     }
     _process()
     {
+        if(!this._imageFileQ.length) return;
         if(this._processingMutex) return;
         this._processingMutex = true;
-        this.state = PipelineEngineState.PROCESSING;
         console.log(`Pipeline process loop started with ${this._imageFileQ.length} images in queue.`);
 
+        
+        this.state = PipelineEngineState.PROCESSING;
         this._runWaitOneFrame()
         .then(this._runProcessStart.bind(this))
         .then(this._runProcessLoop.bind(this))
@@ -213,6 +225,7 @@ export class PipelineEngine extends EventEmitter
             this.state = PipelineEngineState.IDLE;
             this._destroyDepletedProducers();
             this._stopIfNoProducers();
+            this._clearFileQ();
             this._processingMutex = false;
             console.log("Pipeline process loop exited.");
         });
@@ -368,6 +381,15 @@ export class PipelineEngine extends EventEmitter
         } else {
             return Promise.resolve();
         }
+    }
+    get status() {
+        // "state"
+        // "pipelinestart", pipelineName 
+        // "pipelineend"
+        // "action", actionName 
+        // "actionend"
+        // "processimage", filePath 
+        // "processend"
     }
     get state() {
         return this._state;

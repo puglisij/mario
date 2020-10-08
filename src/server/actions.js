@@ -76,14 +76,15 @@ export class ActionParameter
         this.isRequired = false;
         this.defaultValue = null;
     }
+
     static fromJSDoc(jsdocParameter) {
         const { name, description, defaultValue, optional, type } = jsdocParameter;
         const param = new ActionParameter();
-        param.name = name;
-        param.description = description;
-        param.defaultValue = defaultValue || null;
-        param.isRequired = !(optional === true);
-        param.typeNames = type.names.slice(0);
+            param.name = name;
+            param.description = description;
+            param.defaultValue = defaultValue || null;
+            param.isRequired = !(optional === true);
+            param.typeNames = type.names.slice(0);
 
         return param;
     }
@@ -112,7 +113,7 @@ class ActionParameterCurator
 }
 
 /**
- * Handles reading JSX action files and their JSDoc descriptions
+ * Handles reading JSX action files and JSDoc descriptions they contain
  */
 class ActionFileDescriptionReader 
 {
@@ -160,7 +161,7 @@ class ActionFileDescriptionReader
     {
         return jsdocDescription.scope === "static"
             && jsdocDescription.kind === "function"
-            && jsdocDescription.memberof === "action";
+            && jsdocDescription.memberof.startsWith("action");
     }
     // ENUMERATIONS:
     // name starts with capital letter

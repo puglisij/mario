@@ -12,11 +12,8 @@ function ImageForProcessing(json)
     this._inputImagePath   = json.inputImagePath;
     this._inputDirectory  = json.inputDirectory;
 
-    this._useOutputDirectory = json.useOutputDirectory;
     this._outputDirectory = json.outputDirectory;
-    this._useProcessedDirectory = json.useProcessedDirectory;
     this._processedDirectory = json.processedDirectory;
-    this._useErrorDirectory = json.useErrorDirectory;
     this._errorDirectory = json.erroredDirectory;
 
     // The current pipeline processing this IMAGE

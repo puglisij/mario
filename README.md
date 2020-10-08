@@ -63,6 +63,10 @@ You can automate this by using `npm run switch`. In case you need to do it manua
 - Launch host application and find in Window > Extensions
 - Panel is now ready to sign and certify or be used on any client
 
+### Installing in Production
+
+
+
 ---
 
 ## Getting Started
@@ -268,9 +272,9 @@ Extendscript code that will be executed (Example, adding a background color, or 
 
 ### Outputs 
 
-Input/source files for IMAGEs which are processed will be moved into a processed directory (default is "./Processed") inside the input directory which initiated the process. Alternatively, this path can be specified as a custom property "processedDirectory" when using a JSON data input file. 
+Input/source files for IMAGEs which are processed will be moved into a processed directory inside the input directory which initiated the process. Alternatively, this path can be specified as a custom property "processedDirectory" when using a JSON data input file. 
 
-Resulting output files/images will be written to an output directory (default is "./Output") inside the input directory which initiated the process. Alternatively, this path can be specified as a custom property "outputDirectory" when using a JSON data input file.  
+Resulting output files/images will be written to an output directory inside the input directory which initiated the process. Alternatively, this path can be specified as a custom property "outputDirectory" when using a JSON data input file.  
 
 
 ### Logging 

@@ -42,6 +42,11 @@
                     <wait-dots v-show="isLoadingActions" />
                 </div>
             </section>
+            <h3 class="section-title">Http Server</h3>
+            <a-checkbox v-model="runHttpServer" @change="markForSave">
+                Run a server instance (REST api)?
+            </a-checkbox>
+
             <h3 class="section-title">File Sources</h3>
             <section class="section-content">
                 <draggable 
@@ -108,6 +113,7 @@ export default {
         return {
             needSaved: false, 
             isLoadingActions: false,
+            runHttpServer: store.general.runHttpServer,
             pathToUserActions: store.general.pathToUserActions,
             fileSources: _.simpleDeepClone(store.general.fileSources)
         }
@@ -122,12 +128,10 @@ export default {
             await Server.actions.init();
             this.isLoadingActions = false;
         },
-        onPathToUserActions(event)
-        {
+        onPathToUserActions(event) {
             this.markForSave();
         },
-        onSourceChange(newSource)
-        {
+        onSourceChange(newSource) {
             this.markForSave();
         },
         updatePipelineFileSourceReferences() 
@@ -192,6 +196,7 @@ export default {
         onConfigurationSubmit(event)
         {
             this.updatePipelineFileSourceReferences();
+            store.general.runHttpServer = this.runHttpServer;
             store.general.pathToUserActions = this.pathToUserActions;
             store.general.fileSources = _.simpleDeepClone(this.fileSources);
             eventBus.$emit("filesource-update");

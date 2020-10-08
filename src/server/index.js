@@ -2,17 +2,18 @@
 /* npm modules */
 import debounce from 'debounce'; 
 import EventEmitter from "events";
-
+import express from "express";
 
 /* local modules */
 import { PipelineEngine } from './pipelineEngine';
+import PipelineEngineState from './pipelineEngineState';
 import { Actions } from './actions';
 import _ from '../utils';
 import store from '../store';
 import global from '../global';
 
-const port = 3001;
-//const app = express();
+let port = 0;
+let app = null;
 
 
 export const ServerState = {
@@ -23,6 +24,7 @@ export const ServerState = {
 // DELETE. Note, to access in iframe use iframe.contentWindow.actions
 // TODO: For DEBUG Only. When finished, move new Actions() inside Server constructor.
 window.actions = new Actions(); 
+
 /**
  * Backend systems.
  * Manages Node REST API, and JS API for managing pipelines. 
@@ -51,6 +53,18 @@ class Server extends EventEmitter
 
         await this._pipelineEngine.init();
         await this._actions.init();
+
+        if(store.general.runHttpServer) {
+            this.startServer();
+        }
+        this.state = ServerState.RUNNING;
+        this.emit("initialized");
+        console.log("Server initialized.");
+    }
+    async startServer() 
+    {
+        app = express();
+        port = store.general.serverPort;
         //-----------------
         // Express Routes
         //-----------------
@@ -67,13 +81,6 @@ class Server extends EventEmitter
         // app.post('/pipeline/stop', (req, res) => {
         //     res.status(200).json({ success: true });
         // });
-        // app.get('/status', (req, res) => {
-        //     // search for files matching parameters 
-        //     res.status(200).json({
-        //         status: Object.keys(ServerState).find(p => ServerState[p] === this._state),
-        //         needUserInteraction: false
-        //     });
-        // });
         // app.use((req, res, next) => {
         //     res.status(404).send("Sorry, can't find that!");
         // });
@@ -81,25 +88,27 @@ class Server extends EventEmitter
         //     console.error(err.stack);
         //     res.status(500).send('Something broke!')
         // });
+        app.get('/status', (req, res) => {
+            res.status(200).json({
+                status: PipelineEngineState.toKey(this._pipelineEngine.state)
+            });
+        });
 
         //-----------------
         // Create Server
         //-----------------
-        // this._httpServer = app.listen(port, function() {
-        //     console.log(`Express is listening to http://localhost:${port}`);
-        // });
-
-        this.state = ServerState.RUNNING;
-        this.emit("initialized");
-        console.log("Server initialized.");
+        this._httpServer = app.listen(port, function() {
+            console.log(`Express is listening to http://localhost:${port}`);
+        });
+        console.log("Server started.");
     }
     destroy() 
     {
         console.log(`Server closing...`);
-        // this._httpServer && this._httpServer.close(() => {
-        //     this._httpServer = null;
-        //     console.log(`Server closed.`);
-        // });
+        this._httpServer && this._httpServer.close(() => {
+            this._httpServer = null;
+            console.log(`Server closed.`);
+        });
         this._pipelineEngine.destroy();
         this._pipelineEngine = null;
         this._actions.destroy();

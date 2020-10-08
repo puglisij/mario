@@ -26,6 +26,12 @@ export default class ImageFileReader
     {
         let { useOutputDirectory, useProcessedDirectory, useErrorDirectory } = imageSource;
         let { outputDirectory, processedDirectory, errorDirectory } = imageSource;
+
+        // Sanity check
+        outputDirectory = useOutputDirectory ? outputDirectory : "";
+        processedDirectory = useProcessedDirectory ? processedDirectory : "";
+        errorDirectory = useErrorDirectory ? errorDirectory : "";
+
         let initialInputImagePath = path || "";
         let inputImagePath = initialInputImagePath;
         let inputDirectory = this._isPathDefinedAndAbsolute(path) ? uncSafePath.dirname(path) : "";
@@ -43,6 +49,7 @@ export default class ImageFileReader
                     data = await this._readJson(inputImagePath);
                     pipelines = data.pipelines || [];
                     pipelines = (typeof pipelines === "string") ? pipelines.split(',') : pipelines;
+
                     // Grab new image source path and other paths from json, if available
                     inputImagePath = data.inputImagePath || "";
                     outputDirectory = data.outputDirectory || outputDirectory;
@@ -66,13 +73,10 @@ export default class ImageFileReader
                     if (uncSafePath.isAncestor(inputImagePath, inputDirectory) 
                         && (useProcessedDirectory || useErrorDirectory)) 
                     {
-                            // Otherwise ImageFileMOver would attempt to move the root/source directory
+                        // Otherwise ImageFileMover would attempt to move the root/source directory
+                        // This rule should probably be thrown inside of ImageFileMover
                         throw new Error(`JSON inputImagePath cannot be ancestor directory of or same as input directory when using errorDirectory or processedDirectory options.`);
                     }
-
-                    // TODO: Where are errors written when errorDirectory & inputDirectory are blank?
-                    // TODO: Test unc input paths are rejected?
-                    // Test invalid input file/permissions?
                 }
                 if(this._doesFileExist(inputImagePath) && readMetadata) 
                 {

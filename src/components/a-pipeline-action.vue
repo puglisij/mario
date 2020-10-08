@@ -10,7 +10,6 @@
                     placeholder="the action function name (e.g. 'action.saveDocument')"
                     title="The action function name as given in the jsx. Case sensitive."
                     v-model="localAction.actionName"
-                    readonly
                 />
                 <button class="topcoat-button--large--quiet" 
                     type="button" 
