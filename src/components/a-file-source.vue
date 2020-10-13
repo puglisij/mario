@@ -34,7 +34,7 @@
                 v-slot="{ errors }"
             >
                 <div class="label">Source Type</div>
-                <select class="topcoat-text-input flex-grow" v-model="localSource.type"> 
+                <select class="topcoat-text-input flex-grow" v-model="localSource.sourceType"> 
                     <option v-for="option in imageSourceTypeOptions" 
                         :value="option.value" 
                         :key="option.value"
@@ -205,8 +205,8 @@ export default {
     },
     computed: {
         isSourceExternalFiles() {
-            return this.localSource.type === ImageSourceType.DIRECTORY
-                || this.localSource.type === ImageSourceType.FILEWATCHER;
+            return this.localSource.sourceType === ImageSourceType.DIRECTORY
+                || this.localSource.sourceType === ImageSourceType.FILEWATCHER;
         }
     },
     watch: {

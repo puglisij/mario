@@ -120,26 +120,9 @@ export default {
         Server.pipelineEngine.on("state", state => {
             this.pipelineEngineState = state;
         });
-        Server.pipelineEngine.on("pipelinestart", pipelineName => {
-            this.pipelineText = pipelineName;
+        Server.pipelineEngine.on("status", status => {
+            
         });
-        Server.pipelineEngine.on("pipelineend", pipelineName => {
-            this.pipelineText = "";
-        });
-        Server.pipelineEngine.on("action", actionName => {
-            this.pipelineActionText = actionName;
-        });
-        Server.pipelineEngine.on("actionend", actionName => {
-            this.pipelineActionText = "";
-        });
-        Server.pipelineEngine.on("processimage", filePath => {
-            this.pipelinefilePathText = filePath;
-        });
-        Server.pipelineEngine.on("processend", () => {
-            this.pipelineText = "";
-            this.pipelineActionText = "";
-            this.pipelinefilePathText = "";
-        })
     },
     methods: {
         /**

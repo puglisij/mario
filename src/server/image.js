@@ -57,9 +57,7 @@ export default class Image
          */
         this.pipeline = "";
         /**
-         * The current job id being processed for this Image. 
-         * This is unique to the current pipeline iteration for this Image instance
-         */
+         * The current job id for this Image (may be sourced from JSON) */
         this.jobId = "";
         /**
          * An array of error messages encountered during processing, if applicable

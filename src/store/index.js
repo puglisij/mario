@@ -1,6 +1,7 @@
 import Conf from 'conf';
-import { get } from 'core-js/fn/dict';
 import { EventEmitter } from 'events'
+import ImageSource from '../server/imageSource';
+import ArrayMap from '../arrayMap';
 
 import _ from '../utils';
 
@@ -35,13 +36,13 @@ const general = new Conf({
             type: "boolean",
             default: false
         },
-        doReadFileMetadata: {
-            type: "boolean", 
-            default: false
-        },
         logDirectory: { 
             type: "string",
             default: ""
+        },
+        logFilePersistForDays: {
+            type: "number", 
+            default: 3
         },
         runHttpServer: {
             type: "boolean",
@@ -58,20 +59,7 @@ const general = new Conf({
         fileSources: {
             type: "array",
             default: [
-                // TODO: Add Schema validation
-                // {
-                //  id: ""
-                //  name: "",
-                //  type: 0,
-                //  path: "",
-                //  useProcessedDirectory: true
-                //  processedDirectory: "", 
-                //  useOutputDirectory: true,
-                //  outputDirectory: "",
-                //  useErrorDirectory: true,
-                //  errorDirectory: "",
-                //  extensions: []
-                // }
+                // Objects matching ImageSource
             ]
         },
         currentTab: {
@@ -85,9 +73,18 @@ const general = new Conf({
     }
 });
 const generalDecorator = {
-    getFileSourceByName(name) 
+    /**
+     * Returns the ImageSource by the given name
+     * @param {string} name 
+     * @returns {ImageSource}
+     */
+    getImageSourceByName(name) 
     {
-        return this.fileSources.find(s => s.name === name);
+        const source = this.fileSources.find(s => s.name === name);
+        if(source) {
+            return ImageSource.fromObject(source);
+        }
+        return null;
     }
 };
 
@@ -115,36 +112,35 @@ const pipelines = new Conf({
     }
 });
 const pipelinesDecorator = {
-    getByNames(pipelineNames)
+    getByNames(pipelineNames, includeDisabled)
     {
-        return this.pipelines.filter(p => pipelineNames.includes(p.name));
+        return this.pipelines.filter(p => {
+            return pipelineNames.includes(p.name) && (includeDisabled || !p.disabled);
+        });
     },
-    getByName(pipelineName) 
+    getByName(pipelineName, includeDisabled) 
     {
-        return this.pipelines.find(p => p.name === pipelineName);
-    },
-    getUniqueFileSourceNamesByPipelineNames(pipelineNames)
-    {
-        // Get all unique file sources for given pipelines
-        let sourceNames = pipelineNames.reduce((arr, name) => {
-            const pipeline = this.getByName(name);
-            return arr.concat(pipeline.sourceNames);
-        }, []);
-        return _.unique(sourceNames);
+        return this.pipelines.find(p => {
+            return p.name === pipelineName && (includeDisabled || !p.disabled); 
+        });
     },
     /**
-     * Returns unique mapping of file source name -> pipeline name
+     * Returns unique mapping of image source name -> pipeline name
+     * @param {Array<string>} pipelineNames
+     * @param {boolean} [includeDisabled = false]
      * @returns {ArrayMap<string, string>}
      */
-    getFileSourceNameToPipelineNameMap() 
+    getImageSourceNameToPipelineNameMap(pipelineNames, includeDisabled) 
     {
         // Collect all unique file sources for given pipelines
         let fileSourceNameToPipelineNames = new ArrayMap();
         pipelineNames.forEach(pipelineName =>
         {
             const pipeline = this.getByName(pipelineName);
-            const fileSourceNames = pipeline.sourceNames;
-            for(let fileSourceName of fileSourceNames) {
+            if(!pipeline) {
+                return;
+            }
+            for(let fileSourceName of pipeline.sourceNames) {
                 fileSourceNameToPipelineNames.set(fileSourceName, pipeline.name);
             }
         });

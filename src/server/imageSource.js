@@ -13,6 +13,7 @@ export default class ImageSource
      * @param {string} [processedDirectory] directory where source files will be moved to when finished processing
      * @param {boolean} [useErrorDirectory = false]
      * @param {string} [errorDirectory] directory where source files will be moved when an error is encountered
+     * @param {boolean} [readMetadata = false]
      */
     constructor(
         sourceType, 
@@ -24,7 +25,8 @@ export default class ImageSource
         useProcessedDirectory = false,
         processedDirectory = "", 
         useErrorDirectory = false,
-        errorDirectory = "")
+        errorDirectory = "",
+        readMetadata = false)
     {
         this.name = name;
         this.sourceType = sourceType;
@@ -37,27 +39,28 @@ export default class ImageSource
         this.processedDirectory = processedDirectory;
         this.useErrorDirectory = useErrorDirectory;
         this.errorDirectory = errorDirectory;
+        this.readMetadata = readMetadata;
     }
 
-    /**
-     * Convert file source configuration object to ImageSource instance
-     * @param {*} fileSource 
-     * @returns {ImageSource}
-     */
-    static fromFileSource(fileSource) 
+    clone() 
     {
-        const imageSource = new ImageSource(
-            fileSource.type, 
-            fileSource.name,
-            fileSource.sourceDirectory, 
-            fileSource.sourceExtensions,
-            fileSource.useOutputDirectory, 
-            fileSource.outputDirectory, 
-            fileSource.useProcessedDirectory,
-            fileSource.processedDirectory,
-            fileSource.useErrorDirectory,
-            fileSource.errorDirectory
-        );
+        // Shallow copy
+        let imageSource = new ImageSource();
+        return Object.assign(imageSource, this);
+    }
+    toString() 
+    {
+        return `name = "${this.name}" type = ${this.sourceType} directory = "${this.sourceDirectory}"`;
+    }
+
+    static fromObject(object)
+    {
+        let imageSource = new ImageSource();
+        for(const key of Object.getOwnPropertyNames(object)) {
+            if(imageSource.hasOwnProperty(key)) {
+                imageSource[key] = object[key];
+            }
+        }
         return imageSource;
     }
 }

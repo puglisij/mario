@@ -1,12 +1,41 @@
 import fs from 'fs';
 import upath from 'upath';
 import { configure, setInteractionMode, extend } from 'vee-validate';
+import _ from '../utils';
 
 setInteractionMode("custom", context => {
     return {
         on: ["change", "blur"]
     }
 });
+
+extend("integer", {
+    validate(value, { min, max }) {
+        value = parseInt(value, 10);
+        min = parseInt(min, 10);
+        max = parseInt(max, 10);
+
+        let message = `Must be an integer`;
+        if(_.isNumber(min) && _.isNumber(max)) {
+            message += ` between ${min} and ${max}`;
+        } else if(_.isNumber(min)) {
+            message += ` greater than or equal to ${min}`;
+        } else if(_.isNumber(max)) {
+            message += ` less than or equal to ${max}`;
+        }
+        if(!_.isNumber(value)) {
+            return message;
+        }
+        if(_.isNumber(min) && value < min) {
+            return message;
+        }
+        if(_.isNumber(max) && value > max) {
+            return message;
+        }
+        return true;
+    },
+    params: ['min', 'max']
+})
 
 extend('required', {
     validate (value) {

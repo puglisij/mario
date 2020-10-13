@@ -34,7 +34,8 @@ class Logger extends EventEmitter
 
         this.options = {
             logDirectory: store.general.logDirectory || global.appDefaultLogPath, 
-            logFileEnabled: true
+            logFileEnabled: true,
+            logFilePersistForDays: store.logFilePersistForDays || 3
         };
         this._cleanupFiles();
         this._createFileStream();
@@ -92,17 +93,20 @@ class Logger extends EventEmitter
      */
     _cleanupFiles()
     {
-        const paths = fs.readdirSync(this.options.logDirectory);
-        const logFilenames = paths.filter(name => name.endsWith(".logs"));
-              logFilenames.sort(); // sort by date
-        const logPaths = logFilenames.map(name => upath.join(this.options.logDirectory, name));
-        const howManyToDelete = Math.max(logPaths.length - this.options.logFilePersistForDays, 0);
-        for(let i = 0; i < howManyToDelete; ++i) 
+        fs.readdir(this.options.logDirectory, (err, paths) => 
         {
-            fs.unlink(logPaths[i], err => {
-                if(err) console.error("Could not delete log file. ", err);
-            });
-        }
+            const logFilenames = paths.filter(name => name.endsWith(".logs"));
+            logFilenames.sort(); // sort by date
+            const logPaths = logFilenames.map(name => upath.join(this.options.logDirectory, name));
+            const howManyToDelete = Math.max(logPaths.length - this.options.logFilePersistForDays, 0);
+
+            for(let i = 0; i < howManyToDelete; ++i) 
+            {
+                fs.unlink(logPaths[i], err => {
+                    if(err) console.error("Could not delete log file. ", err);
+                });
+            }
+        });
     }
     /**
      * Clear the buffered logs

@@ -89,9 +89,8 @@ class Server extends EventEmitter
         //     res.status(500).send('Something broke!')
         // });
         app.get('/status', (req, res) => {
-            res.status(200).json({
-                status: PipelineEngineState.toKey(this._pipelineEngine.state)
-            });
+            //res.status(200).json(this._pipelineEngine.status);
+            res.type('json').send(JSON.stringify(this._pipelineEngine.status, null, 2) + '\n');
         });
 
         //-----------------

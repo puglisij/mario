@@ -11,27 +11,25 @@
             @submit.prevent="handleSubmit(onConfigurationSubmit)"
         >
             <h2 class="tab-title">Configuration<i v-show="needSaved">*</i></h2>
-            <section class="section-content">
-                <label>
-                    <div class="label">Custom Actions Folder</div>
-                    <validation-provider 
-                        class="flex"
-                        tag="div"
-                        rules="pathunc:false|pathexists" 
-                        v-slot="v"
+            <section class="section-content section-content--inset section-content--actions">
+                <validation-provider 
+                    slim
+                    :rules="{ 
+                        pathunc: false, 
+                        pathrelative: { allowed: false },
+                        pathexists: true }" 
+                    v-slot="{ errors }"
+                >
+                    <a-folder-input
+                        title="The path to the directory containing custom extendscript actions"
+                        placeholder="/my/custom/jsx/actions"
+                        :errors="errors"
+                        v-model="pathToUserActions"
                     >
-                        <a-folder-dialog-button :folder.sync="pathToUserActions" @update:folder="onPathToUserActions"></a-folder-dialog-button>
-                        <input 
-                            class="topcoat-text-input flex-grow ml1" 
-                            type="text" 
-                            placeholder="/my/custom/jsx/actions" 
-                            title="The path to the directory containing custom extendscript actions"
-                            v-model="pathToUserActions"
-                            @change="onPathToUserActions"
-                        />
-                        <span class="topcoat-notification error" v-if="v.errors.length">{{ v.errors[0] }}</span>
-                    </validation-provider>
-                </label>
+                        Custom Actions Folder
+                    </a-folder-input>
+                </validation-provider>
+
                 <div class="configurator-buttons">
                     <button 
                         class="topcoat-button--large"
@@ -42,10 +40,51 @@
                     <wait-dots v-show="isLoadingActions" />
                 </div>
             </section>
+
+            <h3 class="section-title">Logs</h3>
+            <section class="section-content section-content--inset">
+                <validation-provider 
+                    slim
+                    :rules="{ 
+                        pathunc: false, 
+                        pathrelative: { allowed: false },
+                        pathexists: true }" 
+                    v-slot="{ errors }"
+                >
+                    <a-folder-input
+                        class="mb1"
+                        title="The path to the directory where console log files will be written"
+                        placeholder="/my/log/files" 
+                        :errors="errors"
+                        v-model="logDirectory"
+                    >
+                        Log File Folder
+                    </a-folder-input>
+                </validation-provider>
+
+                <validation-provider
+                    tag="label"
+                    rules="required|integer:0,365"
+                    v-slot="{ errors }"
+                >
+                    <div class="label">Number of Days to Persist Log Files</div>
+                    <input 
+                        class="topcoat-text-input input-days" 
+                        type="number" 
+                        title="An integer value"
+                        v-model="logFilePersistForDays"
+                        @change="markForSave"
+                    />
+                    <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
+                </validation-provider>
+            </section>
+
             <h3 class="section-title">Http Server</h3>
-            <a-checkbox v-model="runHttpServer" @change="markForSave">
-                Run a server instance (REST api)?
-            </a-checkbox>
+            <section class="section-content section-content--inset">
+                <a-checkbox v-model="runHttpServer" @change="markForSave">
+                    Run a server instance (REST api)?
+                </a-checkbox>
+            </section>
 
             <h3 class="section-title">File Sources</h3>
             <section class="section-content">
@@ -89,7 +128,7 @@ import Draggable from 'vuedraggable';
 import _ from "../utils";
 import store from "../store";
 import eventBus from "../eventBus"; 
-import AFolderDialogButton from "./a-folder-dialog-button.vue";
+import AFolderInput from "./a-folder-input.vue";
 import ACheckbox from "./a-checkbox.vue";
 import AFileSource from "./a-file-source.vue";
 import WaitDots from './wait-dots.vue';
@@ -104,7 +143,7 @@ export default {
         Draggable,
         ValidationObserver,
         ValidationProvider,
-        AFolderDialogButton,
+        AFolderInput,
         ACheckbox,
         AFileSource,
         WaitDots
@@ -115,6 +154,8 @@ export default {
             isLoadingActions: false,
             runHttpServer: store.general.runHttpServer,
             pathToUserActions: store.general.pathToUserActions,
+            logDirectory: store.general.logDirectory,
+            logFilePersistForDays: store.general.logFilePersistForDays,
             fileSources: _.simpleDeepClone(store.general.fileSources)
         }
     },
@@ -129,6 +170,9 @@ export default {
             this.isLoadingActions = false;
         },
         onPathToUserActions(event) {
+            this.markForSave();
+        },
+        onLogDirectoryChange(event) {
             this.markForSave();
         },
         onSourceChange(newSource) {
@@ -198,6 +242,8 @@ export default {
             this.updatePipelineFileSourceReferences();
             store.general.runHttpServer = this.runHttpServer;
             store.general.pathToUserActions = this.pathToUserActions;
+            store.general.logDirectory = this.logDirectory;
+            store.general.logFilePersistForDays = parseInt(this.logFilePersistForDays, 10);
             store.general.fileSources = _.simpleDeepClone(this.fileSources);
             eventBus.$emit("filesource-update");
             this.$emit('changed');
@@ -206,3 +252,14 @@ export default {
     }
 }
 </script>
+
+<style lang="scss">
+    .configurator {
+        .section-content--actions {
+            background: rgba(170, 187, 255, 0.1);
+        }
+        .input-days {
+            width: 50px;
+        }
+    }
+</style>

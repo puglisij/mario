@@ -19,11 +19,11 @@ export default {
         {
             host.runActionWithParameters("action.selectFolder", this.value)
             .then(result => {
-                if(result.toLowerCase().includes("error") || result == "null") {
+                if(result.toLowerCase().includes("error")) {
                     console.error(result);
                     return;
                 }
-                this.$emit("update:folder", result);
+                this.$emit("update:folder", result == "null" ? "" : result);
             });
         }
     }

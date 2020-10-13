@@ -64,10 +64,14 @@ export default class ImageFileProducer extends EventEmitter
     {
         return this._imageSource;
     }
+    toString() {
+        return `\tid = ${this._id}\n\timageSource = (${this._imageSource.toString()})`;
+    }
     _emitFiles(files) 
     {
-        // TODO: Emit JOB instead of loose files?
-        // Emit ImageSource?
+        if(!files.length > 0) {
+            return;
+        }
         this.emit("files", this._id, files);
     }
     _emitQFiles()

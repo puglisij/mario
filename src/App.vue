@@ -153,6 +153,12 @@ h4 {
 .section-content {
     padding: 0;
 }
+.section-content--inset {
+    background: rgba(0,0,0,0.2);
+    border: none;
+    border-radius: 7px;
+    padding: 1rem;
+}
 
 
 #app::-webkit-scrollbar {
@@ -172,7 +178,14 @@ body::-webkit-scrollbar {
 ::-webkit-scrollbar-corner {
   display: none;
 }
-
+input[type=number] {
+    -moz-appearance:textfield;
+}
+::-webkit-outer-spin-button,
+::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
 //-------------------
 // Utilities
 //-------------------
@@ -328,7 +341,7 @@ label {
     background: rgba(0,0,0,0.2);
     border: none;
     border-bottom: 1px solid #333;
-    border-radius: 10px;
+    border-radius: 7px;
     padding: 1rem;
     margin-bottom: 1rem;
 

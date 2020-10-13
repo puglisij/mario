@@ -1,10 +1,10 @@
 import exiftool from 'node-exiftool';
 import upath from 'upath';
-import uncSafePath from '../unc-safe-path';
 import fs from 'fs';
-import fsx from '../fsx';
 import Image from './image';
-
+import fsx from '../fsx';
+import uncSafePath from '../unc-safe-path';
+import _ from '../utils';
 
 
 
@@ -20,12 +20,13 @@ export default class ImageFileReader
      * NOTE: When 'path' is a json file, directories will be automatically created for output, processed, and error directories
      * @param {String} path the image path, json file path, document name (e.g. when using Active Document), or empty string. Path should be absolute
      * @param {ImageSource} imageSource the image source that produced the path 
-     * @param {boolean} [readMetadata = false] whether to read the image files metadata (slower)
+     * @param {Array<string>} targetPipelines
      */
-    async read(path, imageSource, readMetadata = false)
+    async read(path, imageSource, targetPipelines)
     {
         let { useOutputDirectory, useProcessedDirectory, useErrorDirectory } = imageSource;
         let { outputDirectory, processedDirectory, errorDirectory } = imageSource;
+        let readMetadata = imageSource.readMetadata;
 
         // Sanity check
         outputDirectory = useOutputDirectory ? outputDirectory : "";
@@ -35,9 +36,10 @@ export default class ImageFileReader
         let initialInputImagePath = path || "";
         let inputImagePath = initialInputImagePath;
         let inputDirectory = this._isPathDefinedAndAbsolute(path) ? uncSafePath.dirname(path) : "";
+        let pipelines = targetPipelines;
+        let jobId = _.guid();
         let data = {};
         let metadata = {};
-        let pipelines = [];
         let image = new Image();
 
         try 
@@ -47,8 +49,10 @@ export default class ImageFileReader
                 if(this._doesPathHaveJsonExtension(inputImagePath)) 
                 {
                     data = await this._readJson(inputImagePath);
-                    pipelines = data.pipelines || [];
+                    pipelines = data.pipelines || pipelines;
                     pipelines = (typeof pipelines === "string") ? pipelines.split(',') : pipelines;
+                    readMetadata = (typeof data.readMetadata === "boolean") ? data.readMetadata : readMetadata;
+                    jobId = data.jobId || jobId;
 
                     // Grab new image source path and other paths from json, if available
                     inputImagePath = data.inputImagePath || "";
@@ -78,7 +82,7 @@ export default class ImageFileReader
                         throw new Error(`JSON inputImagePath cannot be ancestor directory of or same as input directory when using errorDirectory or processedDirectory options.`);
                     }
                 }
-                if(this._doesFileExist(inputImagePath) && readMetadata) 
+                if(this._doesFileExist(inputImagePath) && readMetadata === true) 
                 {
                     metadata = await this._readMetadata(inputImagePath);
                 }
@@ -90,6 +94,7 @@ export default class ImageFileReader
         }
         finally 
         {
+            image.jobId = jobId;
             image.initialInputImagePath = initialInputImagePath;
             image.inputImagePath = inputImagePath;        
             image.inputDirectory = inputDirectory;

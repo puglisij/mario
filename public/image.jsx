@@ -16,8 +16,6 @@ function ImageForProcessing(json)
     this._processedDirectory = json.processedDirectory;
     this._errorDirectory = json.erroredDirectory;
 
-    // The current pipeline processing this IMAGE
-    this._pipeline = json.pipeline;
     // The current job id being processed for this IMAGE
     this._jobId = json.jobId;
     // External (stored outside file) metadata necessary for processing
@@ -96,7 +94,7 @@ ImageForProcessing.prototype.getErrorDirectory = function() {
 * Returns the name of the pipeline that is currently processing this IMAGE
 */
 ImageForProcessing.prototype.getPipelineName = function() {
-    return this._pipeline;
+    return __PIPELINE.name;
 };
 /**
 * Returns the current job id for this IMAGE process
