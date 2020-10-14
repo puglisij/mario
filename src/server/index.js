@@ -1,12 +1,10 @@
 
 /* npm modules */
-import debounce from 'debounce'; 
 import EventEmitter from "events";
 import express from "express";
 
 /* local modules */
 import { PipelineEngine } from './pipelineEngine';
-import PipelineEngineState from './pipelineEngineState';
 import { Actions } from './actions';
 import _ from '../utils';
 import store from '../store';
@@ -20,10 +18,6 @@ export const ServerState = {
     UNINITIALIZED: 0,
     RUNNING: 1
 };
-
-// DELETE. Note, to access in iframe use iframe.contentWindow.actions
-// TODO: For DEBUG Only. When finished, move new Actions() inside Server constructor.
-window.actions = new Actions(); 
 
 /**
  * Backend systems.
@@ -41,7 +35,7 @@ class Server extends EventEmitter
         // Express instance
         this._httpServer = null;
         this._pipelineEngine = new PipelineEngine();
-        this._actions = window.actions;
+        this._actions = new Actions();
     }
     /**
      * @returns {Promise}
@@ -89,8 +83,14 @@ class Server extends EventEmitter
         //     res.status(500).send('Something broke!')
         // });
         app.get('/status', (req, res) => {
+            const status = {
+                adobeApp: global.adobeApp,
+                adobeVersion: global.adobeVersion,
+                version: global.appVersion,
+                ...this._pipelineEngine.fullStatus
+            };
+            res.type('json').send(JSON.stringify(status, null, 2) + '\n');
             //res.status(200).json(this._pipelineEngine.status);
-            res.type('json').send(JSON.stringify(this._pipelineEngine.status, null, 2) + '\n');
         });
 
         //-----------------
@@ -126,7 +126,7 @@ class Server extends EventEmitter
         this._state = value;
         this.emit("state", value);
     }
-    
 }
-
-export default new Server();
+// DELETE. Note, to access in iframe use iframe.contentWindow.server
+// TODO: For DEBUG Only. When finished, remove "window.server = " from export.
+export default (window.server = new Server());

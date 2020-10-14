@@ -121,7 +121,9 @@ export default {
             this.pipelineEngineState = state;
         });
         Server.pipelineEngine.on("status", status => {
-            
+            this.pipelineText = status.pipeline;
+            this.pipelineActionText = status.action;
+            this.pipelinefilePathText = status.file;
         });
     },
     methods: {

@@ -16,8 +16,15 @@ module.exports = {
         }
     },
     plugins: [
-        //new BundleAnalyzerPlugin()
-    ]
+        new BundleAnalyzerPlugin()
+    ],
+    optimization: {
+        usedExports: true,
+        sideEffects: false 
+        //[
+            //"./src/some-side-effectful-file.js"
+        //]
+    }
   },
   css: {
     loaderOptions: {

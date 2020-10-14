@@ -4,9 +4,11 @@
 */
 action.selectFolder = function selectFolder(preselectFolder)
 {
+    var folder = null;
     if(!preselectFolder) {
-        return Folder.selectDialog("Choose Folder");
+        folder = Folder.selectDialog("Choose Folder");
     } else {
-        return new Folder(preselectFolder).selectDlg();
+        folder = new Folder(preselectFolder).selectDlg();
     }
+    return folder ? folder.fsName : null;
 };

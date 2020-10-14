@@ -13,26 +13,48 @@ export class PipelineEngine extends EventEmitter
     constructor() 
     {
         super();
+        const self = this;
         this._processingMutex = false; 
+        this._lastState = PipelineEngineState.STOPPED;
         this._state = PipelineEngineState.STOPPED;
-        this._status = {
-            jobId: "", 
-            imageJobId: "",
-            pipeline: "", 
-            action: "",
-            file: ""
-        };
-        this.on("jobstart", (jobId, imageJobId, file) => {
+        this._status = new Proxy({
+                jobId: "", 
+                jobCreationTime: "",
+                files: [],
+                fileCount: 0,
+                file: "",
+                imageJobId: "",
+                imageIteration: 0,
+                pipeline: "", 
+                action: ""
+            }, {
+                set: function() { 
+                    Reflect.set(...arguments);
+                    self.emit("status", self._status);
+                    return true;
+                }
+        });
+        this.on("jobstart", (jobId, jobCreationTime, files) => {
             this._status.jobId = jobId;
-            this._status.imageJobId = imageJobId;
-            this._status.file = file;
+            this._status.jobCreationTime = jobCreationTime;
+            this._status.files = files;
+            this._status.fileCount = files.length;
         });
         this.on("jobend", () => {
             this._status.jobId = "";
+            this._status.jobCreationTime = "";
+            this._status.files = [];
+            this._status.fileCount = 0;
+            this._status.file = "";
             this._status.imageJobId = "";
+            this._status.imageIteration = 0;
             this._status.pipeline = "";
             this._status.action = "";
-            this._status.file = "";
+        });
+        this.on("imagejobstart", (imageJobId, imageIteration, file) => {
+            this._status.imageJobId = imageJobId;
+            this._status.imageIteration = imageIteration;
+            this._status.file = file;
         });
         this.on("pipelinestart", pipelineName => { this._status.pipeline = pipelineName; });
         this.on("pipelineend", () => { this._status.pipeline = ""; });
@@ -93,13 +115,15 @@ export class PipelineEngine extends EventEmitter
         }
     }
     pause() {
-        if(this.isProcessing()) {
+        if(this.isProcessing() || this.isIdle()) {
             this.state = PipelineEngineState.PAUSED;
         }
     }
     resume() {
-        if(this.isPaused()) {
+        if(this.isPaused() && this._lastState === PipelineEngineState.PROCESSING) {
             this.state = PipelineEngineState.PROCESSING;
+        } else {
+            this.state = PipelineEngineState.IDLE;
         }
     }
     stop() {
@@ -146,7 +170,7 @@ export class PipelineEngine extends EventEmitter
     {
         await this._pauseCheck();
         this.state = PipelineEngineState.PROCESSING;
-        
+
         console.log(`Pipeline process loop started with ${this._imageFileProducers.getTotalJobs()} jobs in queue.`);
         this.emit("processstart");
         return host.runJsxWithThrow(`app.displayDialogs = DialogModes.NO;`);
@@ -159,19 +183,22 @@ export class PipelineEngine extends EventEmitter
         {
             const { 
                 jobId, 
+                jobCreationTime,
                 listenerNames, 
                 files, 
                 imageSource } = this._imageFileProducers.nextJob();
+            this.emit("jobstart", jobId, jobCreationTime, files.slice(0));
 
-            while(!this._stopCheck() && (file = files.pop())) 
+            for(let i = 0; !this._stopCheck() && i < files.length; ++i)
             {
                 await this._pauseCheck();
+                const file = files[i];
 
                 // READ
-                console.log(`Reading next file ${file} from job ${jobId}.`);
+                console.log(`Reading next file ${file} from job ${jobId}. ${files.length} remaining.`);
                 const image = await this._imageFileReader.read(file, imageSource, listenerNames);
                 const pipelines = store.pipelines.getByNames(image.pipelines);
-                this.emit("jobstart", jobId, image.jobId, file);
+                this.emit("imagejobstart", image.jobId, i, file);
 
                 // EXECUTE
                 for(const pipeline of pipelines) 
@@ -183,7 +210,6 @@ export class PipelineEngine extends EventEmitter
                         for(const action of pipeline.actions) 
                         {
                             this.emit("actionstart", action.actionName);
-                            console.log(`Action: ${action.actionName}`);
                             let result = await host.runActionWithParameters(action.actionName, action.parameters);
                             
                             if(this._stopCheck(result)) break;
@@ -208,20 +234,24 @@ export class PipelineEngine extends EventEmitter
                 
                 processedImages.push(image);
                 await this._pauseCheck(null, store.general.pauseAfterEveryImage);
-                this.emit("jobend");
+                this.emit("imagejobend");
             }
+            this.emit("jobend");
         }
         
-        // MOVE
+        return processedImages;
+    }
+    _runProcessEnd(processedImages)
+    {
+        console.log("Pipeline process loop exited.");
+
+        // MOVE (we move at the end of the process, in case images/jobs are sharing files)
         if(!this._stopCheck())
         {
             console.log(`Moving ${processedImages.length} processed images...`);
             this._imageFileMover.move(processedImages);
         } 
-    }
-    _runProcessEnd()
-    {
-        console.log("Pipeline process loop exited.");
+
         this.emit("processend");
         return host.runJsxWithThrow(`$.gc();`);
     }
@@ -282,7 +312,8 @@ export class PipelineEngine extends EventEmitter
         } 
         return Promise.resolve();
     }
-    get status() 
+    
+    get fullStatus() 
     {
         return {
             state: PipelineEngineState.toKey(this._state),
@@ -290,10 +321,14 @@ export class PipelineEngine extends EventEmitter
             status: this._status
         };
     }
+    get status() {
+        return this._status;
+    }
     get state() {
         return this._state;
     }
     set state(value) {
+        this._lastState = this._state;
         this._state = value;
         this.emit("state", value);
     }

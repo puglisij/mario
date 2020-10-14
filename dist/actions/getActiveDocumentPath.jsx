@@ -13,7 +13,11 @@ action.getActiveDocumentPath = function getActiveDocumentPath(options)
         fullPath: true
     }, options || {});
 
-    var doc = app.activeDocument;
+    try {
+        var doc = app.activeDocument;
+    } catch(e) {
+        return "";
+    }
     if (doc.readonly && options.skipReadonly) {
         return "";
     } 

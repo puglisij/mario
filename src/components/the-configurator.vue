@@ -11,6 +11,8 @@
             @submit.prevent="handleSubmit(onConfigurationSubmit)"
         >
             <h2 class="tab-title">Configuration<i v-show="needSaved">*</i></h2>
+
+            <h3 class="section-title">Actions</h3>
             <section class="section-content section-content--inset section-content--actions">
                 <validation-provider 
                     slim
@@ -37,7 +39,7 @@
                         @click.prevent="onReloadActions"
                         v-show="!isLoadingActions"
                     >Reload Actions</button>
-                    <wait-dots v-show="isLoadingActions" />
+                    <wait-dots v-if="isLoadingActions" />
                 </div>
             </section>
 

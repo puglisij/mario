@@ -44,7 +44,8 @@ class Host
             Builtin Action Path: ${appGlobal.appBuiltinActionsPath}\n
             Temporary Path: ${appGlobal.appTemporaryPath}\n
             Creative Suite API Version: ${apiVersion.major}.${apiVersion.minor}.${apiVersion.micro}\n
-            OS: ${this.interface.getOSInformation()}`);
+            OS: ${this.interface.getOSInformation()}\n
+            App Version: ${appGlobal.appVersion}`);
             
         return Promise.resolve();
     }
@@ -152,6 +153,7 @@ class Host
      */
     runActionWithParameters(functionName, parameters)
     {
+        console.log(`Action: ${functionName}`);
         const parametersJson = JSON.stringify(parameters);
         return this.runJsxWithThrow(`
             var result = ${functionName}(${parametersJson});

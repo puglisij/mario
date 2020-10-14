@@ -1,5 +1,18 @@
 import upath from 'upath';
+import { version as appVersion } from '../../package.json';
 
+function getAdobeVersions() 
+{
+    const csInterface = new CSInterface();
+    const { appVersion, appName } = csInterface.getHostEnvironment();
+    const { major, minor, micro } = csInterface.getCurrentApiVersion();
+
+    return {
+        adobeApp: appName,
+        adobeVersion: appVersion, 
+        adobeCEPApiVersion: `${major}.${minor}.${micro}`
+    }
+}
 
 const appInstallPath = upath.normalize(new CSInterface().getSystemPath(SystemPath.EXTENSION));
 const appWorkingPath = upath.join(appInstallPath, process.env.VUE_APP_HOST_DIR);
@@ -8,9 +21,11 @@ const appBuiltinActionsPath = upath.join(appWorkingPath, "actions");
 const appTemporaryPath = upath.join(appWorkingPath, "tmp");
 
 export default {
+    appVersion,
     appInstallPath, 
     appWorkingPath,
     appDefaultLogPath,
     appBuiltinActionsPath,
-    appTemporaryPath
+    appTemporaryPath,
+    ...getAdobeVersions()
 }

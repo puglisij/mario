@@ -6,7 +6,7 @@ import EventEmitter from "events";
 import ImageSource from './imageSource';
 import ImageSourceType from './imageSourceType';
 import host from '../host';
-import utils, { EDebounceType } from '../utils';
+import _, { EDebounceType } from '../utils';
 
 
 let nextProducerId = 0;
@@ -33,7 +33,7 @@ export default class ImageFileProducer extends EventEmitter
         // A better option would be to submit explicit files for processing as one 'job',
         // via a REST api or similar interface.
         this._q = [];
-        this._emitQFiles = utils.debounce(this._emitQFiles, 5000, EDebounceType.Trailing);
+        this._emitQFiles = _.debounce(this._emitQFiles, 5000, EDebounceType.Trailing);
     }
     get id() {
         return this._id;
@@ -96,8 +96,9 @@ export default class ImageFileProducer extends EventEmitter
             ignored: /^\./, 
             depth: 0,
             usePolling: true,
+            interval: 5000,
             awaitWriteFinish: {
-                stabilityThreshold: 2000,
+                stabilityThreshold: 5000,
                 pollInterval: 5000
             }
         })

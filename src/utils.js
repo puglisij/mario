@@ -70,6 +70,23 @@ function guid()
     return _p8() + _p8(true) + _p8(true) + _p8();
 }
 
+/**
+* Returns the date in format YYYYMMDDhhmmss
+*/
+function yyyymmddhhmmss(date) 
+{
+    function pad2(n) {  // always returns a string
+        return (n < 10 ? '0' : '') + n;
+    }
+    date = date || new Date();
+    return date.getFullYear() +
+            pad2(date.getMonth() + 1) + 
+            pad2(date.getDate()) +
+            pad2(date.getHours()) +
+            pad2(date.getMinutes()) +
+            pad2(date.getSeconds());
+}
+
 function first(obj) 
 {
     if(Array.isArray(obj)) {
@@ -128,6 +145,7 @@ export default {
     debounce,
     simpleDeepClone,
     guid, 
+    yyyymmddhhmmss,
     first,
     unique,
     getOrDefine,

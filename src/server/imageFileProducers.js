@@ -88,6 +88,7 @@ export default class ImageFileProducers extends EventEmitter
         const imageSource = this._producerIdToProducer.get(producerId).getImageSource();
         this._jobs.push({
             jobId: _.guid(), 
+            jobCreationTime: _.yyyymmddhhmmss(),
             listenerNames: listenerNames.slice(0),
             files, 
             imageSource: imageSource.clone()

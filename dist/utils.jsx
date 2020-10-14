@@ -129,6 +129,22 @@ var _ = {
         return null;
     },
     /**
+    * Returns the date in format YYYYMMDDhhmmss
+    */
+    yyyymmddhhmmss: function(date) 
+    {
+        function pad2(n) {  // always returns a string
+            return (n < 10 ? '0' : '') + n;
+        }
+        date = date || new Date();
+        return date.getFullYear() +
+               pad2(date.getMonth() + 1) + 
+               pad2(date.getDate()) +
+               pad2(date.getHours()) +
+               pad2(date.getMinutes()) +
+               pad2(date.getSeconds());
+    },
+    /**
     * Replaces the mustache {{expression}} in the given text with the given input text
     * @param {string} template the template string e.g. "my template is {{foo}}"
     * @param {object} map the object with name, value pairs e.g. { foo: "awesome" }
