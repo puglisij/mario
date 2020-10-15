@@ -1,7 +1,7 @@
 
 /* npm modules */
 import EventEmitter from "events";
-import express from "express";
+import polka from "polka";
 
 /* local modules */
 import { PipelineEngine } from './pipelineEngine';
@@ -57,15 +57,14 @@ class Server extends EventEmitter
     }
     async startServer() 
     {
-        app = express();
         port = store.general.serverPort;
+        app = polka();
         //-----------------
-        // Express Routes
+        // Routes
         //-----------------
-        // TODO Replace Express with WebSockets (e.g. sockjs)?
         // app.get('/pipeline/:name/configuration', (req, res) => {
-        //     res.header("Content-Type", "application/json");
-        //     res.send(
+        //     res.setHeader("Content-Type", "application/json");
+        //     res.end(
         //         JSON.stringify(this._pipelineConfig.pipelines.find(p => p.name == req.params.name.toLowerCase()), null, 4)
         //     );
         // });
@@ -75,13 +74,6 @@ class Server extends EventEmitter
         // app.post('/pipeline/stop', (req, res) => {
         //     res.status(200).json({ success: true });
         // });
-        // app.use((req, res, next) => {
-        //     res.status(404).send("Sorry, can't find that!");
-        // });
-        // app.use((err, req, res, next) => {
-        //     console.error(err.stack);
-        //     res.status(500).send('Something broke!')
-        // });
         app.get('/status', (req, res) => {
             const status = {
                 adobeApp: global.adobeApp,
@@ -89,16 +81,29 @@ class Server extends EventEmitter
                 version: global.appVersion,
                 ...this._pipelineEngine.fullStatus
             };
-            res.type('json').send(JSON.stringify(status, null, 2) + '\n');
-            //res.status(200).json(this._pipelineEngine.status);
+
+            res.writeHead(200, {
+                "Content-Type": "application/json"
+            });
+            res.end(JSON.stringify(status, null, 2) + '\n');
         });
 
         //-----------------
         // Create Server
         //-----------------
-        this._httpServer = app.listen(port, function() {
-            console.log(`Express is listening to http://localhost:${port}`);
+        this._httpServer = app.listen(port, "0.0.0.0", function() {
+            console.log(`Polka is listening to http://localhost:${port}`);
         });
+
+        // Native
+        // this._httpServer = http.createServer((req, res) => 
+        // {
+        //      handle routing on req.url
+        // });
+        // this._httpServer.listen(port, "0.0.0.0", () => {
+        //     console.log(`Server is listening to http://localhost:${port}`);
+        // });
+
         console.log("Server started.");
     }
     destroy() 
