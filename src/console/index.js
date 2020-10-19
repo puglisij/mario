@@ -3,6 +3,7 @@ import fs from "fs";
 import { EventEmitter } from "events";
 import global from '../global';
 import store from '../store';
+import fsx from '../fsx';
 
 const CONSOLE_METHODS = ["log", "warn", "error"];
 
@@ -13,8 +14,7 @@ class Logger extends EventEmitter
         super();
         this.initialized = false;
         this.options = {
-            logDirectory: "./",
-            logFileEnabled: false,
+            logDirectory: "",
             logFilePersistForDays: 7 // number of files/days to keep
         };
         this.originalConsoleMethods = {};
@@ -25,21 +25,19 @@ class Logger extends EventEmitter
     /**
      * @returns {Promise}
      */
-    init() 
+    async init() 
     {
         if(this.initialized)
             return;
         this.initialized = true;
-        this.emit("initializing");
-
         this.options = {
             logDirectory: store.general.logDirectory || global.appDefaultLogPath, 
-            logFileEnabled: true,
             logFilePersistForDays: store.logFilePersistForDays || 3
         };
-        this._cleanupFiles();
+        await this._createLogsDirectory();
         this._createFileStream();
-
+        this._cleanupOldFiles();
+        
         // Override default console logging methods
         CONSOLE_METHODS.forEach(function(method)
         {
@@ -58,8 +56,7 @@ class Logger extends EventEmitter
         }.bind(this));
 
         this.emit("initialized");
-        console.log("Logger initialized");
-        return Promise.resolve();
+        console.log(`Logger initialized.\n\t${this.options.logDirectory}`);
     }
     _write(method, args)
     {
@@ -71,12 +68,18 @@ class Logger extends EventEmitter
 
         this.emit("logs");
     }
+    _createLogsDirectory() 
+    {
+        return new Promise((resolve, reject) => {
+            fsx.mkdir(this.options.logDirectory, { recursive: true }, err => {
+                if(err && err.code !== "ENOENT") reject(`${err}\nCould not create directory.`);
+                else resolve();
+            });
+        });
+    }
     _createFileStream()
     {
-        if(!this.options.logFileEnabled) {
-            return;
-        }
-        const yyyymmdd = new Date().toISOString().slice(0,10);
+        const yyyymmdd = new Date().toISOString().slice(0,10);   
         const logPath = upath.join(this.options.logDirectory, yyyymmdd + ".logs");
         this.logWriteStream = fs.createWriteStream(logPath, {
             flags: "a",
@@ -91,12 +94,16 @@ class Logger extends EventEmitter
     /**
      * Erase old log files 
      */
-    _cleanupFiles()
+    _cleanupOldFiles()
     {
         fs.readdir(this.options.logDirectory, (err, paths) => 
         {
+            if(err) {
+                return;
+            }
             const logFilenames = paths.filter(name => name.endsWith(".logs"));
-            logFilenames.sort(); // sort by date
+                  logFilenames.sort(); // sort by date
+                  logFilenames.pop(); // don't delete todays
             const logPaths = logFilenames.map(name => upath.join(this.options.logDirectory, name));
             const howManyToDelete = Math.max(logPaths.length - this.options.logFilePersistForDays, 0);
 

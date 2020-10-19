@@ -50,6 +50,7 @@ function wrapAction(actionName)
             throw e 
                 + (e.line !== undefined ? "\nLine Number: " + e.line  : "")
                 + "\nAction: " + actionName;
+            // Also see $.stack
         }
     };
 }

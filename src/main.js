@@ -9,6 +9,8 @@ import Server from './server';
 import global from './global';
 import Validation from './validation';
 
+global.csInterface.setWindowTitle("Mario v" + global.appVersion);
+
 // Fixes module resolution issues for dependencies within node_modules
 process.chdir(global.appWorkingPath);
 __dirname = global.appWorkingPath;
@@ -30,6 +32,7 @@ const create = async () => {
     await Server.init();
     await Host.init(); 
     await HostScriptListener.init();
+    await Validation.init();
 
     window.vue = new Vue({
         render: h => h(App),

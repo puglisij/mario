@@ -99,7 +99,11 @@ extend('custom', {
 });
 
 console.log("Validation imported");
-export default { init: () => {} };
+export default { 
+    init: () => {
+        return Promise.resolve();
+    } 
+};
 
 
 // extend("uniq", {

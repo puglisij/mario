@@ -280,10 +280,17 @@ export class Actions
      */
     async _importAll()
     {
+        const pathToUserActions = store.general.pathToUserActions;
+        const pathToBuildInActions = global.appBuiltinActionsPath;
         console.log("Import actions started.");
-
-        await this._import(store.general.pathToUserActions);
-        await this._import(global.appBuiltinActionsPath);
+        console.log(`Importing from:\n\t${pathToUserActions}\n\t${pathToBuildInActions}`);
+        
+        await this._import(pathToBuildInActions);
+        if(pathToUserActions) 
+        {
+            await this._import(pathToUserActions);
+            await host.runJsx(`action.CUSTOM_ACTIONS_FOLDER = new Folder("${pathToUserActions}");`);
+        }
 
         console.log("Import actions exited.");
     }

@@ -14,6 +14,7 @@ export default class ImageFileMover
      */
     async move(images) 
     {
+        console.log(`Moving ${images.length} processed images...`);
         for(const image of images)
         {
             if(image.errors.length) {
@@ -29,6 +30,7 @@ export default class ImageFileMover
                 await this._moveImage(image, image.processedDirectory);
             }
         }
+        console.log(`Move completed.`);
     }
     /**
      * @param {Image} image 

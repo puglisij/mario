@@ -93,7 +93,7 @@ class Server extends EventEmitter
         //-----------------
         this._httpServer = app.listen(port, "0.0.0.0", function() {
             console.log(`Polka is listening to http://localhost:${port}`);
-        });
+        }).server;
 
         // Native
         // this._httpServer = http.createServer((req, res) => 

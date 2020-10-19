@@ -87,6 +87,21 @@ function yyyymmddhhmmss(date)
             pad2(date.getSeconds());
 }
 
+function defaultForNativeType(value) 
+{
+    switch (typeof value) {
+        case 'boolean'   : return false;
+        case 'function'  : return function () {};
+        case 'null'      : return null;
+        case 'number'    : return 0;
+        case 'object'    : return {};
+        case 'string'    : return "";
+        case 'symbol'    : return Symbol();
+        case 'undefined' : return void 0;
+        default: return null;
+    }
+}
+
 function first(obj) 
 {
     if(Array.isArray(obj)) {
@@ -146,6 +161,7 @@ export default {
     simpleDeepClone,
     guid, 
     yyyymmddhhmmss,
+    defaultForNativeType,
     first,
     unique,
     getOrDefine,

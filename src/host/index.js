@@ -1,7 +1,5 @@
-import os from 'os';
 import upath from 'upath';
 import appGlobal from '../global';
-import { reject } from 'async';
 
 /*
     Creative Suite Extendscript Interface / Decorator
@@ -27,24 +25,25 @@ class Host
         // Host Environment Setup
         this.importScript("utils.jsx");
         this.importScript("polyfil.jsx");
+        this.importScript("console.jsx");
         this.importScript("json.jsx"); 
         this.importScript("image.jsx"); 
         
         // Listeners
         this.interface.addEventListener("log", event => {
-            console.log("Jsx Event: " + event.data);
+            console.log("Jsx Log: " + event.data);
         });
+        this.interface.addEventListener("exec", this.onExec.bind(this));
         this.interface.addEventListener("setTimeout", this.onSetTimeout.bind(this));
 
-        const apiVersion = this.interface.getCurrentApiVersion();
         console.log(`Host initialized.\n
             Install Path: ${appGlobal.appInstallPath}\n
             Working Path: ${appGlobal.appWorkingPath}\n
             Default Log Path: ${appGlobal.appDefaultLogPath}\n
+            Default Config Path: ${appGlobal.appDefaultConfigPath}\n
             Builtin Action Path: ${appGlobal.appBuiltinActionsPath}\n
-            Temporary Path: ${appGlobal.appTemporaryPath}\n
-            Creative Suite API Version: ${apiVersion.major}.${apiVersion.minor}.${apiVersion.micro}\n
-            OS: ${this.interface.getOSInformation()}\n
+            Creative Suite API Version: ${appGlobal.adobeCEPApiVersion}\n
+            OS: ${appGlobal.os}\n
             App Version: ${appGlobal.appVersion}`);
             
         return Promise.resolve();
@@ -80,6 +79,11 @@ class Host
                 }
             })
         }, delay);
+    }
+    onExec(event) 
+    {
+        // TODO: Execute node child process 
+        console.log("Jsx exec called: " + event.data);
     }
     /*---------------------
         Extend Script

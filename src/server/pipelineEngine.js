@@ -7,6 +7,7 @@ import ImageFileMover from './imageFileMover';
 import ImageFileReader from './imageFileReader';
 import ImageFileProducers from './imageFileProducers';
 import PipelineEngineState from './pipelineEngineState';
+import PipelineEngineStatus from './pipelineEngineStatus';
 
 export class PipelineEngine extends EventEmitter
 {
@@ -17,51 +18,42 @@ export class PipelineEngine extends EventEmitter
         this._processingMutex = false; 
         this._lastState = PipelineEngineState.STOPPED;
         this._state = PipelineEngineState.STOPPED;
-        this._status = new Proxy({
-                jobId: "", 
-                jobCreationTime: "",
-                files: [],
-                fileCount: 0,
-                file: "",
-                imageJobId: "",
-                imageIteration: 0,
-                pipeline: "", 
-                action: ""
-            }, {
+        this._status = new Proxy(new PipelineEngineStatus(), 
+            {
                 set: function() { 
                     Reflect.set(...arguments);
                     self.emit("status", self._status);
                     return true;
                 }
-        });
+            }
+        );
         this.on("jobstart", (jobId, jobCreationTime, files) => {
             this._status.jobId = jobId;
             this._status.jobCreationTime = jobCreationTime;
             this._status.files = files;
             this._status.fileCount = files.length;
         });
-        this.on("jobend", () => {
-            this._status.jobId = "";
-            this._status.jobCreationTime = "";
-            this._status.files = [];
-            this._status.fileCount = 0;
-            this._status.file = "";
-            this._status.imageJobId = "";
-            this._status.imageIteration = 0;
-            this._status.pipeline = "";
-            this._status.action = "";
-        });
         this.on("imagejobstart", (imageJobId, imageIteration, file) => {
             this._status.imageJobId = imageJobId;
             this._status.imageIteration = imageIteration;
             this._status.file = file;
         });
-        this.on("pipelinestart", pipelineName => { this._status.pipeline = pipelineName; });
-        this.on("pipelineend", () => { this._status.pipeline = ""; });
-        this.on("actionstart", actionName => { this._status.action = actionName; });
-        this.on("actionend", () => { this._status.action = ""; });
-
-
+        this.on("pipelinestart", pipelineName => { 
+            this._status.pipeline = pipelineName; 
+        });
+        this.on("pipelineend", () => { 
+            this._status.pipeline = ""; 
+        });
+        this.on("actionstart", actionName => { 
+            this._status.action = actionName; 
+        });
+        this.on("actionend", () => { 
+            this._status.action = ""; 
+        });
+        this.on("jobend", () => this._status.reset());
+        this.on("processstart", () => this._status.reset());
+        this.on("processend", () => this._status.reset());
+        
         this._imageFileReader = new ImageFileReader();
         this._imageFileMover = new ImageFileMover();
         this._imageFileProducers = new ImageFileProducers();
@@ -188,6 +180,7 @@ export class PipelineEngine extends EventEmitter
                 files, 
                 imageSource } = this._imageFileProducers.nextJob();
             this.emit("jobstart", jobId, jobCreationTime, files.slice(0));
+            console.log(`Job ${jobId} started with ${files.length} files.`);
 
             for(let i = 0; !this._stopCheck() && i < files.length; ++i)
             {
@@ -195,7 +188,7 @@ export class PipelineEngine extends EventEmitter
                 const file = files[i];
 
                 // READ
-                console.log(`Reading next file ${file} from job ${jobId}. ${files.length} remaining.`);
+                console.log(`Reading next file[${i}] ${file}.`);
                 const image = await this._imageFileReader.read(file, imageSource, listenerNames);
                 const pipelines = store.pipelines.getByNames(image.pipelines);
                 this.emit("imagejobstart", image.jobId, i, file);
@@ -221,6 +214,7 @@ export class PipelineEngine extends EventEmitter
                     {
                         console.error(e);
                         image.errors.push(e.toString());
+                        await host.runActionWithParameters(`action.closeAllWithoutSave`);
                         await this._pauseCheck(null, store.general.pauseOnExceptions);
                     }
                     finally
@@ -248,7 +242,6 @@ export class PipelineEngine extends EventEmitter
         // MOVE (we move at the end of the process, in case images/jobs are sharing files)
         if(!this._stopCheck())
         {
-            console.log(`Moving ${processedImages.length} processed images...`);
             this._imageFileMover.move(processedImages);
         } 
 
@@ -318,11 +311,11 @@ export class PipelineEngine extends EventEmitter
         return {
             state: PipelineEngineState.toKey(this._state),
             jobs: this._imageFileProducers.getAllJobs(),
-            status: this._status
+            status: this._status.serialize()
         };
     }
     get status() {
-        return this._status;
+        return this._status.serialize();
     }
     get state() {
         return this._state;

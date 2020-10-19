@@ -8,6 +8,7 @@
             class="configurator"
             novalidate="true"
             @keydown.enter.prevent
+            @change="markForSave"
             @submit.prevent="handleSubmit(onConfigurationSubmit)"
         >
             <h2 class="tab-title">Configuration<i v-show="needSaved">*</i></h2>
@@ -75,7 +76,6 @@
                         type="number" 
                         title="An integer value"
                         v-model="logFilePersistForDays"
-                        @change="markForSave"
                     />
                     <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
                 </validation-provider>
@@ -83,7 +83,7 @@
 
             <h3 class="section-title">Http Server</h3>
             <section class="section-content section-content--inset">
-                <a-checkbox v-model="runHttpServer" @change="markForSave">
+                <a-checkbox v-model="runHttpServer">
                     Run a server instance (REST api)?
                 </a-checkbox>
             </section>
@@ -101,7 +101,6 @@
                         :key="source.id"
                         v-model="fileSources[index]"
                         :sources="fileSources"
-                        @change="onSourceChange"
                         @delete="onDeleteSource"
                     ></a-file-source>
                 </draggable>
@@ -170,15 +169,6 @@ export default {
             this.isLoadingActions = true;
             await Server.actions.init();
             this.isLoadingActions = false;
-        },
-        onPathToUserActions(event) {
-            this.markForSave();
-        },
-        onLogDirectoryChange(event) {
-            this.markForSave();
-        },
-        onSourceChange(newSource) {
-            this.markForSave();
         },
         updatePipelineFileSourceReferences() 
         {

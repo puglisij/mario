@@ -204,6 +204,9 @@ var _ = {
     },
     isNull: function isNull(val) {
         return val === null;
+    },
+    clamp: function clamp(val, min, max) {
+        return Math.max(min, Math.min(val, max));
     }
 };
 
