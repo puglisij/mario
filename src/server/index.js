@@ -79,6 +79,7 @@ class Server extends EventEmitter
                 adobeApp: global.adobeApp,
                 adobeVersion: global.adobeVersion,
                 version: global.appVersion,
+                time: new Date().toLocaleString(),
                 ...this._pipelineEngine.fullStatus
             };
 

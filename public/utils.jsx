@@ -29,6 +29,25 @@ var _ = {
     {
         return (fullName || app.activeDocument.name).match(/^[^.]+/).toString();
     },
+    getRulerUnitsAsAbbreviation: function() {
+        switch(app.preferences.rulerUnits) {
+            case Units.CM:
+                return "cm";
+            case Units.INCHES:
+                return "in";
+            case Units.MM:
+                return "mm";
+            case Units.PERCENT:
+                return "%";
+            case Units.PICAS:
+                return "pc";
+            case Units.PIXELS:
+                return "px";
+            case Units.POINTS:
+                return "pt";
+        }
+        return "?";
+    },
     /**
     * Converts the given UnitValue to appropriate charID and Number values necessary to add to an ActionDescriptor
     * @param {Number|UnitValue} unitValue any type of supported unit: px, pt, pc, cm, mm, in, etc
@@ -41,6 +60,7 @@ var _ = {
         var originalBaseUnit = UnitValue.baseUnit; 
         UnitValue.baseUnit = UnitValue(1 / resolution, "in");
 
+        unitValue = _.isNumber(unitValue) ? unitValue + _.getRulerUnitsAsAbbreviation() : unitValue;
         var theUnit = UnitValue(unitValue);
         var result;
         if(theUnit.type == "px") {

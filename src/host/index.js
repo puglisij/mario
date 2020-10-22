@@ -1,5 +1,7 @@
+import child_process from 'child_process';
 import upath from 'upath';
 import appGlobal from '../global';
+import store from '../store';
 
 /*
     Creative Suite Extendscript Interface / Decorator
@@ -27,11 +29,12 @@ class Host
         this.importScript("polyfil.jsx");
         this.importScript("console.jsx");
         this.importScript("json.jsx"); 
+        this.importScript("events.jsx");
         this.importScript("image.jsx"); 
         
         // Listeners
         this.interface.addEventListener("log", event => {
-            console.log("Jsx Log: " + event.data);
+            console.log("Jsx Log: ", event.data);
         });
         this.interface.addEventListener("exec", this.onExec.bind(this));
         this.interface.addEventListener("setTimeout", this.onSetTimeout.bind(this));
@@ -72,18 +75,31 @@ class Host
         setTimeout(function()
         {
             // Since ExtendScript doesn't have a setTimeout. We're hijacking the event loop here.
-            _this.runJsx(`executeSetTimeoutCallback(${callbackId})`)
-            .then(result => {
-                if(result.includes("error")) {
-                    console.error(result);
-                }
-            })
+            _this.runJsxWithThrow(`executeSetTimeoutCallback(${callbackId})`)
         }, delay);
     }
     onExec(event) 
     {
-        // TODO: Execute node child process 
-        console.log("Jsx exec called: " + event.data);
+        var data = event.data.split(",");
+        var callbackId = Number(data[0]);
+        var command = data[1];
+
+        console.log("Jsx Exec: " + command);
+        child_process.exec(command, {
+            cwd: store.general.pathToUserActions,
+            timeout: 5 * 60 * 1000 // terminate long running processes
+        }, 
+        (err, stdout, stderr) => 
+        {
+            if(err) {
+                console.error(err);
+                return;
+            }
+            stdout = stdout.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '');
+            stderr = stderr.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '');
+            var jsx = `executeExecCallback(${callbackId},"${stdout}","${stderr}");`;
+            this.runJsxWithThrow(jsx);
+        });
     }
     /*---------------------
         Extend Script
