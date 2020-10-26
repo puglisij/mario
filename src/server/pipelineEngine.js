@@ -239,11 +239,13 @@ export class PipelineEngine extends EventEmitter
     {
         console.log("Pipeline process loop exited.");
 
-        // MOVE (we move at the end of the process, in case images/jobs are sharing files)
-        if(!this._stopCheck())
-        {
+        // CLEANUP
+        if(this._stopCheck()) {
+            host.runActionWithParameters(`action.closeAllWithoutSave`);
+        } else {
+            // We move at the end of the process, in case images/jobs are sharing files
             this._imageFileMover.move(processedImages);
-        } 
+        }
 
         this.emit("processend");
         return host.runJsxWithThrow(`$.gc();`);

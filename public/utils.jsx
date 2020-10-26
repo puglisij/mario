@@ -83,6 +83,14 @@ var _ = {
         UnitValue.baseUnit = originalBaseUnit;
         return result;
     },
+    /**
+    * Convert the given value to a UnitValue instance. 
+    * @param {string|Number|UnitValue} value if a Number, uses preference ruler units as the value Unit
+    */
+    toUnitValue: function(value) {
+        var valueString = _.isNumber(value) ? value + _.getRulerUnitsAsAbbreviation() : value;
+        return new UnitValue(valueString);
+    },
     saveUnits: function() 
     {
         var rulerUnits = app.preferences.rulerUnits;

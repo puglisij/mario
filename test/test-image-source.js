@@ -11,7 +11,7 @@ var expect = chai.expect;
 var should = chai.should();
 
 
-context('imageFileReader', function()
+context('ImageFileReader', function()
 {
     let _imageFileReader = null;
 

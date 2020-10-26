@@ -63,7 +63,7 @@ function mkdir(dirPath, options, callback)
 function _mkdirRecursive(dirPath, options, callback) 
 {
     child_process.exec(
-        `mkdir${options.mode ? ' --mode=' + options.mode : ''} -p "${dirPath}"`, 
+        `mkdir${options.mode ? ' --parents --mode=' + options.mode : ''} "${dirPath}"`, 
         (error, stdout, stderr) => {
             if(error) {
                 // IMPORTANT: For some reason, on windows, when creating a directory 
