@@ -1,6 +1,6 @@
 {
   "name": "Mario",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -16,7 +16,6 @@
     "array-back": "^2.0.0",
     "async": "^3.1.0",
     "chokidar": "^3.3.0",
-    "conf": "^6.2.1",
     "core-js": "^3.6.5",
     "debounce": "^1.2.0",
     "es6-promisify": "^6.0.2",

@@ -216,7 +216,7 @@ if (typeof Object.assign !== 'function') {
 * ExtendScript doesn't have a native setTimeout.
 * NOTE: delay will be somewhat imprecise. 
 */
-var setTimeoutCallbacks = [];
+var setTimeoutCallbacks = {};
 var setTimeoutId = 0;
 this.setTimeout = function(cb, delay) {
     var id = setTimeoutId++;

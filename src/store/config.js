@@ -24,8 +24,12 @@ export default class Config extends EventEmitter
 
         this._doAutoSave = opts.autoSave === true;
         this._schema = opts.schema;
-        this._config = this._createDefaultConfigObject();
-        this._configFilePath = opts.configFilePath;
+        this._data = this._createDefaultConfigObject();
+        this._dataFilePath = opts.filePath;
+        
+        if(opts.doExtend) {
+            this._extend();
+        }
     }
     _createDefaultConfigObject() 
     {
@@ -44,7 +48,7 @@ export default class Config extends EventEmitter
     }
     _validateConfig() 
     {
-        for (const [key, value] of Object.entries(this._config)) 
+        for (const [key, value] of Object.entries(this._data)) 
         {
             if(!this._schema[key]) {
                 throw new Error(`Property ${key} not found in schema`);
@@ -73,58 +77,96 @@ export default class Config extends EventEmitter
         } 
         return typeof value;
     }
+    _extend() 
+    {
+        for (const [key, value] of Object.entries(this._schema)) 
+        {
+            Object.defineProperty(this, key, {
+                get() { 
+                    return this.get(key);
+                },
+                set(value) { 
+                    return this.set(key, value);
+                },
+                enumerable: true, 
+                configurable: false
+            });
+        }
+    }
 
     load() 
     {
-        if(this._isLoaded || this._isLoading)
-            return;
+        if(this._isLoaded || this._isLoading) 
+            return Promise.resolve();
 
-        this._isLoading = true;
-        fs.readFile(this._configFilePath, (err, data) => {
-            this._isLoading = false;
-            // ENOENT = file missing
-            if(err && err.code !== 'ENOENT') throw err;
-            if(!err) {
-                // Assume file exists and data read successfully
-                this._config = JSON.parse(data);
-                this._validateConfig();
-            }
-            this._isSaved = true;
-            this._isLoaded = true;
-            this.emit("loaded");
+        return new Promise(resolve => 
+        {
+            this._isLoading = true;
+            fs.readFile(this._dataFilePath, (err, data) => {
+                this._isLoading = false;
+                // ENOENT = file missing
+                if(err && err.code !== 'ENOENT') throw err;
+                if(!err) {
+                    // Assume file exists and data read successfully
+                    this._data = JSON.parse(data);
+                    this._validateConfig();
+                }
+                this._isSaved = true;
+                this._isLoaded = true;
+                this.emit("loaded");
+                resolve();
+            });
         });
     }
     save() 
     {
         if(this._isSaved) 
-            return;
+            return Promise.resolve();
         if(this._isSaving) {
             this._isAnotherSavePending = true;
-            return;
+            return Promise.resolve();
         }
 
-        this._isSaving = true;
-        fs.writeFile(this._configFilePath, JSON.stringify(this._config, null, 2), err => {
-            this._isSaving = false;
-            if(err) throw err;
+        return new Promise(resolve => 
+        {
+            this._isSaving = true;
+            fs.writeFile(this._dataFilePath, JSON.stringify(this._data, null, 2), err => {
+                this._isSaving = false;
+                if(err) throw err;
 
-            this._isLoaded = true;
-            this._isSaved = true;
-            this._lastSavedTime = Date.now();
-            this.emit("saved", this._lastSavedTime);
+                this._isLoaded = true;
+                this._isSaved = true;
+                this._lastSavedTime = Date.now();
+                this.emit("saved", this._lastSavedTime);
 
-            if(this._isAnotherSavePending) {
-                this._isAnotherSavePending = false;
-                process.nextTick(() => this.save);
-            }
+                if(this._isAnotherSavePending) {
+                    this._isAnotherSavePending = false;
+                    process.nextTick(() => this.save);
+                }
+                resolve();
+            });
         });
     }
     getLastSavedTime() {
         return this._lastSavedTime;
     }
+    /**
+     * Same as getAll() except returns a deep copy
+     */
+    clone() 
+    {
+        return JSON.parse(JSON.stringify(this._data));
+    }
+    /**
+     * Returns entire configuration object by reference
+     */
+    getAll() 
+    {
+        return this._data;
+    }
     get(key) 
     {
-		return key.split('.').reduce((accumulator, property) => accumulator[property], this._config);
+		return key.split('.').reduce((accumulator, property) => accumulator[property], this._data);
     }
     set(key, value) 
     {
@@ -132,13 +174,17 @@ export default class Config extends EventEmitter
 
         const tokens = key.split('.');
         const lastToken = tokens.pop();
-        const parent = tokens.reduce((accumulator, property) => accumulator[property], this._config);
+        const parent = tokens.reduce((accumulator, property) => accumulator[property], this._data);
         const property = parent[lastToken];
+        if(typeof property === "undefined") {
+            throw new Error(`Property ${key} not found.`);
+        }
         if(this._typeOf(property) !== this._typeOf(value)) {
             throw new TypeError(`Property ${key} type ${this._typeOf(property)} does not match value type ${this._typeOf(value)}`);
         }
         // Set value
         parent[lastToken] = value;
+        console.log(`Configuration updated. ${key} -> ${value}`);
 
         if(this._doAutoSave) {
             this.save();

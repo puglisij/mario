@@ -77,14 +77,32 @@ and point it to the git repository directory for this project.
 
 NOTE: Photoshop will need restarted in order to find new plugins added to the extensions directory. 
 
-1. git clone http://g1vptfs02:8080/tfs/FMG/Web/_git/web-mario
-2. mklink /D C:/Users/<user>/AppData/Roaming/Adobe/CEP/extensions/web-mario C:/Projects/web-mario  (Windows)
+1. git clone http://g1vptfs02:8080/tfs/FMG/Web/_git/com.mario.panel
+2. mklink /D C:/Users/<user>/AppData/Roaming/Adobe/CEP/extensions/com.mario.panel C:/Projects/com.mario.panel  (Windows)
 3. cd web-mario 
 4. npm install 
 5. npm run serve 
 6. Open Photoshop. Open Mario panel via Window > Extensions > Mario 
 7. Open a Chrome tab and visit http://localhost:8089/ if you wish to develop
 8. Do awesome things. Add solutions to any encountered issues to this Readme
+
+--- 
+
+## Installation in Production
+
+1. git clone 
+2. npm install
+3. npm run build
+4. npm run switch (ensure the project is in Production mode)
+5. npm run sign (sign using default password, etc. Photoshop requires the .zxp package to be signed or the plugin will not run in Photoshop)
+6. Copy the .zxp to target machine 
+7. Unzip the .zxp to C:/Users/<user>/AppData/Roaming/Adobe/CEP/extensions/com.mario.panel
+8. Start Photoshop. Plugin should appear under Window > Extensions
+
+Setup:
+1. You'll have to configure Mario within the GUI, including Pipeline configurations. The configuration files are stored as json at C:/Users/<user>/AppData/Roaming/Mario-nodejs/Config
+2. Next you'll need to load custom jsx **actions** required for your pipelines by specifying the directory (containing your .jsx files) within the GUI. You can select 'Reload Actions' to load these anytime they change. 
+
 
 ---
 

@@ -200,6 +200,7 @@ export default {
   
             // Save to disk
             store.pipelines.pipelines = pipelines;
+            store.pipelines.save();
         },
         onAddNewSource(event)
         { 

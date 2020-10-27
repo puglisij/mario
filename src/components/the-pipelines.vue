@@ -149,6 +149,7 @@ export default {
         onConfigurationSubmit()
         {
             store.pipelines.pipelines = this.pipelines;
+            store.pipelines.save();
             this.needSaved = false;
         },
         refreshPipelineSourcesFromStorage() 

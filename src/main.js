@@ -8,6 +8,7 @@ import Logger from './console';
 import Server from './server';
 import global from './global';
 import Validation from './validation';
+import Store from './store';
 
 global.csInterface.setWindowTitle("Mario v" + global.appVersion);
 
@@ -28,6 +29,7 @@ const destroy = () => {
 };
 
 const create = async () => {
+    await Store.init();
     await Logger.init();
     await Server.init();
     await Host.init(); 
