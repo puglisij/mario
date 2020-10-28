@@ -86,6 +86,20 @@
                 <a-checkbox v-model="runHttpServer">
                     Run a server instance (REST api)?
                 </a-checkbox>
+                <validation-provider
+                    tag="label"
+                    rules="required|integer:0,65353"
+                    v-slot="{ errors }"
+                >
+                    <div class="label">Port Number</div>
+                    <input 
+                        class="topcoat-text-input input-server-port" 
+                        type="number" 
+                        title="An integer value"
+                        v-model="serverPort"
+                    />
+                    <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
+                </validation-provider>
             </section>
 
             <h3 class="section-title">File Sources</h3>
@@ -154,6 +168,7 @@ export default {
             needSaved: false, 
             isLoadingActions: false,
             runHttpServer: store.general.runHttpServer,
+            serverPort: store.general.serverPort,
             pathToUserActions: store.general.pathToUserActions,
             logDirectory: store.general.logDirectory,
             logFilePersistForDays: store.general.logFilePersistForDays,
@@ -234,6 +249,7 @@ export default {
         {
             this.updatePipelineFileSourceReferences();
             store.general.runHttpServer = this.runHttpServer;
+            store.general.serverPort = this.serverPort;
             store.general.pathToUserActions = this.pathToUserActions;
             store.general.logDirectory = this.logDirectory;
             store.general.logFilePersistForDays = parseInt(this.logFilePersistForDays, 10);
@@ -253,6 +269,9 @@ export default {
         }
         .input-days {
             width: 50px;
+        }
+        .input-server-port {
+            width: 80px
         }
     }
 </style>

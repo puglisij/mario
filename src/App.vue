@@ -343,7 +343,7 @@ label {
     border-bottom: 1px solid #333;
     border-radius: 7px;
     padding: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: .5rem;
 
     label {
         position: relative;

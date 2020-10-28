@@ -9,8 +9,21 @@ export const VALID_JSON_TYPES = [
     'boolean'
 ];
 
+/**
+ * Configuration class for saving/loading data via JSON file.
+ * Note that load() should be called after construction to read from file.
+ * If save() is called before load(), any previous configuration will be overwritten.
+ */
 export default class Config extends EventEmitter
 {
+    /**
+     * Create a Config instance
+     * @param {Object} opts 
+     * @param {boolean} [opts.autoSave = false] if true, automatically save to file when data changes
+     * @param {boolean} [opts.doExtend = false] if true, this instance is extended with setters/getters for property names specified in the schema
+     * @param {string} opts.filePath the absolute path to the configuration file, including its extension 
+     * @param {Object} opts.schema
+     */
     constructor(opts) 
     {
         super();
