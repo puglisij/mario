@@ -43,7 +43,9 @@ module.exports = {
   ignore: async function() {
     let ignores;
   },
-  help: async function() {
+  
+  help: async function() 
+  {
     const extVersion = getExtVersion();
     const extName = getExtName();
     console.log("   Welcome! You can run these commands at any time:");
@@ -109,7 +111,9 @@ module.exports = {
     );
     return "";
   },
-  register: async function() {
+
+  register: async function() 
+  {
     console.log(`${helpPrompt}`);
     console.log(``);
     let user = shell.exec("git config user.name", { silent: true }).stdout;
@@ -157,7 +161,9 @@ module.exports = {
       console.log("");
     });
   },
-  sign: async function() {
+
+  sign: async function() 
+  {
     console.log(`${helpPrompt}`);
     console.log(``);
     // gathering data
@@ -235,7 +241,9 @@ module.exports = {
     });
     return "";
   },
-  switch: async function() {
+
+  switch: async function() 
+  {
     console.log(`${helpPrompt}`);
     console.log(``);
     const extVersion = getExtVersion();
@@ -297,7 +305,9 @@ module.exports = {
 
     return "";
   },
-  update: async function() {
+
+  update: async function() 
+  {
     console.log(`${helpPrompt}`);
     const extVersion = getExtVersion();
     const extName = getExtName();
@@ -358,14 +368,16 @@ module.exports = {
 };
 
 // GLOBAL
-function getExtVersion() {
+function getExtVersion() 
+{
   const xml = fs.readFileSync(`./CSXS/manifest.xml`, { encoding: "utf-8" });
   const bundleVersion = /ExtensionBundleVersion\=\"(\d|\.)*(?=\")/;
   const matches = xml.match(bundleVersion);
   return matches.length ? matches[0].replace(/\w*\=\"/, "") : "Unknown";
 }
 
-function getExtName() {
+function getExtName() 
+{
   const xml = fs.readFileSync(`./CSXS/manifest.xml`, { encoding: "utf-8" });
   const bundleVersion = /Menu\>.*(?=\<)/;
   const matches = xml.match(bundleVersion);
@@ -380,7 +392,8 @@ function getExtName() {
 
 // SIGN
 //
-async function promptUser() {
+async function promptUser() 
+{
   return await inquirer.prompt([
     {
       type: "input",
@@ -397,7 +410,8 @@ async function promptUser() {
   ]);
 }
 
-function getIgnores() {
+function getIgnores() 
+{
   if (fs.existsSync(`./src/utils/dev/.certignore`)) {
     ignores = fs.readFileSync(`./src/utils/dev/.certignore`, {
       encoding: "utf-8"
@@ -419,7 +433,8 @@ function getIgnores() {
   return new RegExp(ignores.join("|"));
 }
 
-async function confirmSign() {
+async function confirmSign() 
+{
   return await inquirer.prompt([
     {
       type: "Confirm",
@@ -430,7 +445,8 @@ async function confirmSign() {
   ]);
 }
 
-function stageExtensionFolder(extString) {
+function stageExtensionFolder(extString) 
+{
   return new Promise((resolve, reject) => {
     let tempdir = [];
     let omitted = getIgnores();
@@ -460,7 +476,8 @@ function stageExtensionFolder(extString) {
   });
 }
 
-function signCommands(path, rootpath, password, includeZip) {
+function signCommands(path, rootpath, password, includeZip) 
+{
   return new Promise((resolve, reject) => {
     let certInfo;
     if (fs.existsSync(`./src/utils/dev/certInfo.txt`)) {
@@ -518,7 +535,8 @@ function signCommands(path, rootpath, password, includeZip) {
 
 // SWITCH
 //
-async function endMessage(switched = false) {
+async function endMessage(switched = false) 
+{
   let finalstate = await getCurrentContext();
   if (finalstate)
     console.log(
@@ -534,7 +552,8 @@ async function endMessage(switched = false) {
     );
 }
 
-async function getCurrentContext() {
+async function getCurrentContext() 
+{
   return new Promise((resolve, reject) => {
     const xml = fs.readFileSync(`./CSXS/manifest.xml`, { encoding: "utf-8" });
     const isDev = /\<\!\--\s\<MainPath\>\.\/dist\/index\.html\<\/MainPath\>\s\-\-\>/;
@@ -543,7 +562,8 @@ async function getCurrentContext() {
   });
 }
 
-function switchContext() {
+function switchContext() 
+{
   return new Promise((resolve, reject) => {
     let xml = fs.readFileSync(`./CSXS/manifest.xml`, { encoding: "utf-8" });
     const isDev = /\<\!\--\s\<MainPath\>\.\/dist\/index\.html\<\/MainPath\>\s\-\-\>/;
@@ -589,7 +609,8 @@ function switchContext() {
 
 // UPDATE
 //
-async function findTier(original) {
+async function findTier(original) 
+{
   return await inquirer.prompt([
     {
       type: "list",
@@ -613,7 +634,8 @@ async function findTier(original) {
   ]);
 }
 
-async function promptNewNumber(old) {
+async function promptNewNumber(old) 
+{
   return await inquirer.prompt([
     {
       type: "Number",
@@ -624,7 +646,8 @@ async function promptNewNumber(old) {
   ]);
 }
 
-function setExtVersion(older, newer) {
+function setExtVersion(older, newer) 
+{
   return new Promise((resolve, reject) => {
     let xml = fs.readFileSync(`./CSXS/manifest.xml`, { encoding: "utf-8" });
     let rx = new RegExp(`${older.split(".").join("\\.")}`);
@@ -644,7 +667,8 @@ function setExtVersion(older, newer) {
 
 // REGISTER
 //
-async function promptRegister(data) {
+async function promptRegister(data) 
+{
   return await inquirer.prompt([
     {
       type: "input",

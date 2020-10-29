@@ -16,8 +16,25 @@ module.exports = {
         }
     },
     plugins: [
-        //new BundleAnalyzerPlugin()
-    ]
+        new BundleAnalyzerPlugin()
+    ],
+    optimization: {
+        usedExports: true,
+        sideEffects: false 
+        //[
+            //"./src/some-side-effectful-file.js"
+        //]
+    }
+  },
+  css: {
+    loaderOptions: {
+      sass: {
+        prependData: `
+        @import "@/styles/_variables.scss";
+        @import "@/styles/_mixins.scss";
+        `
+      }
+    }
   },
   chainWebpack: config => {
     config.module

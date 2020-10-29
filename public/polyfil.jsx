@@ -104,6 +104,46 @@ if (!Array.prototype.includes)
     };
 }
 
+if (!Array.prototype.filter) 
+{
+    Array.prototype.filter = function(func, thisArg) {
+        'use strict';
+        if ( ! ((typeof func === 'Function' || typeof func === 'function') && this) )
+            throw new TypeError();
+    
+        var len = this.length >>> 0,
+            res = new Array(len), // preallocate array
+            t = this, c = 0, i = -1;
+
+        var kValue;
+        if (thisArg === undefined) {
+            while (++i !== len) {
+                // checks to see if the key was set
+                if (i in this) {
+                    kValue = t[i]; // in case t is changed in callback
+                    if (func(t[i], i, t)) {
+                        res[c++] = kValue;
+                    }
+                }
+            }
+        }
+        else {
+            while (++i !== len) {
+                // checks to see if the key was set
+                if (i in this) {
+                    kValue = t[i];
+                    if (func.call(thisArg, t[i], i, t)) {
+                        res[c++] = kValue;
+                    }
+                }
+            }
+        }
+    
+        res.length = c; // shrink down array to proper size
+        return res;
+    };
+}
+
 if (!Array.prototype.forEach) {
     Array.prototype.forEach = function forEach (callback, thisArg) {
       if (typeof callback !== 'function') {
@@ -146,5 +186,48 @@ if (!String.prototype.trim)
         return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
     };
 }
+
+if (typeof Object.assign !== 'function') {
+   // Modified from MDN to remove dependency on Object.defineProperty
+   Object.assign = function assign(target, varArgs) { 
+        'use strict';
+        if (target === null || target === undefined) {
+            throw new TypeError('Cannot convert undefined or null to object');
+        }
+        var to = Object(target);
+
+        for (var index = 1; index < arguments.length; index++) {
+            var nextSource = arguments[index];
+            if (nextSource !== null && nextSource !== undefined) { 
+                for (var nextKey in nextSource) {
+                    // Avoid bugs when hasOwnProperty is shadowed
+                    if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                        to[nextKey] = nextSource[nextKey];
+                    }
+                }
+            }
+        }
+        return to;
+    }
+}
+
+/**
+* Polyfil setTimeout (via host <-> client event magic)
+* ExtendScript doesn't have a native setTimeout.
+* NOTE: delay will be somewhat imprecise. 
+*/
+var setTimeoutCallbacks = {};
+var setTimeoutId = 0;
+this.setTimeout = function(cb, delay) {
+    var id = setTimeoutId++;
+    setTimeoutCallbacks[id] = cb;
+    JsxEvents.dispatch("setTimeout", id + "," + delay);
+};
+this.executeSetTimeoutCallback = function(id) {
+    if(setTimeoutCallbacks[id]) {
+        setTimeoutCallbacks[id]();
+        delete setTimeoutCallbacks[id];
+    }
+};
 
 "";

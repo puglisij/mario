@@ -7,6 +7,20 @@ var _ = {
         if(app.refresh)
             app.refresh();
     }, 
+    /**
+    * Returns true if path is a File
+    * @param {string|Folder|File} path
+    */
+    isFile: function(path) {
+        return File(path) instanceof File;
+    },
+    /**
+    * Returns true if path is a Folder
+    * @param {string|Folder|File} path
+    */
+    isFolder: function(path) {
+        return Folder(path) instanceof Folder;
+    },
     getDocumentPath: function() 
     {
         return app.activeDocument.fullName.fsName;
@@ -14,6 +28,68 @@ var _ = {
     getDocumentNameWithoutExtension: function(fullName)
     {
         return (fullName || app.activeDocument.name).match(/^[^.]+/).toString();
+    },
+    getRulerUnitsAsAbbreviation: function() {
+        switch(app.preferences.rulerUnits) {
+            case Units.CM:
+                return "cm";
+            case Units.INCHES:
+                return "in";
+            case Units.MM:
+                return "mm";
+            case Units.PERCENT:
+                return "%";
+            case Units.PICAS:
+                return "pc";
+            case Units.PIXELS:
+                return "px";
+            case Units.POINTS:
+                return "pt";
+        }
+        return "?";
+    },
+    /**
+    * Converts the given UnitValue to appropriate charID and Number values necessary to add to an ActionDescriptor
+    * @param {Number|UnitValue} unitValue any type of supported unit: px, pt, pc, cm, mm, in, etc
+    * @param {Number} [documentResolution] resolution of the reference document for this value, in pixels per inch. If no value is given, the activeDocument resolution is used.
+    */
+    unitValueToActionDescriptorValue: function(unitValue, documentResolution)
+    {
+        // Set reference Resolution (Document resolution is always in pixels per inch)
+        var resolution = documentResolution || activeDocument.resolution;
+        var originalBaseUnit = UnitValue.baseUnit; 
+        UnitValue.baseUnit = UnitValue(1 / resolution, "in");
+
+        unitValue = _.isNumber(unitValue) ? unitValue + _.getRulerUnitsAsAbbreviation() : unitValue;
+        var theUnit = UnitValue(unitValue);
+        var result;
+        if(theUnit.type == "px") {
+            result = {
+                value: theUnit.value, 
+                charID: "#Pxl" // pixel 
+            };
+        } else if(theUnit.type == "%") {
+            result = {
+                value: theUnit.value, 
+                charID: "#Prc" // percentUnit
+            };
+        } else {
+            result = {
+                value: theUnit.as("pt"), // Convert value to points ( which is inches / 72 )
+                charID: "#Rlt" // distanceUnit (points)
+            };
+        }
+        // Restore reference Resolution
+        UnitValue.baseUnit = originalBaseUnit;
+        return result;
+    },
+    /**
+    * Convert the given value to a UnitValue instance. 
+    * @param {string|Number|UnitValue} value if a Number, uses preference ruler units as the value Unit
+    */
+    toUnitValue: function(value) {
+        var valueString = _.isNumber(value) ? value + _.getRulerUnitsAsAbbreviation() : value;
+        return new UnitValue(valueString);
     },
     saveUnits: function() 
     {
@@ -81,6 +157,22 @@ var _ = {
         return null;
     },
     /**
+    * Returns the date in format YYYYMMDDhhmmss
+    */
+    yyyymmddhhmmss: function(date) 
+    {
+        function pad2(n) {  // always returns a string
+            return (n < 10 ? '0' : '') + n;
+        }
+        date = date || new Date();
+        return date.getFullYear() +
+               pad2(date.getMonth() + 1) + 
+               pad2(date.getDate()) +
+               pad2(date.getHours()) +
+               pad2(date.getMinutes()) +
+               pad2(date.getSeconds());
+    },
+    /**
     * Replaces the mustache {{expression}} in the given text with the given input text
     * @param {string} template the template string e.g. "my template is {{foo}}"
     * @param {object} map the object with name, value pairs e.g. { foo: "awesome" }
@@ -140,70 +232,44 @@ var _ = {
     },
     isNull: function isNull(val) {
         return val === null;
+    },
+    /**
+    * The given value is believed to be an enumerated value under these conditions
+    *   - its an object
+    *   - does not have inherited properties
+    *   - each property is of type (string, number, boolean)
+    * Otherwise Returns false
+    * TODO: doesnt yet work on Adobe built-in enums (e.g. AnchorPosition)
+    */
+    inferIsEnum: function(val) {
+        if(typeof val !== "object") {
+            return false;
+        }
+
+        var values = [];
+        for(var p in val) {
+            if(!val.hasOwnProperty(p)) {
+                return false;
+            }
+            var pType = typeof val[p];
+            if(!["string", "number", "boolean"].includes(pType)) {
+                return false;
+            }
+            values.push(p);
+        }
+        return values;
+    },
+    clamp: function clamp(val, min, max) {
+        return Math.max(min, Math.min(val, max));
     }
-}
+};
 
-
-
-function c2s(c) { return typeIDToStringID(charIDToTypeID(c)) }
+function c2s(c) { return app.typeIDToStringID(app.charIDToTypeID(c)) }
 function s2t(s) { return app.stringIDToTypeID(s) }
 function c2t(c) { return app.charIDToTypeID(c) }
+function t2s(t) { return app.typeIDToStringID(t) }
+function t2c(t) { return app.typeIDToCharID(t) }
 
-/**
-* Cross-platform path joining. Works similar to node.js  path.join(). 
-* If path does not exist, the returned path may be invalid.
-*/
-// function pathJoin()
-// {
-//     if(!arguments.length) {
-//         return null; 
-//     }
-//     function isPathAFile(path) {
-//         return path.match(/\.[^\/:\\]+$/) !== null;
-//     }
-//     function makePathRelative(path) {
-//         return "./" + path.replace(/^\.?[\/\\]/, '');
-//     }
-//     function makePathAbsolute(path) {
-//         var f = new Folder(path);
-//         return f.fsName;
-//     }
-//     var args = Array.prototype.slice.call(arguments);
-//     var firstPart = args.shift();
-//     if(!args.length) 
-//     {
-//         if(isPathAFile(firstPart)) {
-//             return new File(firstPart);
-//         } else {
-//             return new Folder(firstPart);
-//         }
-//     }
-
-//     firstPart = makePathAbsolute(firstPart);
-//     var lastPart = makePathRelative(args.pop());
-//     var currentDir = Folder.current;
-//     Folder.current = new Folder(firstPart);
-
-//     for(var i = 0; i < args.length; ++i) 
-//     {
-//         var pathPart = args[i];
-//         if(typeof pathPart !== "string") {
-//             throw new TypeError("Path must be a string. Received: " + pathPart);
-//         }
-//         pathPart = makePathRelative(pathPart);
-//         Folder.current = new Folder(pathPart);
-//     }
-    
-//     var result;
-//     if(isPathAFile(lastPart)) {
-//         result = new File(lastPart);
-//     } else {
-//         result = new Folder(lastPart);
-//     }
-//     // restore 
-//     Folder.current = currentDir;
-//     return result;
-// }
 
 /**
 * Get JSON Introspection of an ActionDescriptor
@@ -225,5 +291,15 @@ function actionDescriptorToJSON(actionDescriptor)
     convertDesc, DialogModes.NO );
     return jsonDesc.getString( s2t("json") );
 }
+
+
+// Export as globals
+this._ = _;
+this.s2t = s2t;
+this.c2t = c2t;
+this.c2s = c2s;
+this.t2s = t2s;
+this.t2c = t2c;
+this.actionDescriptorToJSON = actionDescriptorToJSON;
 
 "";
