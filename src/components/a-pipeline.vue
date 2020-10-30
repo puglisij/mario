@@ -18,6 +18,7 @@
             >{{name_}}</span>
             <button 
                 class="topcoat-button--large--quiet expand right"
+                type="button"
                 :class="{ open: !collapsed }"
                 @click="collapsed_ = !collapsed_"
             ><i>&#10097;</i></button>

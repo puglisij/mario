@@ -16,7 +16,6 @@ class GeneralConfig extends Config
     constructor() {
         super({
             filePath: upath.join(appGlobal.appDefaultConfigPath, "general.json"),
-            autoSave: true,
             doExtend: true,
             schema: {
                 checkIsScriptListenerActiveOnStart: {
@@ -154,11 +153,23 @@ class Store
          * NOTE: Properties are set by Reference.
          */
         this.general = new GeneralConfig();
+        this.general.on("loaded", () => {
+            console.log("Configuration 'general' loaded.");
+        });
+        this.general.on("saved", () => {
+            console.log("Configuration 'general' saved.");
+        });
         /**
          * Pipeline configuration storage
          * NOTE: Properties are set by Reference.
          */
         this.pipelines = new PipelinesConfig();
+        this.pipelines.on("loaded", () => {
+            console.log("Configuration 'pipelines' loaded.");
+        });
+        this.pipelines.on("saved", () => {
+            console.log("Configuration 'pipelines' saved.");
+        });
     }
     async init() 
     {

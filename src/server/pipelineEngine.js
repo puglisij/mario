@@ -1,4 +1,6 @@
 import EventEmitter from "events";
+import Rete from "rete"; 
+
 import _ from '../utils';
 import store from '../store';
 import host from '../host';
@@ -235,9 +237,10 @@ export class PipelineEngine extends EventEmitter
         
         return processedImages;
     }
-    _runProcessEnd(processedImages)
+    async _runProcessEnd(processedImages)
     {
-        console.log("Pipeline process loop exited.");
+        console.log("Waiting for unresolved callback tunnels...");
+        await host.join();
 
         // CLEANUP
         if(this._stopCheck()) {
@@ -247,6 +250,7 @@ export class PipelineEngine extends EventEmitter
             this._imageFileMover.move(processedImages);
         }
 
+        console.log("Pipeline process exited.");
         this.emit("processend");
         return host.runJsxWithThrow(`$.gc();`);
     }

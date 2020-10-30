@@ -1,20 +1,27 @@
-import child_process from 'child_process';
+import EventEmitter from "events";
 import upath from 'upath';
+
+import HostCallbackTunnelExec from './hostCallbackTunnelExec';
+import HostCallbackTunnelSetTimeout from './hostCallbackTunnelSetTimeout';
 import appGlobal from '../global';
 import store from '../store';
+
 
 /*
     Creative Suite Extendscript Interface / Decorator
 */
-class Host 
+class Host extends EventEmitter
 {
     constructor() 
     {
+        super();
         /**
-         * To reduce coupling with GUI, don't use this raw interface in Vue components
+         * To reduce coupling with GUI, this raw interface should not be used in Vue components
          */
         this.interface = new CSInterface();
         this._initialized = false;
+        this._nextTunnelId = 0;
+        this._tunnelIdToTunnel = new Map();
     }
     /**
      * @returns {Promise}
@@ -36,8 +43,9 @@ class Host
         this.interface.addEventListener("log", event => {
             console.log("Jsx Log: ", event.data);
         });
-        this.interface.addEventListener("exec", this.onExec.bind(this));
-        this.interface.addEventListener("setTimeout", this.onSetTimeout.bind(this));
+        // Tunnel Listeners
+        this.interface.addEventListener("exec", this._onExec.bind(this));
+        this.interface.addEventListener("setTimeout", this._onSetTimeout.bind(this));
 
         console.log(`Host initialized.\n
             Install Path: ${appGlobal.appInstallPath}\n
@@ -53,7 +61,9 @@ class Host
     }
     destroy()
     {
-        
+        for(const [id, tunnel] of this._tunnelIdToTunnel) {
+            tunnel.close();
+        }
     }
     /*---------------------
             Events
@@ -65,42 +75,63 @@ class Host
               event.data = data;
         this.interface.dispatchEvent(event);
     }
-    onSetTimeout(event)
-    {
-        var data = event.data.split(",");
-        var callbackId = Number(data[0]);
-        var delay = Number(data[1]);
+    /**
+     * Returns a promise that is fulfilled when all jsx callbacks are completed (e.g. setTimeout() and exec())
+     * @returns {Promise}
+     */
+    join() {
+        if(this._nextTunnelId === 0) {
+            return Promise.resolve();
+        }
 
-        var _this = this;
-        setTimeout(function()
+        return new Promise(resolve => 
         {
-            // Since ExtendScript doesn't have a setTimeout. We're hijacking the event loop here.
-            _this.runJsxWithThrow(`executeSetTimeoutCallback(${callbackId})`)
-        }, delay);
-    }
-    onExec(event) 
-    {
-        var data = event.data.split(",");
-        var callbackId = Number(data[0]);
-        var command = data[1];
-
-        console.log("Jsx Exec: " + command);
-        child_process.exec(command, {
-            cwd: store.general.pathToUserActions,
-            timeout: 5 * 60 * 1000 // terminate long running processes
-        }, 
-        (err, stdout, stderr) => 
-        {
-            if(err) {
-                console.error(err);
-                return;
-            }
-            stdout = stdout.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '');
-            stderr = stderr.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '');
-            var jsx = `executeExecCallback(${callbackId},"${stdout}","${stderr}");`;
-            this.runJsxWithThrow(jsx);
+            this.once("host.callback.join", resolve);
         });
     }
+    _onSetTimeout(event)
+    {
+        const tunnel = new HostCallbackTunnelSetTimeout();
+        this._openTunnel(tunnel, event.data);
+    }
+    _onExec(event) 
+    {
+        const tunnel = new HostCallbackTunnelExec(
+            store.general.pathToUserActions
+        );
+        this._openTunnel(tunnel, event.data);
+    }
+    _openTunnel(tunnel, stream) 
+    {
+        const tunnelId = this._nextTunnelId++;
+        this._tunnelIdToTunnel.set(tunnelId, tunnel);
+
+        tunnel.setId(tunnelId);
+        tunnel.once("enter", () => {
+            console.log(`Tunnel ${tunnel.getId()}: ${tunnel.name}\n\t ${stream}\n\t Entered.`);
+        });
+        tunnel.once("exit", (jsx) => {
+            console.log(`Tunnel ${tunnel.getId()}: ${tunnel.name}\n\t ${stream}\n\t Exited.`);
+            this._exitTunnel(tunnel, jsx);
+        });
+        tunnel.open(stream);
+    }
+    _exitTunnel(tunnel, jsx) 
+    {
+        this._tunnelIdToTunnel.delete(tunnel.getId());
+
+        this.runJsxWithThrow(jsx)
+        .finally(() => 
+        {
+            console.log(`Tunnel ${tunnel.getId()} Finished Executing Jsx Callback.`);
+
+            if(this._tunnelIdToTunnel.size === 0) {
+                this._nextTunnelId = 0;
+                this.emit("host.callback.join");
+            }
+        });
+    }
+
     /*---------------------
         Extend Script
     ---------------------*/

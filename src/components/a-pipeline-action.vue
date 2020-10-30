@@ -16,6 +16,7 @@
                     title="Delete this action"
                     @click="onActionDelete">X</button>
                 <button class="topcoat-button--large--quiet expand ml1"
+                    type="button"
                     :class="{ open: showParameters }"
                     :title="(showParameters ? 'Hide' : 'Show') + ' Parameters'"
                     @click="toggleParameters"
@@ -34,14 +35,16 @@
                     @change="onParameterChange"
                     @delete="onParameterDelete"
                 />
-                <button class="topcoat-button" type="button" 
+                <button class="topcoat-button" 
+                    type="button" 
                     title="Single parameters are passed as a single parameter, literal value, to the action function."
                     v-if="!hasParameters" 
                     @click="onParameterAddSingle"
                 >
                     Add Single
                 </button>
-                <button class="topcoat-button" type="button" 
+                <button class="topcoat-button" 
+                    type="button" 
                     title="Multiple parameters are passed as an object of key value pairs to the action function."
                     v-if="!hasParameters || !hasSingleParameter" 
                     @click="onParameterAddMultiple"

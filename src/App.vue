@@ -56,6 +56,7 @@ export default {
     methods: {
         onTabChanged(tabTitle) {
             store.general.currentTab = tabTitle;
+            store.general.save();
             this.currentTabComponent = tabTitle;
         },
         hideLoadingSpinner() {
