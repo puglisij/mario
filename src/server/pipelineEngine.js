@@ -1,4 +1,6 @@
 import EventEmitter from "events";
+import Rete from "rete"; 
+
 import _ from '../utils';
 import store from '../store';
 import host from '../host';
@@ -58,6 +60,7 @@ export class PipelineEngine extends EventEmitter
         this._imageFileMover = new ImageFileMover();
         this._imageFileProducers = new ImageFileProducers();
         this._imageFileProducers.on("job", this._onProducerJob.bind(this));
+        this._imageFileProducers.on("depleted", this._onProducerDepleted.bind(this));
     }
     /**
      * @returns {Promise}
@@ -139,11 +142,16 @@ export class PipelineEngine extends EventEmitter
     {
         this._process();
     }
+    _onProducerDepleted() {
+        if(this.isProcessing()) return;
+        this._stopIfNoProducersElseIdle();
+    }
     _process()
     {
-        if(!this._imageFileProducers.hasJobs()) return;
+        if(!this._imageFileProducers.hasJobs()) return; 
         if(this._processingMutex) return;
         this._processingMutex = true;
+        this.state = PipelineEngineState.PROCESSING;
 
         this._runWaitOneFrame()
         .then(this._runProcessStart.bind(this))
@@ -161,11 +169,10 @@ export class PipelineEngine extends EventEmitter
     async _runProcessStart()
     {
         await this._pauseCheck();
-        this.state = PipelineEngineState.PROCESSING;
 
         console.log(`Pipeline process loop started with ${this._imageFileProducers.getTotalJobs()} jobs in queue.`);
         this.emit("processstart");
-        return host.runJsxWithThrow(`app.displayDialogs = DialogModes.NO;`);
+        await host.runJsxWithThrow(`app.displayDialogs = DialogModes.NO;`);
     }
     async _runProcessLoop()
     {
@@ -235,9 +242,10 @@ export class PipelineEngine extends EventEmitter
         
         return processedImages;
     }
-    _runProcessEnd(processedImages)
+    async _runProcessEnd(processedImages)
     {
-        console.log("Pipeline process loop exited.");
+        console.log("Waiting for unresolved callback tunnels...");
+        await host.join();
 
         // CLEANUP
         if(this._stopCheck()) {
@@ -247,8 +255,9 @@ export class PipelineEngine extends EventEmitter
             this._imageFileMover.move(processedImages);
         }
 
+        console.log("Pipeline process exited.");
         this.emit("processend");
-        return host.runJsxWithThrow(`$.gc();`);
+        await host.runJsxWithThrow(`$.gc();`);
     }
     /**
      * Close all documents. Save Photoshop settings. Instantiate IMAGE instance.

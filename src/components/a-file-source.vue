@@ -5,6 +5,7 @@
             <span v-if="localSource.collapsed">{{localSource.name}}</span>
             <button 
                 class="topcoat-button--large--quiet expand right"
+                type="button"
                 :class="{ open: !localSource.collapsed }"
                 @click="localSource.collapsed = !localSource.collapsed"
             ><i>&#10097;</i></button>
@@ -146,7 +147,8 @@
                 </a-extensions-input>
             </validation-provider>
             
-            <button class="topcoat-button--large--quiet" type="button"
+            <button class="topcoat-button--large--quiet" 
+                type="button"
                 @click.prevent="onDelete"
             >X</button>
         </div>

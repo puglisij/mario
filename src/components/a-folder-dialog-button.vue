@@ -17,13 +17,13 @@ export default {
     methods: {
         onClick(e) 
         {
-            host.runActionWithParameters("action.selectFolder", this.value)
+            host.runActionWithParameters("action.selectFolder", this.folder)
             .then(result => {
                 if(result.toLowerCase().includes("error")) {
                     console.error(result);
                     return;
                 }
-                this.$emit("update:folder", result == "null" ? "" : result);
+                this.$emit("update:folder", result == "null" ? this.folder : result);
             });
         }
     }
@@ -31,7 +31,5 @@ export default {
 </script>
 
 <style scoped>
-    button {
-        padding: 0 1rem;
-    }
+
 </style>

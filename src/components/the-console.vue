@@ -5,8 +5,15 @@
         <div class="console topcoat-textarea" ref="output" v-html="output">
         </div>
         <div class="console-buttons">
-            <button class="topcoat-button--large--quiet" v-show="output.length > 0" @click="onClear">Clear</button>
-            <button class="topcoat-button--large--quiet" @click="onSetAutoScroll">Turn Auto Scroll {{doAutoScroll ? "Off" : "On" }}</button>
+            <button class="topcoat-button--large--quiet" 
+                type="button"
+                v-show="output.length > 0" 
+                @click="onClear"
+                >Clear</button>
+            <button class="topcoat-button--large--quiet" 
+                type="button"
+                @click="onSetAutoScroll"
+                >Turn Auto Scroll {{doAutoScroll ? "Off" : "On" }}</button>
         </div>
     </div> 
 </template>

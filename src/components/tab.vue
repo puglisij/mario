@@ -1,5 +1,9 @@
 <template>
-    <button :class="{ active: isActive }" @click.prevent.stop="onClick">
+    <button 
+        :class="{ active: isActive }" 
+        @click.prevent.stop="onClick" 
+        type="button"
+    >
         <slot></slot>
     </button>
 </template>

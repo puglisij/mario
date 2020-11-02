@@ -4,7 +4,9 @@
             :class="{expanded: isExpanded, directory: node.isDirectory}"
             @click="select"
         >
-            <button class="tree-node__expand topcoat-icon-button--quiet"
+            <button 
+                class="tree-node__expand topcoat-icon-button--quiet"
+                type="button"
                 v-if="node.isDirectory"
             >
                 <i>&#9654;</i>

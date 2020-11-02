@@ -21,7 +21,7 @@ export default {
         },
         removeEmpty: {
             type: Boolean,
-            required: false, 
+            required: true, 
             default: true
         }
     },

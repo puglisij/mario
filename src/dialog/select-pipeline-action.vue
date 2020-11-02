@@ -12,7 +12,11 @@
             />
         </section>
         <footer class="modal-footer">
-            <button type="button" class="topcoat-button--large" @click="onCancel">
+            <button 
+                type="button" 
+                class="topcoat-button--large" 
+                @click="onCancel"
+            >
                 Cancel
             </button>
         </footer>

@@ -86,7 +86,10 @@ export default {
         }
     },
     watch: {
-        isMainDrawerOpen: v => { store.general.isMainDrawerOpen = v; }
+        isMainDrawerOpen: v => { 
+            store.general.isMainDrawerOpen = v; 
+            store.general.save();
+        }
         // imageSource: {
         //     deep: true, 
         //     handler: function(v) {

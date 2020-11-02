@@ -193,7 +193,7 @@ export default class Config extends EventEmitter
             throw new Error(`Property ${key} not found.`);
         }
         if(this._typeOf(property) !== this._typeOf(value)) {
-            throw new TypeError(`Property ${key} type ${this._typeOf(property)} does not match value type ${this._typeOf(value)}`);
+            throw new TypeError(`Property ${key} type ${this._typeOf(property)} does not match value ${value} with type ${this._typeOf(value)}`);
         }
         // Set value
         parent[lastToken] = value;

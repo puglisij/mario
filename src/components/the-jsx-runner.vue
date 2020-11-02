@@ -5,12 +5,14 @@
         <div class="columns is-mobile is-multiline">
             <div class="column is-full scriptlistener">
                 <button class="topcoat-button--large" 
+                    type="button"
                     v-if="isScriptListenerInstalled"
                     @click="toggleScriptListener" 
                     >
                     Turn ScriptListener {{ isScriptListenerActive ? 'Off' : 'On'}}
-                    </button>
+                </button>
                 <!-- <button class="topcoat-button--large" 
+                    type="button"
                     @click="toggleScriptListenerReader" 
                     >
                     ScriptListener Logs Reader {{ isScriptListenerActive ? 'Off' : 'On'}}
@@ -65,16 +67,19 @@
             <!-- <button class="topcoat-button--large" v-show="jsxText.length > 0" >Save as Action</button> -->
             <button 
                 class="topcoat-button--large" 
+                type="button"
                 v-show="haveInput" 
                 @click="runJsxText"
                 >Run</button>
             <button 
                 class="topcoat-button--large" 
+                type="button"
                 v-show="haveInput" 
                 @click="clearJsx"
                 >Clear</button>
             <button 
                 class="topcoat-button--large" 
+                type="button"
                 v-show="haveInput"
                 @click="clearJsxResult"
                 >Clear Result</button>

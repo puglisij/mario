@@ -116,6 +116,7 @@
                         v-model="fileSources[index]"
                         :sources="fileSources"
                         @delete="onDeleteSource"
+                        @change="markForSave"
                     ></a-file-source>
                 </draggable>
             </section>
@@ -222,7 +223,8 @@ export default {
             let source = {
                 id: _.guid(),
                 name: "",
-                type: -1,
+                collapsed: false,
+                sourceType: -1,
                 sourceDirectory: "",
                 sourceExtensions: [],
                 useProcessedDirectory: false,
@@ -249,11 +251,12 @@ export default {
         {
             this.updatePipelineFileSourceReferences();
             store.general.runHttpServer = this.runHttpServer;
-            store.general.serverPort = this.serverPort;
+            store.general.serverPort = parseInt(this.serverPort, 10);
             store.general.pathToUserActions = this.pathToUserActions;
             store.general.logDirectory = this.logDirectory;
             store.general.logFilePersistForDays = parseInt(this.logFilePersistForDays, 10);
             store.general.fileSources = _.simpleDeepClone(this.fileSources);
+            store.general.save();
             eventBus.$emit("filesource-update");
             this.$emit('changed');
             this.needSaved = false;

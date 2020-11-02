@@ -3,6 +3,28 @@
 * ExtendScript doesn't have a native setTimeout.
 * NOTE: delay will be somewhat imprecise. 
 */
+var setTimeoutCallbacks = {};
+var setTimeoutId = 0;
+this.setTimeout = function(cb, delay) {
+    var id = setTimeoutId++;
+    setTimeoutCallbacks[id] = cb;
+    JsxEvents.dispatch("setTimeout", id + "," + delay);
+};
+this.executeSetTimeoutCallback = function(id) {
+    if(setTimeoutCallbacks[id]) {
+        setTimeoutCallbacks[id]();
+        delete setTimeoutCallbacks[id];
+    }
+};
+this.clearSetTimeoutCallback = function(id) {
+    delete setTimeoutCallbacks[id];
+};
+
+/**
+* Polyfil setTimeout (via host <-> client event magic)
+* ExtendScript doesn't have a native setTimeout.
+* NOTE: delay will be somewhat imprecise. 
+*/
 var execCallbacks = {};
 var execId = 0;
 this.exec = function(command, cb) {
@@ -15,6 +37,9 @@ this.executeExecCallback = function(id, stdout, stderr) {
         execCallbacks[id](stdout, stderr);
         delete execCallbacks[id];
     }
+};
+this.clearExecCallback = function(id) {
+    delete execCallbacks[id];
 };
 
 /*
