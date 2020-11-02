@@ -29,7 +29,7 @@ function ImageForProcessing(json)
     this._savedFilePaths = [];
 }
 ImageForProcessing.prototype.addSavedFilePath = function(fullPath) {
-    this._savedFilePaths.push(fullPath);
+    this._savedFilePaths.push(new File(fullPath).fsName);
 };
 ImageForProcessing.prototype.getSavedFilePaths = function() {
     return this._savedFilePaths;
