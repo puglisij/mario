@@ -40,7 +40,7 @@
             </validation-provider>
             <validation-provider
                 tag="label"
-                :rules="{ custom: { fn: validateSourceNames } }" 
+                :rules="{ required: true, custom: { fn: validateSourceNames } }" 
                 v-slot="{ errors }"
             >
                 <div class="label">File Source(s)</div>
@@ -53,6 +53,7 @@
                     title="The file source(s) to use for inputs to this pipeline. Comma delimited."
                     placeholder="my-file-source-name"
                     v-model="sourceNames_"
+                    :removeEmpty="true"
                 />
                 <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
             </validation-provider>

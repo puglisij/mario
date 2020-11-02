@@ -99,5 +99,6 @@ export default class ImageFileProducers extends EventEmitter
     _onProducerDepleted(producerId) 
     {
         this._stopProducers([producerId]);
+        this.emit("depleted");
     }
 }

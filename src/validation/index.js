@@ -41,7 +41,7 @@ extend('required', {
     validate (value) {
         return {
             required: true,
-            valid: ['', null, undefined].indexOf(value) === -1
+            valid: ['', null, undefined].indexOf(value) === -1 && !(Array.isArray(value) && value.length === 0)
         };
     },
     message: 'This is required',
