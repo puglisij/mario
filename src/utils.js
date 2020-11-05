@@ -89,16 +89,20 @@ function yyyymmddhhmmss(date)
 
 function defaultForNativeType(value) 
 {
+    if(value === null) {
+        return null;
+    } else if(Array.isArray(value)) {
+        return [];
+    }
     switch (typeof value) {
         case 'boolean'   : return false;
         case 'function'  : return function () {};
-        case 'null'      : return null;
         case 'number'    : return 0;
         case 'object'    : return {};
         case 'string'    : return "";
         case 'symbol'    : return Symbol();
         case 'undefined' : return void 0;
-        default: return null;
+        default: throw new Error("Unrecognized type.");
     }
 }
 

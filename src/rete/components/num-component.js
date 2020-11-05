@@ -12,9 +12,11 @@ export class NumComponent extends Component
 
     builder(node) {
         var Field = this.CustomFieldControl || InputControl;
-        var out1 = new Output('num', "Number", Socket.num);
+        var out1 = new Output('num', "Number", Socket.input);
 
-        return node.addControl(new Field(this.editor, 'num', 'number')).addOutput(out1);
+        return node
+            .addControl(new Field(this.editor, 'num', 'number'))
+            .addOutput(out1);
     }
 
     worker(node, inputs, outputs) {

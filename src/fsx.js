@@ -4,7 +4,7 @@ import fs from 'fs';
 import rimraf from 'rimraf';
 
 /**
- * Force deletes the destination file/directory recursively and renames the source path to the destination
+ * Force deletes the destination file/directory recursively and then moves (renames) the source path to the destination
  * @param {*} fromPath 
  * @param {*} toPath 
  * @param {*} callback 

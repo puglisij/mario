@@ -1,18 +1,13 @@
 <template>
-    <label 
-        @click.stop 
-        @dblclick.stop 
-        @pointermove.stop 
-        @mousemove.stop
-        @mousedown.stop
-    >
+    <label>
         {{ikey}}
         <input
             :type="type || 'text'"
             :readonly="readonly"
             :required="required"
             :value="value"
-            @input="onChange($event)"
+            @input.stop="onChange($event)"
+            @mousedown.stop
         />
     </label>
 </template>
@@ -48,7 +43,11 @@ export default {
         }
     },
     mounted() {
-        this.value = this.getData(this.ikey);
+
+        const val = this.getData(this.ikey);
+        this.value = typeof val !== 'undefined' ? val : this.value;
+
+        this.putData(this.ikey, this.value);
     }
 }
 </script>

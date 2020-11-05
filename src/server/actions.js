@@ -9,6 +9,9 @@ import FolderTreeNode from '../folderTree';
 
 const ROOT_ACTION_NAMESPACE = "action";
 
+/**
+ * Simple object representing a JSX Action
+ */
 class Action
 {
     constructor(name, namespace, absolutePath)
@@ -31,6 +34,8 @@ export class ActionDescriptor
         this.description = "";
         this.path = "";
         this.params = [];
+        this.returnDescription = "";
+        this.returnTypeNames = [];
     }
     /**
      * Translate JSDocDescription object to ActionDescriptor
@@ -55,16 +60,35 @@ export class ActionDescriptor
                     "description": "y axis position in pixels",
                     "name": "posY"
                     }
-                ]
+                ],
+                "returns": [{
+                    description: "nothing",
+                    type: {
+                        names: ["undefined"]
+                    }
+                }]
             }
         */
         
-        const d = jsdocDescription;
+        // Destructure
+        const { 
+            longname: name,
+            description,
+            params,
+            metadata: { path },
+            returns: [{ 
+                description: returnDescription,
+                type: { names: returnTypeNames }
+            }] 
+        } = jsdocDescription;
+
         const descriptor = new ActionDescriptor();
-              descriptor.name = d.longname;
-              descriptor.description = d.description;
-              descriptor.params = d.params ? d.params.map(p => ActionParameter.fromJSDoc(p)) : [];
-              descriptor.path = d.meta.path;
+              descriptor.name = name;
+              descriptor.description = description;
+              descriptor.params = params ? params.map(p => ActionParameter.fromJSDoc(p)) : [];
+              descriptor.path = path;
+              descriptor.returnDescription = returnDescription;
+              descriptor.returnTypeNames = returnTypeNames || [];
         return descriptor;
     }
 }
@@ -98,29 +122,9 @@ export class ActionParameter
 }
 
 /**
- * 
- */
-class ActionParameterCurator
-{
-    constructor(hostInterface)
-    {
-        this.host = hostInterface;
-        this.typeNameToDataCache = {};
-    }
-    /**
-     * Convert jsdoc parameter type name to Vue control component type
-     * @param {string} typeName any type for which a control exists (e.g. string, boolean, etc)
-     * @returns {string} 
-     */
-    typeNameToControlInputType(typeName)
-    {
-        // call jsx functions to get type information
-        // this.host.runJsx('...');
-    }
-}
-
-/**
- * Handles reading JSX action files and JSDoc descriptions they contain
+ * Reads JSX action files and creates a cached mapping of JSDoc descriptions they contain.
+ * Mapping:
+ *  Action -> JSDoc descriptions 
  */
 class ActionFileDescriptionReader 
 {
@@ -249,109 +253,6 @@ class ActionFileImportStringBuilder
             importString: imports.join(''),
             actions
         };
-    }
-}
-
-
-
-// TODO: Could use a templating engine (e.g. Handlebars) here to make this more readable
-export class ActionDescriptorToReteComponentGenerator
-{
-    /**
-     * Generates a Rete Component class for each action, and writes as a .js file to the appropriate directory
-     * @param {ActionDescriptor[]} actionDescriptors 
-     * @param {string} outputDirectory the absolute path to the output directory
-     */
-    generateReteComponents(actionDescriptors, outputDirectory)
-    {
-        for(let i = 0; i < actionDescriptors.length; ++i)
-        {
-            // generate file contents
-            // stream file contents to disk 
-        }
-    }
-    _generateReteComponentFileContents(actionDescriptor)
-    {
-        return this._templatize(
-            actionDescriptor.name,
-            this._templatizeConstructor(actionDescriptor),
-            this._templatizeBuilder(actionDescriptor), 
-            this._templatizeWorker(actionDescriptor)
-        );
-    }
-    _templatize(actionName, templatizedConstructor, templatizedBuilder, templatizedWorker)
-    {
-        // First letter caps
-        actionName = actionName[0].toUpperCase() + actionName.substring(1);
-
-        return `
-        import { Component, Input, Output } from 'rete';
-        import Socket from '../sockets';
-        import { InputControl } from '../controls/input/index';
-
-        class ${actionName}Component extends Component 
-        {
-            ${templatizedConstructor}
-            ${templatizedBuilder}
-            ${templatizedWorker}
-        }
-        `;
-    }
-    _templatizeConstructor(actionDescriptor)
-    {
-        // TODO: Whenever this Component is loaded, pass to constructor an interface to JSX environment for making global Enum objects available as dropdown Control
-        return `
-        constructor(parameterCurator) {
-            super("${actionDescriptor.name}");
-            this.parameterCurator = parameterCurator;
-        }`;
-    }
-    _templatizeBuilder(actionDescriptor)
-    {
-        // Rules for parameters given in JSDoc comment
-        //  - dont use if it has no description
-        //  - default to 'text' type if no type is given 
-        //  - if parameter receives more than one type of primitive, default to type 'text'?  (e.g. Number|String)
-        //  - accept any type? or... types 'string|number|boolean|enumerated object|array|object|File'
-        
-        // NOTE: parameters are also inputs (not just a Control) to allow programmable values (connection with outputs of other nodes)
-        let inputDeclare = [];
-        let inputAssign = [];
-        for(let i = 0; i < actionDescriptor.parameters.length; ++i)
-        {
-            let p = actionDescriptor.parameters[i];
-            if(!p.description.trim()) 
-                continue;
-            
-            inputDeclare.push(
-                `var input${p.name} = new Input(${p.name}, ${p.name}, Socket.input, false);`,
-                `    input${p.name}.addControl(new InputControl(this.editor, this.parameterCurator, ${p.name}, ${p.typeNames}, false, ${p.isRequired}));`
-            );
-            inputAssign.push(
-                `.addInput(input${p.name})`
-            );
-        }
-
-        return `
-        builder(node) 
-        {
-            ${inputDeclare.join('\n')}
-
-            var inpAct = new Input("act", "Act", Socket.action);            
-            var outThen = new Output('then', "Then", Socket.action);
-            return node
-                ${inputAssign.join('')}
-                .addInput(inpAct)
-                .addOutput(outThen);
-        }`;
-    }
-    _templatizeWorker(actionDescriptor)
-    {
-        return `
-        worker(node, inputs, outputs, runAction) 
-        {
-            return runAction(node.name, node.data);
-        }`;
     }
 }
 

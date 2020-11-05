@@ -3,7 +3,6 @@ import chokidar from 'chokidar';
 import upath from 'upath';
 import isUncPath from 'is-unc-path';
 import EventEmitter from "events";
-import ImageSource from './imageSource';
 import ImageSourceType from './imageSourceType';
 import host from '../host';
 import _, { EDebounceType } from '../utils';

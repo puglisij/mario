@@ -113,9 +113,9 @@ ImageForProcessing.prototype.data = function(key)
     return this._data[key];
 }
 /**
-* Set or get a context variable for the current IMAGE process
+* Set or get a blackboard variable for the current IMAGE process
 */
-ImageForProcessing.prototype.context = function(name, value)
+ImageForProcessing.prototype.blacboard = function(name, value)
 {
     if(value === undefined) {
         return this._context[name];

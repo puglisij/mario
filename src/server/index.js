@@ -45,8 +45,8 @@ class Server extends EventEmitter
         if(this._initialized) return;
         this._initialized = true;
 
-        await this._pipelineEngine.init();
         await this._actions.init();
+        await this._pipelineEngine.init();
 
         if(store.general.runHttpServer) {
             this.startServer();

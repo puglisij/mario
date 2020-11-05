@@ -2,6 +2,8 @@
     <div>
         <div id="rete"></div>
         <button class="topcoat-button--large" type="submit" @click="onRun">Run</button>
+        <button class="topcoat-button--large" type="submit" @click="onGetJson">Get JSON</button>
+        <div id="rete-json">{{json}}</div>
     </div>
 </template>
 
@@ -15,6 +17,7 @@ import VueRenderPlugin from "rete-vue-render-plugin";
 /* local modules */
 import { NumComponent } from '@/rete/components/num-component';
 import { StartComponent } from '@/rete/components/start-component';
+import { AddComponent } from '@/rete/components/add-component';
 import { ActionResizeImageComponent } from '@/rete/generated-components/action.resizeImage';
 import Socket from '@/rete/sockets';
 
@@ -27,6 +30,11 @@ export default {
     local: {
         editor: null,
         engine: null
+    },
+    data() {
+        return {
+            json: ""
+        }
     },
     computed: {
         cs() { return appGlobal.csInterface; }
@@ -70,24 +78,23 @@ export default {
             const editor = this.$options.local.editor;
             if(editor.silent) return;
 
+            // engine.process() returns a 'success' or 'aborted' string when Promise resolves
             await engine.abort();
             await engine.process(editor.toJSON(), 1, (name, inputs) => {
                 return this.runAction(name, inputs);
             });
+        },
+        onGetJson() 
+        {
+            this.json = this.$options.local.editor.toJSON();
         }
     },
     mounted() {
-        // Import components
-        // let importPromises = []
-        // for(const name in componentNames) {
-        //     importPromises.push(
-        //         import(name)
-        //     );
-        // }
-        // Promise.all(importPromises)
-        // .then(components => {
-
-        // });
+        // Create Editor Instance
+        // Get Component Instances from ActionsManager
+        // Register Components
+        // Load Pipeline Configuration into Editor
+        // 
 
         // Communication between nodes
         const container = document.querySelector('#rete');
@@ -97,12 +104,18 @@ export default {
         editor.use(VueRenderPlugin);
 
         const startComponent = new StartComponent();
+        const numComponent = new NumComponent();
+        const addComponent = new AddComponent();
         const actionResizeImageComponent = new ActionResizeImageComponent();
         editor.register(startComponent);
+        editor.register(numComponent);
+        editor.register(addComponent);
         editor.register(actionResizeImageComponent);
         
         const engine = this.$options.local.engine = new Rete.Engine('demo@0.1.0');
         engine.register(startComponent);
+        engine.register(numComponent);
+        engine.register(addComponent);
         engine.register(actionResizeImageComponent);
 
         
@@ -116,49 +129,79 @@ export default {
             "nodes": {
                 "1": {
                     "id": 1,
-                    "data": {
-                        "w": "256px",
-                        "h": "256px"
-                    },
-                    "inputs": {
-                        "act": {
-                            "connections": []
-                        }
-                    },
-                    "outputs": { 
-                        "continue": {
-                            "connections": []
-                        }
-                    },
-                    "position": [250, 0],
-                    "name": "action.resizeImage"
-                }, 
-                "2": {
-                    "id": 2,
                     "data": {},
                     "inputs": {},
                     "outputs": {
                         "then": {
-                            "connections": [{
-                                "node": 1, 
-                                "input": "act",
-                                "data": {}
-                            }]
+                            "connections": [{ "node": 2, "input": "act", "data": {} }]
                         }
                     },
-                    "name": "Start",
-                    "position": [0, 0]
+                    "position": [120, 270],
+                    "name": "Start"
+                },
+                "2": {
+                    "id": 2,
+                    "data": { "w": "256px", "h": "256px" },
+                    "inputs": {
+                        "w": {
+                            "connections": [{ "node": 5, "output": "num", "data": {} }]
+                        },
+                        "h": { "connections": [] },
+                        "act": {
+                            "connections": [{ "node": 1, "output": "then", "data": {} }]
+                        }
+                    },
+                    "outputs": { "then": { "connections": [] } },
+                    "position": [540, 0],
+                    "name": "action.resizeImage"
+                },
+                "3": {
+                    "id": 3,
+                    "data": { "num": 256 },
+                    "inputs": {},
+                    "outputs": {
+                        "num": {
+                            "connections": [{ "node": 5, "input": "num2", "data": {} }]
+                        }
+                    },
+                    "position": [-200, 100],
+                    "name": "Number"
+                },
+                "4": {
+                    "id": 4,
+                    "data": { "num": 256 },
+                    "inputs": {},
+                    "outputs": {
+                        "num": {
+                            "connections": [{ "node": 5, "input": "num1", "data": {} }]
+                        }
+                    },
+                    "position": [-200, -40],
+                    "name": "Number"
+                },
+                "5": {
+                    "id": 5,
+                    "data": { "preview": 0, "num1": 0, "num2": 0 },
+                    "inputs": {
+                        "num1": {
+                            "connections": [{ "node": 4, "output": "num", "data": {} }]
+                        },
+                        "num2": {
+                            "connections": [{ "node": 3, "output": "num", "data": {} }]
+                        }
+                    },
+                    "outputs": {
+                        "num": {
+                            "connections": [{ "node": 2, "input": "w", "data": {} }]
+                        }
+                    },
+                    "position": [120, 0],
+                    "name": "Add"
                 }
             }
         }).then(() => editor.trigger('process'));
 
-        // (async function(){
-        //     let node = await numComponent.createNode({});
-        //         node.position - [100, 100];
-        //     editor.addNode(node);
-        // }())
-        
- 
+
         editor.view.resize();
     },
     onActionAdd(event)
@@ -168,10 +211,15 @@ export default {
         this.$dialog.open({
             component: SelectPipelineAction, 
             listeners: {
-                onSelect: (actionDescriptor) => {
-                    // const actionId = _.guid();
+                onSelect: async (actionDescriptor) => {
                     // const actionName = actionDescriptor.name;
+                    // get component by action name
 
+                    //     createNode() is a passthrough to the .builder() function
+                    //     It takes one parameter - the data to be assigned to the node before its built.
+                    //     let node = await actionComponent.createNode({});
+                    //         node.position = [100, 100];
+                    //     editor.addNode(node);
                 }
             }
         });
