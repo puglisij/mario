@@ -201,7 +201,9 @@ export class PipelineEngine extends EventEmitter
                 // EXECUTE PIPELINES
                 if(!image.errors.length > 0) 
                 {
+                    this.emit("imagejobstart", image.jobId, i, file);
                     await this._runPipelinesLoop(image);
+                    this.emit("imagejobend");
                 }
 
                 processedImages.push(image);
@@ -235,8 +237,6 @@ export class PipelineEngine extends EventEmitter
      */
     async _runPipelinesLoop(image)
     {
-        this.emit("imagejobstart", image.jobId, i, file);
-
         const pipelines = store.pipelines.getByNames(image.pipelines);
         for(const pipeline of pipelines) 
         {
@@ -270,8 +270,6 @@ export class PipelineEngine extends EventEmitter
                 await this._runPipelineEnd(image, pipeline);
             }
         }
-
-        this.emit("imagejobend");
     }
     /**
      * Close all documents. Save Photoshop settings. Instantiate IMAGE instance.
