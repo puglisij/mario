@@ -135,8 +135,9 @@
             <!-- Extensions -->
             <validation-provider 
                 slim
-                rules="required" 
+                :rules="{ required: isSourceExternalFiles }" 
                 v-slot="{ errors }"
+                v-if="isSourceExternalFiles"
             >
                 <a-extensions-input 
                     title="Either multiple file extensions, or json (exclusive). A comma delimited list."

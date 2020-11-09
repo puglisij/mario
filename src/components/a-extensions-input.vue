@@ -6,6 +6,7 @@
                 placeholder="jpg, jpeg, png, psd, tif, etc." 
                 :title="title"
                 :value="extensions"
+                :removeEmpty="true"
                 @change="onExtensions"
             />
             <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>

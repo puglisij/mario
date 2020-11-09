@@ -82,7 +82,7 @@ export default class Config extends EventEmitter
             case 'array': return [];
             case 'boolean': return false;
         }
-        return null;
+        throw new Error(`default not defined for type ${type}`);
     }
     _typeOf(value) {
         if(Array.isArray(value)) {
@@ -115,13 +115,14 @@ export default class Config extends EventEmitter
         return new Promise(resolve => 
         {
             this._isLoading = true;
-            fs.readFile(this._dataFilePath, (err, data) => {
+            fs.readFile(this._dataFilePath, (err, jsonString) => {
                 this._isLoading = false;
                 // ENOENT = file missing
                 if(err && err.code !== 'ENOENT') throw err;
                 if(!err) {
                     // Assume file exists and data read successfully
-                    this._data = JSON.parse(data);
+                    const data = JSON.parse(jsonString);
+                    this._data = Object.assign(this._data, data);
                     this._validateConfig();
                 }
                 this._isSaved = true;

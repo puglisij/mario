@@ -13,7 +13,7 @@ export default class ImageFileReader
     /**
      * Create a reader used to generate an Image instance for processing by Adobe host
      */
-    constructor() {}
+    constructor() {} 
 
     /**
      * Create a new Image instance for processing by Adobe host
@@ -117,12 +117,18 @@ export default class ImageFileReader
      */
     async _readJson(jsonFilePath)
     {
-        return new Promise(resolve => {
-            fs.readFile(jsonFilePath, { encoding: 'utf8' }, (error, data) => {
+        return new Promise((resolve, reject) => {
+            fs.readFile(jsonFilePath, { encoding: 'utf8' }, (error, jsonString) => {
                 if(error) {
-                    throw new Error(`Image json ${jsonFilePath} could not be read.`);
+                    reject(`Image json ${jsonFilePath} file could not be read.\n${error}`);
+                    return;
                 }
-                resolve(JSON.parse(data));
+                try {
+                    const data = JSON.parse(jsonString);
+                    resolve(data);
+                } catch(e) {
+                    reject(e);
+                }
             });
         });
     }

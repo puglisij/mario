@@ -79,6 +79,21 @@
                     />
                     <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
                 </validation-provider>
+
+                <validation-provider
+                    tag="label"
+                    rules="required|integer:8,4096"
+                    v-slot="{ errors }"
+                >
+                    <div class="label">Maximum Log Entries to Display (Default: 256)</div>
+                    <input 
+                        class="topcoat-text-input input-days" 
+                        type="number" 
+                        title="Number of entries to display in the Console tab. Larger number consumes more memory. Takes effect on re-start."
+                        v-model="logHtmlBufferMaxSize"
+                    />
+                    <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
+                </validation-provider>
             </section>
 
             <h3 class="section-title">Http Server</h3>
@@ -173,6 +188,7 @@ export default {
             pathToUserActions: store.general.pathToUserActions,
             logDirectory: store.general.logDirectory,
             logFilePersistForDays: store.general.logFilePersistForDays,
+            logHtmlBufferMaxSize: store.general.logHtmlBufferMaxSize,
             fileSources: _.simpleDeepClone(store.general.fileSources)
         }
     },
@@ -255,6 +271,7 @@ export default {
             store.general.pathToUserActions = this.pathToUserActions;
             store.general.logDirectory = this.logDirectory;
             store.general.logFilePersistForDays = parseInt(this.logFilePersistForDays, 10);
+            store.general.logHtmlBufferMaxSize = parseInt(this.logHtmlBufferMaxSize, 10);
             store.general.fileSources = _.simpleDeepClone(this.fileSources);
             store.general.save();
             eventBus.$emit("filesource-update");
