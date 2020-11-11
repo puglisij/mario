@@ -46,6 +46,10 @@ class GeneralConfig extends Config
                     type: "number", 
                     default: 3
                 },
+                logHtmlBufferMaxSize: {
+                    type: "number",
+                    default: 256
+                },
                 runHttpServer: {
                     type: "boolean",
                     default: false

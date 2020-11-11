@@ -111,7 +111,7 @@ class Host extends EventEmitter
             console.log(`Tunnel ${tunnel.getId()}: ${tunnel.name}\n\t ${stream}\n\t Entered.`);
         });
         tunnel.once("exit", (jsx) => {
-            console.log(`Tunnel ${tunnel.getId()}: ${tunnel.name}\n\t ${stream}\n\t Exited.`);
+            console.log(`Tunnel ${tunnel.getId()}: ${tunnel.name}\n\t ${stream}\n\t Exited.\nWith Jsx:\n\t${jsx}`);
             this._exitTunnel(tunnel, jsx);
         });
         tunnel.open(stream);

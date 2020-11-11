@@ -4,6 +4,7 @@ import { EventEmitter } from "events";
 import global from '../global';
 import store from '../store';
 import fsx from '../fsx';
+import CircleBuffer from '@/circleBuffer';
 
 const CONSOLE_METHODS = ["log", "warn", "error"];
 
@@ -19,8 +20,8 @@ class Logger extends EventEmitter
         };
         this.originalConsoleMethods = {};
         this.logWriteStream = null;
-        this.logBuffer = [];
-        this.maxBufferSize = 64;
+        this.currentLogFileMonthDay = 0;
+        this.htmlLogBuffer = null;
     }
     /**
      * @returns {Promise}
@@ -29,16 +30,16 @@ class Logger extends EventEmitter
     {
         if(this.initialized)
             return;
+
         this.initialized = true;
         this.options = {
             logDirectory: store.general.logDirectory || global.appDefaultLogPath, 
-            logFilePersistForDays: store.logFilePersistForDays || 3
+            logFilePersistForDays: store.general.logFilePersistForDays > 0 ? store.general.logFilePersistForDays : 3,
+            logHtmlBufferMaxSize: store.general.logHtmlBufferMaxSize > 0 ? store.general.logHtmlBufferMaxSize : 256
         };
-        await this._createLogsDirectory();
-        this._createFileStream();
-        this._cleanupOldFiles();
-        
-        // Override default console logging methods
+        this.htmlLogBuffer = new CircleBuffer(this.options.logHtmlBufferMaxSize);
+
+        // Proxy default console logging methods
         CONSOLE_METHODS.forEach(function(method)
         {
             const self = this;
@@ -55,17 +56,24 @@ class Logger extends EventEmitter
             };
         }.bind(this));
 
+        await this._createLogsDirectory();
+        this._cleanupOldFiles();
+        this._createFileStream();
+
         this.emit("initialized");
         console.log(`Logger initialized.\n\t${this.options.logDirectory}`);
     }
     _write(method, args)
     {
-        // write to read buffer
-        const chunk = [new Date().toLocaleTimeString(), `[${method.toUpperCase()}]\t`, ...args, `\n`].join(" ");
-        const htmlChunk = [`<div class="${method}">${new Date().toLocaleTimeString()}`, ...args, `</div>`].join(" ");
+        const date = new Date();
+        const chunk = [date.toLocaleTimeString(), `[${method.toUpperCase()}]\t`, ...args, `\n`].join(" ");
+        const htmlChunk = [`<div class="${method}">${date.toLocaleTimeString()}`, ...args, `</div>`].join(" ");
+        
+        if(date.getDate() !== this.currentLogFileMonthDay) {
+            this._createFileStream();
+        }
         this.logWriteStream && this.logWriteStream.write(chunk);
-        this.logBuffer.push(htmlChunk);
-
+        this.htmlLogBuffer.push(htmlChunk);
         this.emit("logs");
     }
     _createLogsDirectory() 
@@ -79,21 +87,34 @@ class Logger extends EventEmitter
     }
     _createFileStream()
     {
-        const yyyymmdd = new Date().toISOString().slice(0,10);   
-        const logPath = upath.join(this.options.logDirectory, yyyymmdd + ".logs");
+        this._closeFileStream();
+
+        const date = new Date();
+        const logPath = upath.join(this.options.logDirectory, date.toISOString().slice(0,10) + ".logs");
+        this.currentLogFileMonthDay = date.getDate(); 
         this.logWriteStream = fs.createWriteStream(logPath, {
             flags: "a",
-            encoding: "utf8"
+            encoding: "utf8",
+            autoClose: true // close on error or end
+        });
+        this.logWriteStream.on("error", error => {
+            this._closeFileStream();
+            // TODO: Attempt to create stream again?
+            console.log(`Log file stream error.\n${error}`)
+        });
+        this.logWriteStream.on("close", event => {
+            this._closeFileStream();
+            console.log(`Log file stream closed.`);
         });
     }
     _closeFileStream()
     {
-        this.logWriteStream && this.logWriteStream.end();
-        this.logWriteStream = null;
+        if(this.logWriteStream) {
+            this.logWriteStream.removeAllListeners();
+            this.logWriteStream.end();
+            this.logWriteStream = null;
+        }
     }
-    /**
-     * Erase old log files 
-     */
     _cleanupOldFiles()
     {
         fs.readdir(this.options.logDirectory, (err, paths) => 
@@ -116,11 +137,11 @@ class Logger extends EventEmitter
         });
     }
     /**
-     * Clear the buffered logs
+     * Clear all the buffered html logs
      */
     clear() 
     {
-        this.logBuffer = [];
+        this.htmlLogBuffer.clear();
     }
     /**
      * Read all buffered logs formatted with html
@@ -128,7 +149,7 @@ class Logger extends EventEmitter
      */
     read()
     {
-        return this.logBuffer.reduce((acc, val) => `${acc}${val}`, ``);
+        return this.htmlLogBuffer.toArray().reduce((acc, val) => `${acc}${val}`, ``);
     }
     /**
      * Should be called to release internal resources
@@ -142,10 +163,12 @@ class Logger extends EventEmitter
         this.initialized = false;
 
         this._closeFileStream();
+
         // Restore console methods
         CONSOLE_METHODS.forEach(method => {
             console[method] = this.originalConsoleMethods[method];
-        })
+        });
+
         logger = null;
     }
 }

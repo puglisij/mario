@@ -194,48 +194,20 @@ export class PipelineEngine extends EventEmitter
                 await this._pauseCheck();
                 const file = files[i];
 
-                // READ
+                // READ IMAGE
                 console.log(`Reading next file[${i}] ${file}.`);
                 const image = await this._imageFileReader.read(file, imageSource, listenerNames);
-                const pipelines = store.pipelines.getByNames(image.pipelines);
-                this.emit("imagejobstart", image.jobId, i, file);
 
-                // EXECUTE
-                for(const pipeline of pipelines) 
+                // EXECUTE PIPELINES
+                if(!image.errors.length > 0) 
                 {
-                    try 
-                    {
-                        await this._runPipelineStart(image, pipeline);
-        
-                        for(const action of pipeline.actions) 
-                        {
-                            this.emit("actionstart", action.actionName);
-                            let result = await host.runActionWithParameters(action.actionName, action.parameters);
-                            
-                            if(this._stopCheck(result)) break;
-                            await this._pauseCheck(result, store.general.pauseAfterEveryAction);
-                            this.emit("actionend");
-                        }
-                    }
-                    catch(e)
-                    {
-                        console.error(e);
-                        image.errors.push(e.toString());
-                        await host.runActionWithParameters(`action.closeAllWithoutSave`);
-                        await this._pauseCheck(null, store.general.pauseOnExceptions);
-                    }
-                    finally
-                    {
-                        if(image.errors.length) break;
-                        if(this._stopCheck()) break;
-                        await this._pauseCheck(null, store.general.pauseAfterEveryPipeline);
-                        await this._runPipelineEnd(image, pipeline);
-                    }
+                    this.emit("imagejobstart", image.jobId, i, file);
+                    await this._runPipelinesLoop(image);
+                    this.emit("imagejobend");
                 }
-                
+
                 processedImages.push(image);
                 await this._pauseCheck(null, store.general.pauseAfterEveryImage);
-                this.emit("imagejobend");
             }
             this.emit("jobend");
         }
@@ -258,6 +230,46 @@ export class PipelineEngine extends EventEmitter
         console.log("Pipeline process exited.");
         this.emit("processend");
         await host.runJsxWithThrow(`$.gc();`);
+    }
+    /**
+     * Execute pipeline action graph for this image
+     * @param {Image} image 
+     */
+    async _runPipelinesLoop(image)
+    {
+        const pipelines = store.pipelines.getByNames(image.pipelines);
+        for(const pipeline of pipelines) 
+        {
+            try 
+            {
+                await this._runPipelineStart(image, pipeline);
+
+                // EXECUTE PIPELINE
+                for(const action of pipeline.actions) 
+                {
+                    this.emit("actionstart", action.actionName);
+                    let result = await host.runActionWithParameters(action.actionName, action.parameters);
+                    
+                    if(this._stopCheck(result)) break;
+                    await this._pauseCheck(result, store.general.pauseAfterEveryAction);
+                    this.emit("actionend");
+                }
+            }
+            catch(e)
+            {
+                console.error(e);
+                image.errors.push(e.toString());
+                await host.runActionWithParameters(`action.closeAllWithoutSave`);
+                await this._pauseCheck(null, store.general.pauseOnExceptions);
+            }
+            finally
+            {
+                if(image.errors.length) break;
+                if(this._stopCheck()) break;
+                await this._pauseCheck(null, store.general.pauseAfterEveryPipeline);
+                await this._runPipelineEnd(image, pipeline);
+            }
+        }
     }
     /**
      * Close all documents. Save Photoshop settings. Instantiate IMAGE instance.
