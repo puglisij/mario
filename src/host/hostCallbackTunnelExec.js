@@ -52,9 +52,9 @@ export default class HostCallbackTunnelExec extends EventEmitter
                 console.error(err);
                 console.log(stderr);
             } else {
-                stdout = stdout.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '');
-                stderr = stderr.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '');
-                jsx = `executeExecCallback(${callbackId},"${stdout}","${stderr}");`;
+                stdout = JSON.stringify(stdout);
+                stderr = JSON.stringify(stderr);
+                jsx = `executeExecCallback(${callbackId},${stdout},${stderr});`;
             }
 
             this.emit("exit", jsx);
