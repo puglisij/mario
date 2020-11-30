@@ -1,0 +1,140 @@
+import Action from './Action';
+import ActionFileImportStringBuilder from './ActionFileImportStringBuilder';
+import ActionFileJSDocReader from './ActionFileJSDocReader';
+import ActionDescriptorBuilder from './ActionDescriptorBuilder';
+import ActionComponentBuilder from './ActionComponentBuilder';
+import ActionDescriptor from "./ActionDescriptor";
+import store from '@/store';
+import host from '@/host';
+import global from '@/global';
+import FolderTreeNode from '@/folderTree';
+
+const ROOT_ACTION_NAMESPACE = "action";
+
+
+/**
+ * Action Manager
+ * Primary interface for loading/reloading jsx action files, 
+ * and building their respective ActionDescriptors and ActionComponents.
+ */
+export class Actions
+{
+    constructor() {}
+
+    /**
+     * @returns {Promise}
+     */
+    init() 
+    {
+        // Clear caches / action data
+        this._actionTree = new FolderTreeNode(ROOT_ACTION_NAMESPACE, true);
+        this._actionNameToAction = new Map();
+        this._actionNameToActionDescriptor = new Map();
+        this._actionNameToActionComponent = new Map();
+        return this._importAll();
+    }
+    destroy() {}
+
+    async _importAll()
+    {
+        const pathToUserActions = store.general.pathToUserActions;
+        const pathToBuildInActions = global.appBuiltinActionsPath;
+        console.log("Import actions started.");
+        console.log(`Importing from:\n\t${pathToUserActions}\n\t${pathToBuildInActions}`);
+        
+        await this._import(pathToBuildInActions);
+        if(pathToUserActions) 
+        {
+            await this._import(pathToUserActions);
+            await host.runJsx(`action.CUSTOM_ACTIONS_FOLDER = new Folder("${pathToUserActions}");`);
+        }
+
+        console.log("Import actions exited.");
+    }
+    async _import(importDirectory) 
+    {
+        if(!importDirectory.trim()) {
+            return;
+        }
+
+        const { importString,  actions } = ActionFileImportStringBuilder.build(importDirectory, ROOT_ACTION_NAMESPACE);
+        // Parse to data structures
+        for(let i = 0; i < actions.length; ++i) 
+        {
+            const actionPath = actions[i].name.split('.');
+            this._actionNameToAction.set(actions[i].name, actions[i]);
+            this._actionTree.insert(actionPath, false);
+            console.log("Action: " + actions[i].name);
+        }
+
+        // Action -> JSDoc
+        const jsDocs = await ActionFileJSDocReader.readAll(actions);
+        // JSDoc -> ActionDescriptor
+        const descriptors = ActionDescriptorBuilder.build(jsDocs);
+        // ActionDescriptor -> ActionComponent
+        const components = ActionComponentBuilder.build(descriptors);
+
+        // Cache descriptors
+        for(const d of descriptors) {
+            this._actionNameToActionDescriptor.set(d.name, d);
+        }
+        // Cache components
+        for(const c of components) {
+            this._actionNameToActionComponent.set(c.name, c);
+        }
+
+        await host.runJsx(importString  + "act = action;");
+    }
+    /**
+     * Returns tree structure of all available action nested namespaces/action names
+     * @returns {FolderTreeNode} n-ary tree indicating folder and action file structure
+     */
+    getAllActionsTree() {
+        return this._actionTree.cloneTree(); 
+    }
+    /**
+     * Return all available action names
+     * @returns {string[]}
+     */
+    getAllActionNames() {
+        return Array.from( this._actionNameToAction.keys() );
+    }
+    /**
+     * Converts JSDoc for given action name to instance of ActionDescriptor
+     * @param {string} actionName
+     * @returns {Promise<ActionDescriptor>} by reference
+     */
+    async getActionDescriptorByName(actionName) 
+    {
+        const action = this._actionNameToAction.get(actionName);
+        if(!action) {
+            throw new Error(`Action doesnt exist by name ${actionName}`);
+        }
+
+        return new Promise(resolve => {
+            const descriptor = this._actionNameToActionDescriptor.get(actionName);
+            resolve(descriptor);
+        });
+    }
+    /**
+     * @param {string} actionName
+     * @returns {Promise<ActionComponent>} ActionComponent is returned by reference
+     */
+    async getActionComponentByName(actionName)
+    {
+        return new Promise(resolve => {
+            const component = this._actionNameToActionComponent.get(actionName);
+            resolve(component);
+        });
+    }
+    /**
+     * @returns {Promise<ActionComponent[]>} ActionComponents are returned by reference
+     */
+    async getAllActionComponents()
+    {
+        return new Promise(resolve => {
+            const components = Array.from(this._actionNameToActionComponent.values());
+            resolve(components);
+        });
+    }
+}

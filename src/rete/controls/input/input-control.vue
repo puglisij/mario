@@ -2,8 +2,7 @@
     <label>
         {{ikey}}
         <input
-            :type="type || 'text'"
-            :readonly="readonly"
+            type="text"
             :required="required"
             :value="value"
             @input.stop="onChange($event)"
@@ -20,7 +19,16 @@
  *      - Enum 'type' renders as a <select> dropdown
  */
 export default {
-    props: ['initial', 'readonly', 'required', 'emitter', 'ikey', 'type', 'change', 'getData', 'putData'],
+    props: [
+        'initial', 
+        'required', 
+        'emitter', 
+        'ikey', 
+        'types', 
+        'change', 
+        'getData', 
+        'putData'
+    ],
     data() {
         return {
             value: this.initial || 0,
@@ -28,7 +36,7 @@ export default {
     },
     methods: {
         parse(value) {
-            return this.type === 'number' ? +value : value;
+            return this.types.includes('number') ? +value : value;
         },
         onChange(e){
             this.value = this.parse(e.target.value);
@@ -43,6 +51,7 @@ export default {
         }
     },
     mounted() {
+        // TODO: Determine appropriate display per [types] prop
 
         const val = this.getData(this.ikey);
         this.value = typeof val !== 'undefined' ? val : this.value;

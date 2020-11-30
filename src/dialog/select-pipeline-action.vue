@@ -34,7 +34,8 @@ export default {
     },
     data() {
         return {
-            actionTree: Server.actions.getAllActions()
+            // TODO: Eliminate global Server reference here?
+            actionTree: Server.actions.getAllActionsTree()
         }
     },
     created() {

@@ -18,19 +18,23 @@ import VueRenderPlugin from "rete-vue-render-plugin";
 import { NumComponent } from '@/rete/components/num-component';
 import { StartComponent } from '@/rete/components/start-component';
 import { AddComponent } from '@/rete/components/add-component';
-import { ActionResizeImageComponent } from '@/rete/generated-components/action.resizeImage';
 import Socket from '@/rete/sockets';
 
 import appGlobal from '../global';
-
+import Server from '../server';
 
 export default {
-    // TODO Rete.js editor
     name: "APipelineEditor", 
     local: {
         editor: null,
         engine: null
     },
+    props: {
+        pipelineBeingEdited: {
+            type: Object, 
+            required: false
+        }
+    }, 
     data() {
         return {
             json: ""
@@ -89,120 +93,123 @@ export default {
             this.json = this.$options.local.editor.toJSON();
         }
     },
-    mounted() {
+    mounted() 
+    {
         // Create Editor Instance
-        // Get Component Instances from ActionsManager
-        // Register Components
-        // Load Pipeline Configuration into Editor
-        // 
-
-        // Communication between nodes
         const container = document.querySelector('#rete');
         const editor = this.$options.local.editor = new Rete.NodeEditor('demo@0.1.0', container);
+        const engine = this.$options.local.engine = new Rete.Engine('demo@0.1.0');
+
+        // Rete Plugins
         editor.use(ContextMenuPlugin);
         editor.use(ConnectionPlugin);
         editor.use(VueRenderPlugin);
 
-        const startComponent = new StartComponent();
-        const numComponent = new NumComponent();
-        const addComponent = new AddComponent();
-        const actionResizeImageComponent = new ActionResizeImageComponent();
-        editor.register(startComponent);
-        editor.register(numComponent);
-        editor.register(addComponent);
-        editor.register(actionResizeImageComponent);
-        
-        const engine = this.$options.local.engine = new Rete.Engine('demo@0.1.0');
-        engine.register(startComponent);
-        engine.register(numComponent);
-        engine.register(addComponent);
-        engine.register(actionResizeImageComponent);
-
-        
-        
-        editor.on('process nodecreated noderemoved connectioncreated connectionremoved', async () => 
+        // Get Component Instances from ActionComponentFactory
+        Server.actions.getAllActionComponents()
+        .then(actionComponents => 
         {
-
-        });
-        editor.fromJSON({
-            "id": "demo@0.1.0",
-            "nodes": {
-                "1": {
-                    "id": 1,
-                    "data": {},
-                    "inputs": {},
-                    "outputs": {
-                        "then": {
-                            "connections": [{ "node": 2, "input": "act", "data": {} }]
-                        }
-                    },
-                    "position": [120, 270],
-                    "name": "Start"
-                },
-                "2": {
-                    "id": 2,
-                    "data": { "w": "256px", "h": "256px" },
-                    "inputs": {
-                        "w": {
-                            "connections": [{ "node": 5, "output": "num", "data": {} }]
-                        },
-                        "h": { "connections": [] },
-                        "act": {
-                            "connections": [{ "node": 1, "output": "then", "data": {} }]
-                        }
-                    },
-                    "outputs": { "then": { "connections": [] } },
-                    "position": [540, 0],
-                    "name": "action.resizeImage"
-                },
-                "3": {
-                    "id": 3,
-                    "data": { "num": 256 },
-                    "inputs": {},
-                    "outputs": {
-                        "num": {
-                            "connections": [{ "node": 5, "input": "num2", "data": {} }]
-                        }
-                    },
-                    "position": [-200, 100],
-                    "name": "Number"
-                },
-                "4": {
-                    "id": 4,
-                    "data": { "num": 256 },
-                    "inputs": {},
-                    "outputs": {
-                        "num": {
-                            "connections": [{ "node": 5, "input": "num1", "data": {} }]
-                        }
-                    },
-                    "position": [-200, -40],
-                    "name": "Number"
-                },
-                "5": {
-                    "id": 5,
-                    "data": { "preview": 0, "num1": 0, "num2": 0 },
-                    "inputs": {
-                        "num1": {
-                            "connections": [{ "node": 4, "output": "num", "data": {} }]
-                        },
-                        "num2": {
-                            "connections": [{ "node": 3, "output": "num", "data": {} }]
-                        }
-                    },
-                    "outputs": {
-                        "num": {
-                            "connections": [{ "node": 2, "input": "w", "data": {} }]
-                        }
-                    },
-                    "position": [120, 0],
-                    "name": "Add"
-                }
+            // Register Components
+            for(const c of actionComponents) {
+                editor.register(c);
+                engine.register(c);
             }
-        }).then(() => editor.trigger('process'));
+            // The same component instances should probably be shared between Engine and Editor
+            // Benefits:
+            // - Saves memory
+            // - No need to reinstantiate when Editor is opened or Engine run
+            // - The same editor instance can also be run by the Engine at a future point.
+            
+            // Load Pipeline Configuration into Editor
+            // editor.fromJSON(pipelineBeingEdited);
 
+            // Communication between nodes
+            // Build Sockets ? 
 
-        editor.view.resize();
+            editor.view.resize();
+        });
+
+        // editor.on('process nodecreated noderemoved connectioncreated connectionremoved', async () => 
+        // {
+
+        // });
+        // editor.fromJSON({
+        //     "id": "demo@0.1.0",
+        //     "nodes": {
+        //         "1": {
+        //             "id": 1,
+        //             "data": {},
+        //             "inputs": {},
+        //             "outputs": {
+        //                 "then": {
+        //                     "connections": [{ "node": 2, "input": "act", "data": {} }]
+        //                 }
+        //             },
+        //             "position": [120, 270],
+        //             "name": "Start"
+        //         },
+        //         "2": {
+        //             "id": 2,
+        //             "data": { "w": "256px", "h": "256px" },
+        //             "inputs": {
+        //                 "w": {
+        //                     "connections": [{ "node": 5, "output": "num", "data": {} }]
+        //                 },
+        //                 "h": { "connections": [] },
+        //                 "act": {
+        //                     "connections": [{ "node": 1, "output": "then", "data": {} }]
+        //                 }
+        //             },
+        //             "outputs": { "then": { "connections": [] } },
+        //             "position": [540, 0],
+        //             "name": "action.resizeImage"
+        //         },
+        //         "3": {
+        //             "id": 3,
+        //             "data": { "num": 256 },
+        //             "inputs": {},
+        //             "outputs": {
+        //                 "num": {
+        //                     "connections": [{ "node": 5, "input": "num2", "data": {} }]
+        //                 }
+        //             },
+        //             "position": [-200, 100],
+        //             "name": "Number"
+        //         },
+        //         "4": {
+        //             "id": 4,
+        //             "data": { "num": 256 },
+        //             "inputs": {},
+        //             "outputs": {
+        //                 "num": {
+        //                     "connections": [{ "node": 5, "input": "num1", "data": {} }]
+        //                 }
+        //             },
+        //             "position": [-200, -40],
+        //             "name": "Number"
+        //         },
+        //         "5": {
+        //             "id": 5,
+        //             "data": { "preview": 0, "num1": 0, "num2": 0 },
+        //             "inputs": {
+        //                 "num1": {
+        //                     "connections": [{ "node": 4, "output": "num", "data": {} }]
+        //                 },
+        //                 "num2": {
+        //                     "connections": [{ "node": 3, "output": "num", "data": {} }]
+        //                 }
+        //             },
+        //             "outputs": {
+        //                 "num": {
+        //                     "connections": [{ "node": 2, "input": "w", "data": {} }]
+        //                 }
+        //             },
+        //             "position": [120, 0],
+        //             "name": "Add"
+        //         }
+        //     }
+        // }).then(() => editor.trigger('process'));
+        // editor.view.resize();
     },
     onActionAdd(event)
     {

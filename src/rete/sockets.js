@@ -7,6 +7,6 @@ import { Socket } from 'rete';
 export default {
     num: new Socket('Number value'),
     str: new Socket('String value'),
-    input: new Socket('Input'), // generic input value
-    action: new Socket('Act')
+    input: new Socket('Act'), // generic input value
+    output: new Socket('Then') // generic output value
 }

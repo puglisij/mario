@@ -3,11 +3,18 @@ import VueInputControl from './input-control.vue';
 
 export class InputControl extends Control 
 {
-    constructor(emitter, key, type, readonly, required, initial) 
+    constructor(emitter, key, types, initial, required) 
     {
         super(key);
         this.component = VueInputControl;
-        this.props = { emitter, ikey: key, type, readonly, required, initial, change: () => this.onChange() };
+        this.props = { 
+            emitter, 
+            ikey: key, 
+            types, 
+            initial, 
+            required, 
+            change: () => this.onChange() 
+        };
     }
 
     setValue(value) 

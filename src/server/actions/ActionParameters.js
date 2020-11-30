@@ -7,7 +7,7 @@ const PRIMITIVE_TYPE = new Enum([
     "NUMBER"
 ]);
 
-export class ActionParameters
+export default class ActionParameters
 {
     /**
      * Determines if an action parameter type name is convertable to primitive type

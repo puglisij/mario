@@ -1,26 +1,6 @@
-export default class StateMachine
-{
-    constructor(definition) {
-        this.stateName = definition.initialState;
-        this.states = definition.states;
-    }
-    transition(event) {
-        const fromStateDefinition = this.states[this.stateName];
-        const transition = fromStateDefinition.transitions[event];
-        if(!transition) {
-            throw new Error(`Transition ${targetStateName} does not exist for the current state ${this.stateName}.`);
-        }
-
-        const toStateDefinition = this.states[transition.target];
-        toStateDefinition.action?.();
-        fromStateDefinition.actions.onExit();
-        toStateDefinition.actions.onEnter();
-
-        return this.stateName = transition.target;
-    }
-}
 
 /*
+    Example:
     const machine = createMachine({
         initialState: 'off',
         states: {
@@ -63,3 +43,24 @@ export default class StateMachine
         }
     })
 */
+export default class StateMachine
+{
+    constructor(definition) {
+        this.stateName = definition.initialState;
+        this.states = definition.states;
+    }
+    transition(event) {
+        const fromStateDefinition = this.states[this.stateName];
+        const transition = fromStateDefinition.transitions[event];
+        if(!transition) {
+            throw new Error(`Transition ${targetStateName} does not exist for the current state ${this.stateName}.`);
+        }
+
+        const toStateDefinition = this.states[transition.target];
+        toStateDefinition.action?.();
+        fromStateDefinition.actions.onExit();
+        toStateDefinition.actions.onEnter();
+
+        return this.stateName = transition.target;
+    }
+}
