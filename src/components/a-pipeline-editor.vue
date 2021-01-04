@@ -2,6 +2,7 @@
     <div>
         <div id="rete"></div>
         <button class="topcoat-button--large" type="submit" @click="onRun">Run</button>
+        <button class="topcoat-button--large" type="submit" @click="onActionAdd">Add Action</button>
         <button class="topcoat-button--large" type="submit" @click="onGetJson">Get JSON</button>
         <div id="rete-json">{{json}}</div>
     </div>
@@ -10,18 +11,17 @@
 <script>
 /* npm modules */
 import Rete from "rete"; 
-import ContextMenuPlugin from 'rete-context-menu-plugin';
 import ConnectionPlugin from "rete-connection-plugin";
+import ContextMenuPlugin from 'rete-context-menu-plugin';
 import VueRenderPlugin from "rete-vue-render-plugin";
 
 /* local modules */
-import { NumComponent } from '@/rete/components/num-component';
-import { StartComponent } from '@/rete/components/start-component';
-import { AddComponent } from '@/rete/components/add-component';
-import Socket from '@/rete/sockets';
-
 import appGlobal from '../global';
 import Server from '../server';
+import SelectPipelineAction from "@/dialog/select-pipeline-action.vue";
+
+let _editor = null;
+let _engine = null;
 
 export default {
     name: "APipelineEditor", 
@@ -78,8 +78,8 @@ export default {
         },
         async onRun()
         {
-            const engine = this.$options.local.engine;
-            const editor = this.$options.local.editor;
+            const engine = _engine;
+            const editor = _editor;
             if(editor.silent) return;
 
             // engine.process() returns a 'success' or 'aborted' string when Promise resolves
@@ -90,19 +90,53 @@ export default {
         },
         onGetJson() 
         {
-            this.json = this.$options.local.editor.toJSON();
+            this.json = _editor.toJSON();
+        },
+        onActionAdd(event)
+        {
+            // TODO: Action parameters should be fixed/baked-in and only values editable
+            this.$dialog.open({
+                component: SelectPipelineAction, 
+                listeners: {
+                    onSelect: async (actionComponent) => 
+                    {      
+                        // NOTE: createNode() is a passthrough to the .builder() function.
+                        // It takes one parameter - the data to be assigned to the node before its built.
+                        const area = _editor.view.area;
+                        const offset = [area.transform.x, area.transform.y];
+                        const position = [
+                            ~~(area.container.clientWidth / 2) - offset[0], 
+                            ~~(area.container.clientHeight / 2) - offset[1]
+                        ];
+                        const node = await actionComponent.createNode({});
+                              node.position = position; 
+
+                        _editor.addNode(node);
+                    }
+                }
+            });
+        },
+        onActionDelete(id)
+        { 
+            this.$dialog.openConfirm({
+                name: "confirm",
+                message: "Delete this action??",
+                onYes: () => {
+                    // TODO: Remove from pipeline configuration
+                }
+            });
         }
     },
     mounted() 
     {
         // Create Editor Instance
         const container = document.querySelector('#rete');
-        const editor = this.$options.local.editor = new Rete.NodeEditor('demo@0.1.0', container);
-        const engine = this.$options.local.engine = new Rete.Engine('demo@0.1.0');
+        const editor = _editor = new Rete.NodeEditor('demo@0.1.0', container);
+        const engine = _engine = new Rete.Engine('demo@0.1.0');
 
         // Rete Plugins
-        editor.use(ContextMenuPlugin);
         editor.use(ConnectionPlugin);
+        editor.use(ContextMenuPlugin); // TODO: Fork ContextMenuPlugin and improve
         editor.use(VueRenderPlugin);
 
         // Get Component Instances from ActionComponentFactory
@@ -210,36 +244,6 @@ export default {
         //     }
         // }).then(() => editor.trigger('process'));
         // editor.view.resize();
-    },
-    onActionAdd(event)
-    {
-        // TODO: Action parameters should be fixed/baked-in and only values editable
-        // TODO: Should use normal Class instances here ActionDescriptor & ActionParameter?
-        this.$dialog.open({
-            component: SelectPipelineAction, 
-            listeners: {
-                onSelect: async (actionDescriptor) => {
-                    // const actionName = actionDescriptor.name;
-                    // get component by action name
-
-                    //     createNode() is a passthrough to the .builder() function
-                    //     It takes one parameter - the data to be assigned to the node before its built.
-                    //     let node = await actionComponent.createNode({});
-                    //         node.position = [100, 100];
-                    //     editor.addNode(node);
-                }
-            }
-        });
-    },
-    onActionDelete(id)
-    {
-        this.$dialog.openConfirm({
-            name: "confirm",
-            message: "Delete this action?",
-            onYes: () => {
-                // TODO: Remove from pipeline configuration
-            }
-        });
     }
 }
 </script>

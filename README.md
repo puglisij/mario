@@ -349,3 +349,6 @@ const fs = require("fs"); // Now available in both
 - You may encounter invalid signature errors when attempting to run the extension in development mode in Photosohop. <br>Try the following command to disable signature checking (NOTE: 9 Corresponds to CC 2019. Change the number if necessary.) 
 > `defaults write com.adobe.CSXS.9 PlayerDebugMode 1`
 
+Or edit the registry in Windows
+regedit > HKEY_CURRENT_USER / Software / Adobe / CSXS.9 
+Add a new PlayerDebugMode entry of type "string" with a value of "1"

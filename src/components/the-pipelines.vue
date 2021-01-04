@@ -75,7 +75,6 @@ import eventBus from "../eventBus";
 import ACheckbox from "./a-checkbox.vue";
 import APipeline from "./a-pipeline.vue";
 import APipelineEditor from "./a-pipeline-editor.vue";
-import SelectPipelineAction from "../dialog/select-pipeline-action.vue";
 
 // TODO: Add button to disable/enable all pipelines at once
 // TODO: Allow pipelines to be organized into groups, and groups can be run all at once?
@@ -141,9 +140,6 @@ export default {
         },
         refreshPipelineSourcesFromStorage() 
         {
-            // TODO: Using Vuex would probably be the best option for managing configuration changes
-            // in the store across the app. In such a case we would clone the configurations
-            // from store and store them in a Vuex instance.
             store.pipelines.pipelines.forEach(p => {
                 let pipeline = this.getPipeline(p.id);
                 this.$set(pipeline, "sourceNames", p.sourceNames);

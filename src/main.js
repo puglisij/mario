@@ -47,14 +47,37 @@ create();
 window.addEventListener("beforeunload", destroy);
 
 /**  
-    beforeCreate - about to be initialized. data is not yet reactive 
-    created - events and data observation setup. not yet in native DOM. access data here, not in mounting hooks 
-    beforeMount - right before render happens. template compiled and virtual DOM update by vue.  
-    mounted - $el added and native DOM updated. do modify DOM for integration of non-Vue libraries here.
-    beforeUpdate - data has changed and update cycle starting. do get data before actually is rendered. 
-    updated - data changed and native DOM updated. do access DOM after property changes here. 
-    beforeDestroy - about to teardown. still fully present and functional. do cleanup events, and subscriptions 
-    destroyed - nothing left on your component. do last minute cleanups, etc. 
+    beforeCreate -
+        About to be initialized. 
+        Data is not yet reactive. 
+        Useful when you need logic/API call that does NOT need assigned to data 
+        (Because data assigned now, would be lost once the state was initialized).
+    created - 
+        Events and data observation setup. 
+        Not yet in native DOM. 
+        Read/write data here, not in mounting hooks. 
+        Useful for making API call and storing the value.
+        (Although, API calls doesnt suggest fetch() or ajax calls inside your view logic!)
+    beforeMount - 
+        Right before render happens. 
+        Template compiled and virtual DOM update by vue.  
+    mounted - 
+        $el added and native DOM updated. 
+        Do modify DOM for integration of non-Vue libraries here.
+        No guarantee that child components are mounted yet (Use $nextTick() if you need to)
+    beforeUpdate - 
+        Data has changed and update cycle starting. 
+        Do get data before actually is rendered. 
+    updated - 
+        Data changed and native DOM updated. 
+        Do access DOM after property changes here. 
+    beforeDestroy - 
+        About to teardown. 
+        Still fully present and functional. 
+        Do cleanup events, and subscriptions 
+    destroyed - 
+        Nothing left on your component. 
+        Do last minute cleanups, etc. 
 */
 
 

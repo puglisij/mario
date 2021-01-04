@@ -18,7 +18,7 @@
  *      - Deemphasize parameter/control if its optional
  *      - Enum 'type' renders as a <select> dropdown
  */
-export default {
+export default { 
     props: [
         'initial', 
         'required', 
@@ -50,13 +50,40 @@ export default {
             this.emitter.trigger('process');
         }
     },
-    mounted() {
+    created() {
         // TODO: Determine appropriate display per [types] prop
-
+        /* 
+            Example types
+            --------------
+            BitsPerChannelType,
+            BlendMode,
+            Document,
+            DocumentFill,
+            DropShadowBlendMode,
+            DropShadowContour,
+            File,
+            LayerIconColor,
+            NewDocumentMode,
+            Number,
+            ResampleMethod,
+            String,
+            SubPathItem,
+            UnitValue,
+            XResampleMethod,
+            bool,
+            boolean,
+            number,
+            object,
+            openEachImageCallback,
+            string
+        */
         const val = this.getData(this.ikey);
         this.value = typeof val !== 'undefined' ? val : this.value;
 
         this.putData(this.ikey, this.value);
+    },
+    mounted() {
+        
     }
 }
 </script>

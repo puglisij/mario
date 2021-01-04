@@ -4,6 +4,12 @@ import fs from 'fs';
 import Action from './Action';
 
 /**
+ * @typedef {Object} ActionFileImportResult 
+ * @property {string} importString the stringified JSX script to run which will import all actions
+ * @property {Action[]} actions the array of Action instances representing each imported action 
+ */
+
+/**
  * Handles reading JSX action files for import into Adobe host
  */
 export default class ActionFileImportStringBuilder
@@ -13,7 +19,7 @@ export default class ActionFileImportStringBuilder
      * Each new directory encountered becomes a nested namespace.
      * @param {string} pathToActions the directory containing the jsx files
      * @param {string} rootNamespace the root action function namespace. All action names with start with this
-     * @returns {string} the stringified JSX script to run which will import all actions
+     * @returns {ActionFileImportResult} 
      */
     static build(pathToActions, rootNamespace)
     {
