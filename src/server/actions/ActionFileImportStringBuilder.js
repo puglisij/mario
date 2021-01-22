@@ -25,9 +25,14 @@ export default class ActionFileImportStringBuilder
     {
         return this._buildJsxImportString(pathToActions, rootNamespace); 
     }
-    // NOTE: importAction() is expected to be defined on Host JSX side
+    // NOTE: importAction() and importJsx() is expected to be defined on Host JSX side
     static _buildJsxImportString(absolutePathToActions, rootNamespace)
     {
+        // Import /input
+        // Import /actions
+        // Import /source (no namespace)
+        // TODO: Allow user to define own nodes?
+        // TODO: Does all native API need wrapped in an action function? ideally, no!
         let actions = [];
         let imports = [];
         let directory;

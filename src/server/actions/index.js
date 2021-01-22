@@ -1,6 +1,6 @@
 import Action from './Action';
 import ActionFileImportStringBuilder from './ActionFileImportStringBuilder';
-import ActionFileJSDocReader from './ActionFileJSDocReader';
+import ActionFileJSDocStore from './ActionFileJSDocStore';
 import ActionDescriptorBuilder from './ActionDescriptorBuilder';
 import ActionComponentBuilder from './ActionComponentBuilder';
 import ActionDescriptor from "./ActionDescriptor";
@@ -39,12 +39,14 @@ export class Actions
     {
         const pathToUserActions = store.general.pathToUserActions;
         const pathToBuildInActions = global.appBuiltinActionsPath;
+
         console.log("Import actions started.");
-        console.log(`Importing from:\n\t${pathToUserActions}\n\t${pathToBuildInActions}`);
-        
+        console.log(`Importing:\n\t${pathToBuildInActions}`);     
         await this._import(pathToBuildInActions);
+
         if(pathToUserActions) 
         {
+            console.log(`Importing:\n\t${pathToUserActions}`);
             await this._import(pathToUserActions);
             await host.runJsx(`action.CUSTOM_ACTIONS_FOLDER = new Folder("${pathToUserActions}");`);
         }
@@ -68,22 +70,22 @@ export class Actions
         }
 
         // Action -> JSDoc
-        const jsDocs = await ActionFileJSDocReader.readAll(actions);
+        // const jsDocs = await new ActionFileJSDocStore().load(actions);
         // JSDoc -> ActionDescriptor
-        const descriptors = ActionDescriptorBuilder.build(jsDocs);
-        // ActionDescriptor -> ActionComponent
-        const components = ActionComponentBuilder.build(descriptors);
+        // const descriptors = ActionDescriptorBuilder.build(jsDocs);
+        // // ActionDescriptor -> ActionComponent
+        // const components = ActionComponentBuilder.build(descriptors);
 
-        // Cache descriptors
-        for(const d of descriptors) {
-            this._actionNameToActionDescriptor.set(d.name, d);
-        }
-        // Cache components
-        for(const c of components) {
-            this._actionNameToActionComponent.set(c.name, c);
-        }
+        // // Cache descriptors
+        // for(const d of descriptors) {
+        //     this._actionNameToActionDescriptor.set(d.name, d);
+        // }
+        // // Cache components
+        // for(const c of components) {
+        //     this._actionNameToActionComponent.set(c.name, c);
+        // }
 
-        await host.runJsx(importString  + "act = action;");
+        await host.runJsx(importString);
     }
     /**
      * Returns tree structure of all available action nested namespaces/action names

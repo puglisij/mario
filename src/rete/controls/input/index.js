@@ -1,5 +1,5 @@
 import { Control } from 'rete';
-import VueInputControl from './input-control.vue';
+import VueInputControl from './input.vue';
 
 export class InputControl extends Control 
 {
@@ -12,8 +12,7 @@ export class InputControl extends Control
             ikey: key, 
             types, 
             initial, 
-            required, 
-            change: () => this.onChange() 
+            required
         };
     }
 
@@ -22,6 +21,4 @@ export class InputControl extends Control
         const ctx = this.vueContext || this.props;
         ctx.value = value;
     }
-
-    onChange() {}
 }
