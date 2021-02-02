@@ -115,7 +115,7 @@ ImageForProcessing.prototype.data = function(key)
 /**
 * Set or get a blackboard variable for the current IMAGE process
 */
-ImageForProcessing.prototype.blacboard = function(name, value)
+ImageForProcessing.prototype.blackboard = function(name, value)
 {
     if(value === undefined) {
         return this._context[name];

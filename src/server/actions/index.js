@@ -1,6 +1,6 @@
-import Action from './Action';
-import ActionFileImportStringBuilder from './ActionFileImportStringBuilder';
-import ActionFileJSDocStore from './ActionFileJSDocStore';
+import JsxFile from './JsxFile';
+import JsxFileImportStringBuilder from './JsxFileImportStringBuilder';
+import JsDocStore from './JsDocStore';
 import ActionDescriptorBuilder from './ActionDescriptorBuilder';
 import ActionComponentBuilder from './ActionComponentBuilder';
 import ActionDescriptor from "./ActionDescriptor";
@@ -8,8 +8,6 @@ import store from '@/store';
 import host from '@/host';
 import global from '@/global';
 import FolderTreeNode from '@/folderTree';
-
-const ROOT_ACTION_NAMESPACE = "action";
 
 
 /**
@@ -27,10 +25,11 @@ export class Actions
     init() 
     {
         // Clear caches / action data
-        this._actionTree = new FolderTreeNode(ROOT_ACTION_NAMESPACE, true);
+        this._actionTree = new FolderTreeNode("", true);
         this._actionNameToAction = new Map();
         this._actionNameToActionDescriptor = new Map();
         this._actionNameToActionComponent = new Map();
+        this._jsDocStore = new JsDocStore();
         return this._importAll();
     }
     destroy() {}
@@ -59,18 +58,11 @@ export class Actions
             return;
         }
 
-        const { importString,  actions } = ActionFileImportStringBuilder.build(importDirectory, ROOT_ACTION_NAMESPACE);
-        // Parse to data structures
-        for(let i = 0; i < actions.length; ++i) 
-        {
-            const actionPath = actions[i].name.split('.');
-            this._actionNameToAction.set(actions[i].name, actions[i]);
-            this._actionTree.insert(actionPath, false);
-            console.log("Action: " + actions[i].name);
-        }
+        const { importString, files } = JsxFileImportStringBuilder.build(importDirectory);
 
         // Action -> JSDoc
-        // const jsDocs = await new ActionFileJSDocStore().load(actions);
+        const jsDocs = await this._jsDocStore.load(files);
+        console.log("JSDoc Store loaded.");
         // JSDoc -> ActionDescriptor
         // const descriptors = ActionDescriptorBuilder.build(jsDocs);
         // // ActionDescriptor -> ActionComponent

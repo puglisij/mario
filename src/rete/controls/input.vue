@@ -37,7 +37,7 @@ export default {
     },
     computed: {
         control() {
-            return () => import(`@/rete/controls/input/${types[0]}.vue`);
+            return () => import(`@/rete/controls/${types[0]}.vue`);
         }
     },
     methods: {

@@ -26,6 +26,9 @@ export default class CircleBuffer
      */
     toArray()
     {
-        return this._array;
+        return [
+            ...this._array.slice(this._pointer),
+            ...this._array.slice(0,this._pointer)
+        ];
     }
 }

@@ -100,11 +100,11 @@ class Logger extends EventEmitter
         this.logWriteStream.on("error", error => {
             this._closeFileStream();
             // TODO: Attempt to create stream again?
-            console.log(`Log file stream error.\n${error}`)
+            console.error(`Log file stream error.\n${error}`)
         });
         this.logWriteStream.on("close", event => {
             this._closeFileStream();
-            console.log(`Log file stream closed.`);
+            console.warn(`Log file stream closed.`);
         });
     }
     _closeFileStream()

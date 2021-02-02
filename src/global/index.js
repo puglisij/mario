@@ -17,7 +17,7 @@ export default (function()
     const appWorkingPath = upath.join(appInstallPath, process.env.VUE_APP_HOST_DIR);
     const appDefaultLogPath = upath.normalize(env.log);
     const appDefaultConfigPath = upath.normalize(env.config);
-    const appBuiltinActionsPath = upath.join(appWorkingPath, "actions");
+    const appBuiltinActionsPath = upath.join(appWorkingPath, "jsx");
 
     return {
         csInterface,

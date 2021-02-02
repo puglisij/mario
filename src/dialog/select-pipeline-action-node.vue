@@ -63,7 +63,7 @@ export default {
     },
     methods: {
         getName(node) {
-            return node.getNamePath().join(".");
+            return node.getNamePath().filter(n => !!n).join(".");
         },
         select() {
             if(this.node.isDirectory) {

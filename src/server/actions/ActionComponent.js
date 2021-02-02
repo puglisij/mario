@@ -1,5 +1,5 @@
 import { Component, Input, Output } from 'rete';
-import { InputControl } from '@/rete/controls/input/index';
+import { InputControl } from '@/rete/controls/index';
 import Socket from '@/rete/sockets';
 
 export default class ActionComponent extends Component {

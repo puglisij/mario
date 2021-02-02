@@ -9,47 +9,22 @@ function importJsx(jsxFilePath)
     }
 }
 
-function importAction(actionFilePath, actionName)
-{
-    try { 
-        var file = new File(actionFilePath).fsName; 
-        $.evalFile(file); 
-        wrapAction(actionName);
-    } catch(e) { 
-        alert("File: " + file + " Action Import Exception: " + e); 
-    } 
-}
 
 /** 
- * Finds an action, by its fully qualified namespace, and wraps it so that the 
- * action name can be included in any exceptions generated. This somewhat replicates a stack trace.
- * @param {string} actionName action.foo.bar
+ * Wraps the given function such that a rudimentary stack trace is provided in case of an exception
+ * @param {object} context the object on which the function is defined
+ * @param {function} fn the function to be wrapped
 */
-function wrapAction(actionName)
+function wrapFunction(context, fn)
 {
-    var ns = actionName.split('.');
-    var nameSpace = this;
-    var methodName = ns[ns.length - 1];
-
-    for(var i = 0; i < ns.length - 1; ++i) {
-        nameSpace = nameSpace[ ns[i] ];
-    }
-    
-    var originalMethod = nameSpace[methodName];
-    if(!originalMethod) {
-        throw new Error("Action " + actionName + " is undefined. Ensure that file name casing matches the function name.");
-    }
-    if(typeof originalMethod !== "function") {
-        throw new Error("Action " + actionName + " is not a function.");
-    }
-    nameSpace[methodName] = function() {
+    return function() {
         "use strict";
         try {
-            return originalMethod.apply(nameSpace, arguments);
+            return fn.apply(context, arguments);
         } catch(e) {
             throw e 
                 + (e.line !== undefined ? "\nLine Number: " + e.line  : "")
-                + "\nAction: " + actionName;
+                + "\nFunction: " + actionName;
             // Also see $.stack
         }
     };

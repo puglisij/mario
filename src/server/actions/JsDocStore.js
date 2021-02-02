@@ -7,18 +7,17 @@ import JsDoc from "./JsDoc";
  * NOTE: jsdoc-api should not be used to read action files individually as this 
  * creates individual caches per file, and is also much slower. 
  */
-export default class ActionFileJSDocStore 
+export default class JsDocStore 
 {
     constructor()
     {
         this._typeNameToJSDoc = new Map();
 
-        // TODO: Also read all native API objects...
     }
     /**
      * Reads and caches the JsDocDescription's for all the given actions
      * @param {Action[]} actions 
-     * @returns {Promise<ActionFileJSDocStore>}
+     * @returns {Promise<JsDocStore>}
      */
     async load(actions) 
     {
@@ -40,7 +39,6 @@ export default class ActionFileJSDocStore
                     continue;
                 }
                 // TODO: Require @exports tag for non action definitions?
-                // TODO: Input components are defined on 'input.' object
                 // TODO: What happens if name is empty?
                 this._typeNameToJSDoc.set(description.longname, description);
             }
@@ -51,8 +49,16 @@ export default class ActionFileJSDocStore
      * Returns JS Doc descriptions for all 'action' and 'input' functions
      * @returns {import("./JsDoc").JSDocDescription[]}
      */
-    getActionsAndInputs() 
+    getFunctions() 
     {
         return [];
+    }
+    getInstances()
+    {
+
+    }
+    getConstructors()
+    {
+
     }
 }
