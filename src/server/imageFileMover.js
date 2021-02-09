@@ -5,7 +5,8 @@ import Image from './image';
 
 export default class ImageFileMover 
 {
-    constructor() {}
+    constructor() {
+    }
 
     /**
      * Moves the given Image instances and associated files to the given processed directory.
@@ -85,19 +86,17 @@ export default class ImageFileMover
             return;
         }
         const logPath = upath.join(directory, "error.logs");
-        fs.writeFile(logPath, [   
+        const data = [   
             `\n`,
             `Time: ${new Date().toLocaleString()}`,
             `initialInputImagePath: ${image.initialInputImagePath}`, 
             `inputImagePath: ${image.inputImagePath}`, 
             message
-        ].join(`\n`), 
-        {
-            flag: 'a'
-        },
-        err => {
-            if(err) 
-                console.error(err + "\nCould not write Image error to " + logPath);
+        ].join(`\n`);
+
+        fsx.append(logPath, data)
+        .catch(err => {
+            console.error(err + "\nCould not write Image error to " + logPath);
         });
     }
 }

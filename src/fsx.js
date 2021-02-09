@@ -4,6 +4,99 @@ import fs from 'fs';
 import rimraf from 'rimraf';
 
 /**
+ * Appends the given string to the file at the given path.
+ * This is a workaround, alternative to fs.appendFile which does not work on network AFS drives.
+ * Creates the file if it doesn't exist.
+ * Its not safe to append multiple times without waiting for the promise to resolve.
+ * Use a file stream for more frequent writes.
+ * @param {string} path 
+ * @param {string} str 
+ * @returns {Promise} promise resolves with the following arguments (err)
+ */
+function append(path, str) 
+{
+    return createFileAndStatSize(path)
+    .then(position => {
+        return writeAtPosition(path, str, position);
+    });
+}
+
+function writeAtPosition(path, str, position) 
+{
+    return new Promise((resolve, reject) => 
+    {
+        fs.open(path, 'r+', (err, fd) => 
+        {
+            if(err) {
+                return reject(err);
+            } 
+
+            const buffer = Buffer.from(str, 'utf8');
+            fs.write(fd, buffer, 0, buffer.length, position, (err) => 
+            {
+                fs.closeSync(fd);
+                
+                if(err) 
+                    reject(err);
+                else
+                    resolve();
+            });
+        })
+    });
+}
+
+/**
+ * Create the file at the given path if it doesnt exist and return its byte size.
+ * @param {string} path 
+ */
+function createFileAndStatSize(path) 
+{
+    return stat(path)
+    .then(stats => {
+        if(stats) {
+            return stats.size;
+        } else {
+            return createFile(path).then(_ => 0);
+        }
+    });
+}
+
+/**
+ * Creates the file at the given path if it doesn't exist.
+ * Truncates the file if it exists.
+ * @param {string} path 
+ */
+function createFile(path)
+{
+    return new Promise((resolve, reject) => {
+        fs.open(path, 'w+', (err, fd) => {
+            fs.closeSync(fd);
+
+            if(err) 
+                reject(err);
+            else 
+                resolve(); 
+        });
+    });
+}
+
+/**
+ * Promisified wrapper for fs.stat()
+ * @param {string} path 
+ */
+function stat(path) 
+{
+    return new Promise((resolve, reject) => {
+        fs.stat(path, (err, stats) => {
+            if(err && err.code !== 'ENOENT') 
+                return reject(err);
+            
+            resolve(stats);
+        });
+    });
+}
+
+/**
  * Force deletes the destination file/directory recursively and renames the source path to the destination
  * @param {*} fromPath 
  * @param {*} toPath 
@@ -84,5 +177,6 @@ function _mkdirRecursive(dirPath, options, callback)
 export default {
     rmdir,
     mkdir,
-    overwrite
+    overwrite,
+    append
 }
