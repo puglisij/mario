@@ -16,7 +16,7 @@ module.exports = {
         }
     },
     plugins: [
-        //new BundleAnalyzerPlugin()
+        new BundleAnalyzerPlugin()
     ],
     optimization: {
         usedExports: true,
@@ -29,7 +29,7 @@ module.exports = {
   css: {
     loaderOptions: {
       sass: {
-        additionalData: `
+        prependData: `
         @import "@/styles/_variables.scss";
         @import "@/styles/_mixins.scss";
         `
