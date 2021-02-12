@@ -178,5 +178,7 @@ export default {
     rmdir,
     mkdir,
     overwrite,
-    append
+    append,
+    createFile,
+    createFileAndStatSize
 }

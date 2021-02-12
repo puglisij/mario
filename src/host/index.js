@@ -97,7 +97,8 @@ class Host extends EventEmitter
     _onExec(event) 
     {
         const tunnel = new HostCallbackTunnelExec(
-            store.general.pathToUserActions
+            store.general.pathToUserActions,
+            store.general.execTimeout
         );
         this._openTunnel(tunnel, event.data);
     }

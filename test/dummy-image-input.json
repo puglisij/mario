@@ -1,1 +1,7 @@
-{"inputImagePath":"c:/foo/bar.psd","outputDirectory":"c:/foo/output","processedDirectory":"c:/foo/processed","errorDirectory":"c:/foo/error","pipelines":["my pipeline 1","my pipeline 2"]}
+{
+    "inputImagePath": "c:/foo/bar.psd",
+    "outputDirectory": "c:/foo/output",
+    "processedDirectory": "c:/foo/processed",
+    "errorDirectory": "c:/foo/error",
+    "pipelines": ["my pipeline 1", "my pipeline 2"]
+}

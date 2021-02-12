@@ -1,9 +1,10 @@
 import upath from "upath";
-import fs from "fs";
 import { EventEmitter } from "events";
+import fs from "fs";
+import fsx from '../fsx';
 import global from '../global';
 import store from '../store';
-import fsx from '../fsx';
+import utils from '../utils';
 import CircleBuffer from '@/circleBuffer';
 
 const CONSOLE_METHODS = ["log", "warn", "error"];
@@ -57,20 +58,19 @@ class Logger extends EventEmitter
         }.bind(this));
 
         await this._createLogsDirectory();
-        this._cleanupOldFiles();
-        this._createFileStream();
+        await this._createFileStream();
 
         this.emit("initialized");
         console.log(`Logger initialized.\n\t${this.options.logDirectory}`);
     }
-    _write(method, args)
+    async _write(method, args)
     {
         const date = new Date();
         const chunk = [date.toLocaleTimeString(), `[${method.toUpperCase()}]\t`, ...args, `\n`].join(" ");
         const htmlChunk = [`<div class="${method}">${date.toLocaleTimeString()}`, ...args, `</div>`].join(" ");
         
         if(date.getDate() !== this.currentLogFileMonthDay) {
-            this._createFileStream();
+            await this._createFileStream();
         }
         this.logWriteStream && this.logWriteStream.write(chunk);
         this.htmlLogBuffer.push(htmlChunk);
@@ -88,24 +88,32 @@ class Logger extends EventEmitter
     _createFileStream()
     {
         this._closeFileStream();
+        this._cleanupOldFiles();
 
         const date = new Date();
-        const logPath = upath.join(this.options.logDirectory, date.toISOString().slice(0,10) + ".logs");
         this.currentLogFileMonthDay = date.getDate(); 
-        this.logWriteStream = fs.createWriteStream(logPath, {
-            flags: "a",
-            encoding: "utf8",
-            autoClose: true // close on error or end
-        });
-        this.logWriteStream.on("error", error => {
-            this._closeFileStream();
-            // TODO: Attempt to create stream again?
-            console.log(`Log file stream error.\n${error}`)
-        });
-        this.logWriteStream.on("close", event => {
-            this._closeFileStream();
-            console.log(`Log file stream closed.`);
-        });
+
+        const logPath = upath.join(this.options.logDirectory, `mario-${utils.yyyymmdd()}.logs`);
+        return fsx.createFileAndStatSize(logPath)
+        .then(size => 
+        {
+            this.logWriteStream = fs.createWriteStream(logPath, {
+                flags: "r+", // Note 'a' flags don't work with networked Mac drives
+                encoding: "utf8",
+                autoClose: true, // close on error or end
+                start: size
+            });
+            this.logWriteStream.on("error", error => {
+                // TODO: Attempt to create stream again?
+                this._closeFileStream();
+                console.log(`Log file stream error.\n${error}`)
+            });
+            this.logWriteStream.on("close", event => {
+                this._closeFileStream();
+                console.log(`Log file stream closed.`);
+            });
+            return this.logWriteStream;
+        });;
     }
     _closeFileStream()
     {

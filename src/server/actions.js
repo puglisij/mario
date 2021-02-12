@@ -1,7 +1,7 @@
 import upath from 'upath';
 import fs from 'fs';
 import EventEmitter from "events";
-const jsdoc = require("jsdoc-api");
+import jsdoc from "jsdoc-api";
 //import jsdocx from 'jsdoc-x';
 
 import store from '../store';
@@ -117,7 +117,6 @@ class ActionParameterCurator
  */
 class ActionFileDescriptionReader 
 {
-    static _actionNameToJsDoc = new Map();
     /**
      * Reads and caches the JsDocDescription's for all the given actions
      * @param {Action[]} actions 
@@ -177,6 +176,8 @@ class ActionFileDescriptionReader
             && typeof jsdocDescription.memberof === undefined;
     }
 }
+ActionFileDescriptionReader._actionNameToJsDoc = new Map();
+
 
 /**
  * Handles reading JSX action files for import into Adobe host

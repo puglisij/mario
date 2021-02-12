@@ -63,11 +63,7 @@ export default class ImageFileMover
             fsx.overwrite(path, toPath, err => {
                 if(err) {
                     const message = err + "\nImage path could not be moved to " + toPath;
-                    if(err.code == "ENOENT") {
-                        console.log(message);
-                    } else {
-                        console.warn(message);
-                    }
+                    console.warn(message);
                 }
             });
         }

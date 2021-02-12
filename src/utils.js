@@ -71,6 +71,20 @@ function guid()
 }
 
 /**
+ * Returns the date in format YYYYMMDD
+ */
+function yyyymmdd(date)
+{
+    function pad2(n) {  // always returns a string
+        return (n < 10 ? '0' : '') + n;
+    }
+    date = date || new Date();
+    return date.getFullYear() + 
+            pad2(date.getMonth() + 1) + 
+            pad2(date.getDate());
+}
+
+/**
 * Returns the date in format YYYYMMDDhhmmss
 */
 function yyyymmddhhmmss(date) 
@@ -160,6 +174,7 @@ export default {
     debounce,
     simpleDeepClone,
     guid, 
+    yyyymmdd,
     yyyymmddhhmmss,
     defaultForNativeType,
     first,

@@ -53,7 +53,7 @@
                     class="topcoat-button--large" 
                     type="button"
                     @click="isMainDrawerOpen = !isMainDrawerOpen"
-                >Source &amp; Status <span>❱</span></button>
+                >Status <span>❱</span></button>
             </div>
         </form>
     </validation-observer>

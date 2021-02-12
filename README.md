@@ -6,7 +6,7 @@
 - Hot Reloading (panel updates instantly on every save during `npm run serve`)
 - [Vue-CLI-3](https://cli.vuejs.org/) as Node.js tooling (webkit)
 - Various utility components that handle context/flyout menus, launching CEF debug, common errors with Webpack
-- Modern JS (CS6)
+- Modern JS (ES6+)
 
 For a full list of packages utilized, see the package.json 
 

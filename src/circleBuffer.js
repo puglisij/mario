@@ -22,7 +22,7 @@ export default class CircleBuffer
         this._pointer = 0;
     }
     /**
-     * Returns underlying array by reference. This is NOT a clone.
+     * Returns underlying array in order. This is NOT a clone.
      */
     toArray()
     {

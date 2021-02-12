@@ -62,6 +62,10 @@ class GeneralConfig extends Config
                     type: "string",
                     default: ""
                 }, 
+                execTimeout: {
+                    type: "number",
+                    default: 15
+                },
                 fileSources: {
                     type: "array",
                     default: [

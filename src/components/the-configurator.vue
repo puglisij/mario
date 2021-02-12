@@ -42,6 +42,21 @@
                     >Reload Actions</button>
                     <wait-dots v-if="isLoadingActions" />
                 </div>
+
+                <validation-provider
+                    tag="label"
+                    rules="required|integer:1,600"
+                    v-slot="{ errors }"
+                >
+                    <div class="label">Timeout (seconds) for shell execution tunnels</div>
+                    <input 
+                        class="topcoat-text-input input-exectimeout" 
+                        type="number" 
+                        title="An integer value"
+                        v-model="execTimeout"
+                    />
+                    <span class="topcoat-notification error" v-if="errors.length">{{ errors[0] }}</span>
+                </validation-provider>
             </section>
 
             <h3 class="section-title">Logs</h3>
@@ -186,6 +201,7 @@ export default {
             runHttpServer: store.general.runHttpServer,
             serverPort: store.general.serverPort,
             pathToUserActions: store.general.pathToUserActions,
+            execTimeout: store.general.execTimeout,
             logDirectory: store.general.logDirectory,
             logFilePersistForDays: store.general.logFilePersistForDays,
             logHtmlBufferMaxSize: store.general.logHtmlBufferMaxSize,
@@ -269,6 +285,7 @@ export default {
             store.general.runHttpServer = this.runHttpServer;
             store.general.serverPort = parseInt(this.serverPort, 10);
             store.general.pathToUserActions = this.pathToUserActions;
+            store.general.execTimeout = parseInt(this.execTimeout, 10);
             store.general.logDirectory = this.logDirectory;
             store.general.logFilePersistForDays = parseInt(this.logFilePersistForDays, 10);
             store.general.logHtmlBufferMaxSize = parseInt(this.logHtmlBufferMaxSize, 10);
@@ -287,6 +304,7 @@ export default {
         .section-content--actions {
             background: rgba(170, 187, 255, 0.1);
         }
+        .input-exectimeout,
         .input-days {
             width: 50px;
         }

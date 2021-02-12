@@ -7,13 +7,14 @@ import child_process from 'child_process';
  */
 export default class HostCallbackTunnelExec extends EventEmitter
 {
-    constructor(cwd) 
+    constructor(cwd, timeoutSec) 
     {
         super();
 
         this.cwd = cwd;
         this.childProcess = null;
         this.tunnelId = 0;
+        this.timeout = timeoutSec;
     }
     get name() {
         return "exec";
@@ -41,7 +42,8 @@ export default class HostCallbackTunnelExec extends EventEmitter
         this.childProcess = child_process.exec(command, 
         {
             cwd: this.cwd,
-            timeout: 5 * 60 * 1000 // terminate long running processes
+            // TODO: Make timeout a setting in GUI
+            timeout: timeout * 1000 // terminate long running processes
         }, 
         (err, stdout, stderr) => 
         {
