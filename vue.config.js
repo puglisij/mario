@@ -5,7 +5,9 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
     
 module.exports = {
   publicPath: "./",
-  // Thanks Eric Robinson
+  devServer: {
+    port: 8898
+  },
   configureWebpack: {
     target: "node-webkit", // Set the target to node-webkit (https://webpack.js.org/configuration/target/)
     node: false, // Don't set certain Node globals/modules to empty objects (https://webpack.js.org/configuration/node/)
@@ -16,7 +18,7 @@ module.exports = {
         }
     },
     plugins: [
-        new BundleAnalyzerPlugin()
+        //new BundleAnalyzerPlugin({ analyzerPort: 8890 })
     ],
     optimization: {
         usedExports: true,

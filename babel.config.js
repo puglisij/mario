@@ -1,6 +1,10 @@
 module.exports = {
   presets: [
-    '@vue/cli-plugin-babel/preset', 
-    '@babel/preset-flow'
+    '@vue/cli-plugin-babel/preset'
+  ],
+  plugins: [
+    ["add-module-exports", {
+        "addDefaultProperty": true
+    }]
   ]
 }
