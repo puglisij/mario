@@ -15,13 +15,10 @@ class Logger extends EventEmitter
     {
         super();
         this.initialized = false;
-        this.options = {
-            logDirectory: "",
-            logFilePersistForDays: 7 // number of files/days to keep
-        };
+        this.options = {};
         this.originalConsoleMethods = {};
         this.logWriteStream = null;
-        this.currentLogFileMonthDay = 0;
+        this.lastLogFileMonthDay = 0;
         this.htmlLogBuffer = null;
     }
     /**
@@ -35,6 +32,7 @@ class Logger extends EventEmitter
         this.initialized = true;
         this.options = {
             logDirectory: store.general.logDirectory || global.appDefaultLogPath, 
+            logFileRetryEverySec: 3,
             logFilePersistForDays: store.general.logFilePersistForDays > 0 ? store.general.logFilePersistForDays : 3,
             logHtmlBufferMaxSize: store.general.logHtmlBufferMaxSize > 0 ? store.general.logHtmlBufferMaxSize : 256
         };
@@ -59,6 +57,7 @@ class Logger extends EventEmitter
 
         await this._createLogsDirectory();
         await this._createFileStream();
+        this._cleanupOldFiles();
 
         this.emit("initialized");
         console.log(`Logger initialized.\n\t${this.options.logDirectory}`);
@@ -66,15 +65,24 @@ class Logger extends EventEmitter
     async _write(method, args)
     {
         const date = new Date();
+        const day = date.getDate();
         const chunk = [date.toLocaleTimeString(), `[${method.toUpperCase()}]\t`, ...args, `\n`].join(" ");
         const htmlChunk = [`<div class="${method}">${date.toLocaleTimeString()}`, ...args, `</div>`].join(" ");
         
-        if(date.getDate() !== this.currentLogFileMonthDay) {
+        if(day == this.lastLogFileMonthDay || (!this.logWriteStream && !this.waitingAfterStreamError)) {
             await this._createFileStream();
+        }
+        if(day == this.lastLogFileMonthDay) {
+            this.lastLogFileMonthDay = day;
         }
         this.logWriteStream && this.logWriteStream.write(chunk);
         this.htmlLogBuffer.push(htmlChunk);
         this.emit("logs");
+    }
+    _waitAfterStreamError() 
+    {
+        this.waitingAfterStreamError = true;
+        setTimeout(() => { this.waitingAfterStreamError = false }, this.options.logFileRetryEverySec * 1000);
     }
     _createLogsDirectory() 
     {
@@ -88,10 +96,6 @@ class Logger extends EventEmitter
     _createFileStream()
     {
         this._closeFileStream();
-        this._cleanupOldFiles();
-
-        const date = new Date();
-        this.currentLogFileMonthDay = date.getDate(); 
 
         const logPath = upath.join(this.options.logDirectory, `mario-${utils.yyyymmdd()}.logs`);
         return fsx.createFileAndStatSize(logPath)
@@ -104,16 +108,16 @@ class Logger extends EventEmitter
                 start: size
             });
             this.logWriteStream.on("error", error => {
-                // TODO: Attempt to create stream again?
                 this._closeFileStream();
-                console.log(`Log file stream error.\n${error}`)
+                this._waitAfterStreamError();
+                console.error(`Log file stream closed with error. Retrying in ${this.options.logFileRetryEverySec}sec...\n${error}`);
             });
             this.logWriteStream.on("close", event => {
                 this._closeFileStream();
-                console.log(`Log file stream closed.`);
+                console.warn(`Log file stream closed.`);
             });
             return this.logWriteStream;
-        });;
+        });
     }
     _closeFileStream()
     {
@@ -143,6 +147,12 @@ class Logger extends EventEmitter
                 });
             }
         });
+
+        // Schedule to run again tomorrow at 00:00:01
+        const now = new Date();
+        const night = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+        const msToMidnight = night.getTime() - now.getTime();
+        setTimeout(() => { this._cleanupOldFiles() }, msToMidnight);
     }
     /**
      * Clear all the buffered html logs

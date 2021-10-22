@@ -59,21 +59,58 @@ class Server extends EventEmitter
     {
         port = store.general.serverPort;
         app = polka();
+        app.use(function(req, res, next) 
+        {
+            if(!req.path.includes("/status")) {
+                console.log("Server Request: ", req.path);
+            }
+            if(req.headers["content-type"] === "application/json") 
+            {
+                let data = "";
+                req.on("data", chunk => { data += chunk.toString(); });
+                req.on("end", () => {
+                    try { 
+                        req.body = JSON.parse(data); 
+                    } catch(e) {
+                        console.error("Unable to parse request json: ", e);
+                    }
+                    next();
+                })
+            } else {
+                req.body = null;
+                next();
+            }
+        });
         //-----------------
         // Routes
         //-----------------
         // app.get('/pipeline/:name/configuration', (req, res) => {
         //     res.setHeader("Content-Type", "application/json");
-        //     res.end(
+        //     res.end( 
         //         JSON.stringify(this._pipelineConfig.pipelines.find(p => p.name == req.params.name.toLowerCase()), null, 4)
         //     );
         // });
-        // app.post('/pipeline/run', (req, res) => {
-        //     res.status(200).json({ success: true });
-        // });
-        // app.post('/pipeline/stop', (req, res) => {
-        //     res.status(200).json({ success: true });
-        // });
+        app.post('/pipeline/run', (req, res) => {
+            let pipelineNames = req.body;
+            if(Array.isArray(pipelineNames)) {
+                this._pipelineEngine.run(pipelineNames.pop());
+            } else {
+                this._pipelineEngine.runAll();
+            }
+            res.end();
+        });
+        app.post('/pipeline/stop', (req, res) => {
+            this._pipelineEngine.stop();
+            res.end();
+        });
+        app.post('/pipeline/pause', (req, res) => {
+            this._pipelineEngine.pause();
+            res.end();
+        });
+        app.post('/pipeline/resume', (req, res) => {
+            this._pipelineEngine.resume();
+            res.end();
+        });
         app.get('/status', (req, res) => {
             const status = {
                 adobeApp: global.adobeApp,

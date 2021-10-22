@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ExtensionManifest ExtensionBundleId="com.mario" ExtensionBundleVersion="2.1.6" ExtensionBundleName="mario" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest ExtensionBundleId="com.mario" ExtensionBundleVersion="2.1.7" ExtensionBundleName="mario" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.mario.panel" Version="2.1.6" />
+    <Extension Id="com.mario.panel" Version="2.1.7" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
@@ -18,10 +18,10 @@
     <Extension Id="com.mario.panel">
       <DispatchInfo>
         <Resources>
-          <MainPath>./public/index-dev.html</MainPath>
-          <!-- <MainPath>./dist/index.html</MainPath> -->
-          <ScriptPath>./public/index.jsx</ScriptPath>
-           <!-- <ScriptPath>./dist/index.jsx</ScriptPath> -->
+          <!-- <MainPath>./public/index-dev.html</MainPath> -->
+          <MainPath>./dist/index.html</MainPath>
+          <!-- <ScriptPath>./public/index.jsx</ScriptPath> -->
+           <ScriptPath>./dist/index.jsx</ScriptPath>
           <CEFCommandLine>
             <Parameter>--enable-nodejs</Parameter>
             <Parameter>--mixed-context</Parameter>

@@ -28,6 +28,8 @@ export default class HostCallbackTunnelSetTimeout extends EventEmitter
      */
     open(stream) 
     {
+        this.emit("enter");
+
         const data = stream.split(",");
         const callbackId = Number(data[0]);
         const delay = Number(data[1]);
@@ -39,8 +41,6 @@ export default class HostCallbackTunnelSetTimeout extends EventEmitter
             this.emit("exit", `executeSetTimeoutCallback(${callbackId})`);
             this.close();
         }, delay);
-
-        this.emit("enter");
     }
     /**
      * Force clears the setTimeout

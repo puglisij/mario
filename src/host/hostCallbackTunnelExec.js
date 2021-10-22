@@ -31,39 +31,47 @@ export default class HostCallbackTunnelExec extends EventEmitter
      */
     open(stream) 
     {
+        this.emit("enter");
+
         const data = stream.split(",");
         const callbackId = Number(data[0]);
         const command = data[1];
 
-        /*
-            Since ExtendScript can't execute shell commands without blocking. 
-            We're hijacking node.js exec() here.
-        */
-        this.childProcess = child_process.exec(command, 
+        try 
         {
-            cwd: this.cwd,
-            // TODO: Make timeout a setting in GUI
-            timeout: timeout * 1000 // terminate long running processes
-        }, 
-        (err, stdout, stderr) => 
-        {
-            this.childProcess = null
-            let jsx = "";
-
-            if(err) {
-                console.error(err);
-                console.log(stderr);
-            } else {
-                stdout = JSON.stringify(stdout);
-                stderr = JSON.stringify(stderr);
-                jsx = `executeExecCallback(${callbackId},${stdout},${stderr});`;
-            }
-
-            this.emit("exit", jsx);
+            /*
+                Since ExtendScript can't execute shell commands without blocking. 
+                We're hijacking node.js exec() here.
+            */
+            this.childProcess = child_process.exec(command, 
+                {
+                    cwd: this.cwd,
+                    // TODO: Make timeout a setting in GUI
+                    timeout: this.timeout * 1000 // terminate long running processes
+                }, 
+                (err, stdout, stderr) => 
+                {
+                    this.childProcess = null
+                    let jsx = "";
+        
+                    if(err) {
+                        console.error(err);
+                        console.log(stderr);
+                    } else {
+                        stdout = JSON.stringify(stdout);
+                        stderr = JSON.stringify(stderr);
+                        jsx = `executeExecCallback(${callbackId},${stdout},${stderr});`;
+                    }
+        
+                    this.emit("exit", jsx);
+                    this.close();
+                });
+        }
+        catch(e) {
+            console.error(e);
+            this.emit("exit", "");
             this.close();
-        });
-
-        this.emit("enter");
+        }
     }
     /**
      * Sends a SIGTERM to the child process

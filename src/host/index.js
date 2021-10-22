@@ -121,16 +121,23 @@ class Host extends EventEmitter
     {
         this._tunnelIdToTunnel.delete(tunnel.getId());
 
+        if(!jsx) {
+            this._join();
+            return;
+        }
+        
         this.runJsxWithThrow(jsx)
         .finally(() => 
         {
             console.log(`Tunnel ${tunnel.getId()} Finished Executing Jsx Callback.`);
-
-            if(this._tunnelIdToTunnel.size === 0) {
-                this._nextTunnelId = 0;
-                this.emit("host.callback.join");
-            }
+            this._join();
         });
+    }
+    _join() {
+        if(this._tunnelIdToTunnel.size === 0) {
+            this._nextTunnelId = 0;
+            this.emit("host.callback.join");
+        }
     }
 
     /*---------------------

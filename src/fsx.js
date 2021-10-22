@@ -97,21 +97,55 @@ function stat(path)
 }
 
 /**
- * Force deletes the destination file/directory recursively and renames the source path to the destination
+ * Copy from source to destination and delete source. Works across devices.
+ * @param {*} fromPath 
+ * @param {*} toPath 
+ * @param {*} cb 
+ */
+function copy(fromPath, toPath, cb) 
+{
+    function onClose() {
+        fs.unlink(fromPath, cb);
+    }
+    var ins = fs.createReadStream(fromPath);
+    var outs = fs.createWriteStream(toPath);
+
+    outs.on('error', err => {
+        ins.destroy(); 
+        outs.removeListener('close', onClose); // Node probably removes listeners on destroy()
+        outs.destroy();
+        cb(err);
+    });
+    ins.on('error', err => {
+        outs.removeListener('close', onClose); // Node probably removes listeners on destroy()
+        outs.destroy(); 
+        ins.destroy();
+        cb(err);
+    });
+    outs.once('close', onClose);
+    ins.pipe(outs);
+}
+
+/**
+ * Force deletes the destination file/directory recursively and moves the source path to the destination
+ * See: npm node-mv module by andrewmk
  * @param {*} fromPath 
  * @param {*} toPath 
  * @param {*} callback 
  */
 function overwrite(fromPath, toPath, callback)
 {
-    rimraf(toPath, err => 
+    rimraf(toPath, { disableGlob: true }, err => 
     {
         if(err) {
             callback(err);
             return;
         }
         fs.rename(fromPath, toPath, err => {
-            callback(err);
+            if(err && err.code == 'EXDEV') 
+                copy(fromPath, toPath, callback);
+            else 
+                callback(err);
         });
     });
 }
