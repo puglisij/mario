@@ -161,7 +161,7 @@ export default class ImageFileReader
         if(!path) {
             return "";
         }
-        return upath.isAbsolute(path) ? path : upath.join(parentDirectory, path);
+        return upath.isAbsolute(path) ? path : upath.resolve(parentDirectory, path);
     }
     _doesPathHaveJsonExtension(path) {
         return upath.extname(path) === ".json";
@@ -190,18 +190,9 @@ export default class ImageFileReader
     }
     _makeDirectory(directory) 
     {
-        return new Promise((resolve, reject) => {
-            if(!directory) {
-                resolve(false);
-                return;
-            }
-            fsx.mkdir(directory, { recursive: true }, err => {
-                if(err && err.code !== "ENOENT") {
-                    reject(`${err}\nCould not create directory.`);
-                } else {
-                    resolve(true);
-                }
-            });
-        });
+        if(!directory) {
+            return Promise.resolve(false);
+        }
+        return fsx.mkdir(directory, { recursive: true });
     }
 }

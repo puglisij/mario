@@ -1,7 +1,8 @@
-import child_process from 'child_process';
-import upath from 'upath';
 import fs from 'fs';
+import path from 'path';
 import rimraf from 'rimraf';
+import child_process from 'child_process';
+import uncSafePath from './unc-safe-path';
 
 /**
  * Appends the given string to the file at the given path.
@@ -97,60 +98,6 @@ function stat(path)
 }
 
 /**
- * Copy from source to destination and delete source. Works across devices.
- * @param {*} fromPath 
- * @param {*} toPath 
- * @param {*} cb 
- */
-function copy(fromPath, toPath, cb) 
-{
-    function onClose() {
-        fs.unlink(fromPath, cb);
-    }
-    var ins = fs.createReadStream(fromPath);
-    var outs = fs.createWriteStream(toPath);
-
-    outs.on('error', err => {
-        ins.destroy(); 
-        outs.removeListener('close', onClose); // Node probably removes listeners on destroy()
-        outs.destroy();
-        cb(err);
-    });
-    ins.on('error', err => {
-        outs.removeListener('close', onClose); // Node probably removes listeners on destroy()
-        outs.destroy(); 
-        ins.destroy();
-        cb(err);
-    });
-    outs.once('close', onClose);
-    ins.pipe(outs);
-}
-
-/**
- * Force deletes the destination file/directory recursively and moves the source path to the destination
- * See: npm node-mv module by andrewmk
- * @param {*} fromPath 
- * @param {*} toPath 
- * @param {*} callback 
- */
-function overwrite(fromPath, toPath, callback)
-{
-    rimraf(toPath, { disableGlob: true }, err => 
-    {
-        if(err) {
-            callback(err);
-            return;
-        }
-        fs.rename(fromPath, toPath, err => {
-            if(err && err.code == 'EXDEV') 
-                copy(fromPath, toPath, callback);
-            else 
-                callback(err);
-        });
-    });
-}
-
-/**
  * UNTESTED. Same as fs.rmdir except delegates to rimraf() when using recursive option
  * @param {*} path 
  * @param {*} options 
@@ -170,27 +117,36 @@ function rmdir(path, options, cb)
 
 /**
  * Same as fs.mkdir except supports options object and recursive option
+ * Calls 'mkdir' through system command prompt. Succeeds if directory already exists.
  * This exists because { recursive: true } option not supported prior to Node v10.22
  * NOTE: When using 'recursive' option, call is delegated to shell command 'mkdir' and
  * any errors returned as a string
  * @param {string|Buffer|URL} dirPath 
  * @param {object} options 
  * @param {number} options.mode 
- * @param {boolean} options.recursive 
- * @param {function} callback 
+ * @param {boolean} [options.recursive = false]
+ * @returns {Promise}
  */
-function mkdir(dirPath, options, callback) 
+function mkdir(dirPath, options) 
 {
-    if(typeof options === 'object' && options.recursive) {
-        _mkdirRecursive(dirPath, options, callback);
-    } else {
-        fs.mkdir.call(fs, arguments);
-    }
+    return new Promise((resolve, reject) => {
+        function cb(err) {
+            if(err && err.code !== "ENOENT") reject(`${err}\nCould not create directory.`);
+            else resolve(true);
+        }
+        options = typeof options === 'object' ? options : {};
+        if(options.recursive) {
+            _mkdirRecursive(dirPath, options, cb);
+        } else {
+            fs.mkdir.call(fs, dirPath, options, cb);
+        }
+    });
 }
 function _mkdirRecursive(dirPath, options, callback) 
 {
     child_process.exec(
         `mkdir${options.mode ? ' --parents --mode=' + options.mode : ''} "${dirPath}"`, 
+        { windowsHide : true },
         (error, stdout, stderr) => {
             if(error) {
                 // IMPORTANT: For some reason, on windows, when creating a directory 
@@ -207,11 +163,55 @@ function _mkdirRecursive(dirPath, options, callback)
     );
 } 
 
+/**
+ * Move file/directory recursively to new destination, including across devices
+ * If source file/directory actually doesn't exist, it will also be erased at the destination.
+ * Uses system shell as this is a simpler alternative to Node for cross-drive cross-system moves. 
+ * @param {string} from the absolute path to source file/directory (posix)
+ * @param {string} to the absolute path to target directory. must be a directory (posix)
+ * @returns {Promise}
+ */
+async function move(from, to) 
+{
+    let command = ``;
+    let isWindows = process.platform.includes('win');
+    if(isWindows) {
+        // NOTE: robocopy will not copy source directory itself, nor will it create destination directory by the same name
+        // NOTE: On windows cmd.exe all paths should use '\' and not '/'
+        const stats = await stat(from);
+        const isFromADirectory = stats.isDirectory();
+        if(isFromADirectory) {
+            // Move a directory
+            const fromDir = from;
+            const toDir = uncSafePath.remap(from, to, true);
+            await mkdir(toDir);
+            command = `robocopy ${path.normalize(fromDir)} ${path.normalize(toDir)} /E /IS /MOVE /PURGE /R:3`
+        } else {
+            // Move a file
+            const file = path.basename(from);
+            const fromDir = uncSafePath.dirname(from);
+            const toDir = to;
+            command = `robocopy ${path.normalize(fromDir)} ${path.normalize(toDir)} ${file} /IS /MOV /PURGE /R:3`
+        }
+    } else {
+        command = `mv -f ${from} ${to}`;
+    }
+
+    return new Promise((resolve, reject) => {
+        child_process.exec(command, { windowsHide : true },
+            (error, stdout, stderr) => {
+                // NOTE: code 1 is throwing false positives on Windows
+                if(error && stdout.toString().includes("ERROR")) reject(error + '\n' + stdout);
+                else resolve();
+            }
+        );
+    });
+} 
 
 export default {
     rmdir,
     mkdir,
-    overwrite,
+    move,
     append,
     createFile,
     createFileAndStatSize

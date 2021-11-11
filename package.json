@@ -19,6 +19,7 @@
     "debounce": "^1.2.0",
     "is-unc-path": "^1.0.0",
     "jsdoc-api": "^6.0.0",
+    "mkdirp": "^1.0.4",
     "node-exiftool": "^2.3.0",
     "polka": "0.5.2",
     "rete": "^1.4.3-rc.1",

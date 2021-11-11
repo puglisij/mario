@@ -86,12 +86,7 @@ class Logger extends EventEmitter
     }
     _createLogsDirectory() 
     {
-        return new Promise((resolve, reject) => {
-            fsx.mkdir(this.options.logDirectory, { recursive: true }, err => {
-                if(err && err.code !== "ENOENT") reject(`${err}\nCould not create directory.`);
-                else resolve();
-            });
-        });
+        return fsx.mkdir(this.options.logDirectory, { recursive: true });
     }
     _createFileStream()
     {

@@ -1,5 +1,10 @@
 import upath from 'upath';
 
+/*
+    This library provides pathing functions which preserve the posix style forward slash / in the paths 
+    whilst preserving UNC pathing (which starts with \\ on windows)
+*/
+
 /**
  * Returns true if path starts with // or \\ 
  * @param {string} val the path string
@@ -8,6 +13,14 @@ function isUncPath(val)
 {
     val = val.trim();
     return val.startsWith("//") || val.startsWith("\\\\");
+}
+
+function _preserveUnc(originalPath, newPath) 
+{
+    if(isUncPath(originalPath)) {
+        return newPath.charAt(0) + newPath;
+    } 
+    return newPath;
 }
 
 /**
@@ -22,7 +35,14 @@ function isAncestor(ancestor, descendant)
     // If not ancestor, beginning of path will contain directory traversal (e.g. ../../)
     return descendant.endsWith(relative);
 }
-
+/**
+ * Same as upath.basename 
+ * @param {string} val the path string
+ */
+ function basename(val)
+ {
+     return upath.basename(val);
+ }
 /**
  * Same as upath.dirname except ensures that double slash is maintained for UNC paths
  * @param {string} val the path string
@@ -47,19 +67,25 @@ function join(firstPart)
 {
     return _preserveUnc.call(null, firstPart, upath.join.apply(upath, arguments));
 }
-
-function _preserveUnc(originalPath, newPath) 
-{
-    if(isUncPath(originalPath)) {
-        return newPath.charAt(0) + newPath;
-    } 
-    return newPath;
+/**
+ * Returns the file/directory basename of the 'from' path renamed with the parent directory of 'to' path
+ * Example: ('C:/foo/bar', 'E:/target') -> 'E:/target/bar'
+ * @param {string} from the source file/directory
+ * @param {string} to the destination file/directory
+ * @param {boolean} [isToADirectory = false] pass true if 'to' is a directory. Otherwise dirname(to) will be used when joining paths
+ */
+function remap(from, to, isToADirectory) {
+    const toName = upath.basename(from);
+    const toParentDir = isToADirectory ? to : upath.dirname(to);
+    return _preserveUnc(to, upath.join(toParentDir, toName));
 }
 
 export default {
     isAncestor,
     isUncPath,
+    basename,
     dirname,
     normalize, 
-    join
+    join, 
+    remap
 }

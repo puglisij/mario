@@ -25,13 +25,14 @@ export default class ImageFileMover
                 }
                 if(image.useErrorDirectory) {
                     await this._moveImage(image, image.errorDirectory);
+                    console.log(`Move to error directory completed.`);
                 }
             } else if(image.useProcessedDirectory) {
                 // TODO: Uncomment next line after Debugging
                 await this._moveImage(image, image.processedDirectory);
+                console.log(`Move to processed directory completed.`);
             }
         }
-        console.log(`Move completed.`);
     }
     /**
      * @param {Image} image 
@@ -42,31 +43,27 @@ export default class ImageFileMover
         if(!upath.isAbsolute(toDirectory)) 
         {
             if(!image.inputDirectory) {
-                console.log("Image not moved. Move directory was relative but input directory was not defined.");
+                console.error("Image not moved. Move directory was relative but input directory was not defined.");
                 return Promise.resolve();
             } else {
                 toDirectory = upath.join(image.inputDirectory, toDirectory);
             }
         }
 
-        this._moveToDirectory(image, toDirectory);
+        await this._moveToDirectory(image, toDirectory).catch(err => {
+            const message = err + "\nImage path could not be moved.";
+            console.warn(message);
+        });
     }
     _moveToDirectory(image, directory) 
     {
         const paths = this._getImagePaths(image);
         console.log(`Moving paths:\n\t${paths.join('\n\t')}\nTo directory\n\t${directory}`);
 
-        for(const path of paths) 
-        {
-            const basename = upath.basename(path);
-            const toPath = upath.join(directory, basename);
-            fsx.overwrite(path, toPath, err => {
-                if(err) {
-                    const message = err + "\nImage path could not be moved to " + toPath;
-                    console.warn(message);
-                }
-            });
-        }
+        const promises = paths.map(path => {
+            return fsx.move(path, directory);
+        });
+        return Promise.all(promises);
     }
     _getImagePaths(image) 
     {
