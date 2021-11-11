@@ -51,10 +51,7 @@ export default class ImageFileMover
             }
         }
 
-        await this._moveToDirectory(image, toDirectory).catch(err => {
-            const message = err + "\nImage path could not be moved.";
-            console.warn(message);
-        });
+        await this._moveToDirectory(image, toDirectory);
     }
     _moveToDirectory(image, directory) 
     {
@@ -62,7 +59,9 @@ export default class ImageFileMover
         console.log(`Moving paths:\n\t${paths.join('\n\t')}\nTo directory\n\t${directory}`);
 
         const promises = paths.map(path => {
-            return fsx.move(path, directory);
+            return fsx.move(path, directory).catch(err => {
+                console.error(err);
+            });
         });
         return Promise.all(promises);
     }

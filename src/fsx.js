@@ -167,18 +167,22 @@ function _mkdirRecursive(dirPath, options, callback)
  * Move file/directory recursively to new destination, including across devices
  * If source file/directory actually doesn't exist, it will also be erased at the destination.
  * Uses system shell as this is a simpler alternative to Node for cross-drive cross-system moves. 
- * @param {string} from the absolute path to source file/directory (posix)
- * @param {string} to the absolute path to target directory. must be a directory (posix)
+ * @param {string} from the absolute path to source file/directory 
+ * @param {string} to the absolute path to target directory. must be a directory 
  * @returns {Promise}
  */
 async function move(from, to) 
 {
     let command = ``;
     let isWindows = process.platform.includes('win');
-    if(isWindows) {
+    if (isWindows) {
         // NOTE: robocopy will not copy source directory itself, nor will it create destination directory by the same name
         // NOTE: On windows cmd.exe all paths should use '\' and not '/'
         const stats = await stat(from);
+        if(!stats) {
+            // Not found
+            return Promise.resolve();
+        }
         const isFromADirectory = stats.isDirectory();
         if(isFromADirectory) {
             // Move a directory
@@ -197,12 +201,21 @@ async function move(from, to)
         command = `mv -f ${from} ${to}`;
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => 
+    {
         child_process.exec(command, { windowsHide : true },
             (error, stdout, stderr) => {
-                // NOTE: code 1 is throwing false positives on Windows
-                if(error && stdout.toString().includes("ERROR")) reject(error + '\n' + stdout);
-                else resolve();
+                if(isWindows) {
+                    // NOTE: code 1 is throwing false positives on Windows
+                    if(error && stdout.toString().includes("ERROR")) {
+                        reject(`${from} -> ${to}\nMove failed.\n${error}\n${stdout}`);
+                    } else {
+                        resolve();
+                    }
+                } else {
+                    if(error) reject(error);
+                    else resolve();
+                }
             }
         );
     });

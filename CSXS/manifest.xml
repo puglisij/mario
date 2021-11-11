@@ -18,10 +18,10 @@
     <Extension Id="com.mario.panel">
       <DispatchInfo>
         <Resources>
-          <MainPath>./public/index-dev.html</MainPath>
-          <!-- <MainPath>./dist/index.html</MainPath> -->
-          <ScriptPath>./public/index.jsx</ScriptPath>
-           <!-- <ScriptPath>./dist/index.jsx</ScriptPath> -->
+          <!-- <MainPath>./public/index-dev.html</MainPath> -->
+          <MainPath>./dist/index.html</MainPath>
+          <!-- <ScriptPath>./public/index.jsx</ScriptPath> -->
+           <ScriptPath>./dist/index.jsx</ScriptPath>
           <CEFCommandLine>
             <Parameter>--enable-nodejs</Parameter>
             <Parameter>--mixed-context</Parameter>
