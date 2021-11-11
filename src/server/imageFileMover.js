@@ -25,14 +25,15 @@ export default class ImageFileMover
                 }
                 if(image.useErrorDirectory) {
                     await this._moveImage(image, image.errorDirectory);
-                    console.log(`Move to error directory completed.`);
+                } else {
+                    console.log(`Move skipped for errored image : ${image.jobId}. No error directory defined.`);
                 }
             } else if(image.useProcessedDirectory) {
                 // TODO: Uncomment next line after Debugging
                 await this._moveImage(image, image.processedDirectory);
-                console.log(`Move to processed directory completed.`);
             }
         }
+        console.log(`Moves completed.`);
     }
     /**
      * @param {Image} image 
