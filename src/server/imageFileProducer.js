@@ -69,7 +69,7 @@ export default class ImageFileProducer extends EventEmitter
     }
     _emitFiles(files) 
     {
-        if(!files.length > 0) {
+        if(files.length <= 0) {
             return;
         }
         this.emit("files", this._id, files);

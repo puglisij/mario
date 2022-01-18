@@ -12,6 +12,7 @@ function ImageForProcessing(json)
     this._inputImagePath   = json.inputImagePath;
     this._inputDirectory  = json.inputDirectory;
 
+    this._workingDirectory = json.workingDirectory;
     this._outputDirectory = json.outputDirectory;
     this._processedDirectory = json.processedDirectory;
     this._errorDirectory = json.erroredDirectory;
@@ -74,11 +75,19 @@ ImageForProcessing.prototype.getInputDirectory = function() {
     return this._inputDirectory;
 };
 /**
-* Returns absolute directory where output files 'should' be written (it's up to a given Pipeline/action to honor this)
+* Returns absolute directory where output files 'should' be written 
+* (it's up to a given Pipeline/action to honor this)
+* @param {boolean} [noWorkingDirectory] if false, workingDirectory will be returned if defined
 */
-ImageForProcessing.prototype.getOutputDirectory = function() {
+ImageForProcessing.prototype.getOutputDirectory = function(noWorkingDirectory) {
+    if(!noWorkingDirectory && this._workingDirectory) {
+        return this._workingDirectory + "/" + this._jobId;
+    }
     return this._outputDirectory;
 };
+ImageForProcessing.prototype.getWorkingDirectory = function() {
+    return this._workingDirectory;
+}
 /**
 * Returns absolute directory where processed input files 'will' be moved automatically 
 * (files are moved by engine on Node.js side)

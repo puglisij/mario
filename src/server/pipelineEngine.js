@@ -177,7 +177,6 @@ export class PipelineEngine extends EventEmitter
     async _runProcessLoop()
     {
         let processedImages = [];
-        let file;
         while(!this._stopCheck() && this._imageFileProducers.hasJobs()) 
         {
             const { 
@@ -199,7 +198,7 @@ export class PipelineEngine extends EventEmitter
                 const image = await this._imageFileReader.read(file, imageSource, listenerNames);
 
                 // EXECUTE PIPELINES
-                if(!image.errors.length > 0) 
+                if(image.errors.length == 0) 
                 {
                     this.emit("imagejobstart", image.jobId, i, file);
                     await this._runPipelinesLoop(image);

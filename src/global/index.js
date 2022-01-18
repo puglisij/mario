@@ -17,6 +17,7 @@ export default (function()
     const appWorkingPath = upath.join(appInstallPath, process.env.VUE_APP_HOST_DIR);
     const appDefaultLogPath = upath.normalize(env.log);
     const appDefaultConfigPath = upath.normalize(env.config);
+    const appTempWorkingPath = upath.normalize(env.working);
     const appBuiltinActionsPath = upath.join(appWorkingPath, "actions");
 
     return {
@@ -27,6 +28,7 @@ export default (function()
         appWorkingPath,
         appDefaultLogPath,
         appDefaultConfigPath,
+        appTempWorkingPath,
         appBuiltinActionsPath,
         adobeApp: appName,
         adobeVersion: appVersion, 

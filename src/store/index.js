@@ -66,6 +66,10 @@ class GeneralConfig extends Config
                     type: "number",
                     default: 15
                 },
+                useGlobalWorkingDirectory: {
+                    type: "boolean", 
+                    default: false
+                },
                 fileSources: {
                     type: "array",
                     default: [

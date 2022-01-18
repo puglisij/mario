@@ -134,6 +134,9 @@
 
             <h3 class="section-title">File Sources</h3>
             <section class="section-content">
+                <a-checkbox v-model="useGlobalWorkingDirectory">
+                    Use a working directory for output files (default is job id) ?  
+                </a-checkbox>
                 <draggable 
                     v-model="fileSources"
                     draggable=".source"
@@ -205,6 +208,7 @@ export default {
             logDirectory: store.general.logDirectory,
             logFilePersistForDays: store.general.logFilePersistForDays,
             logHtmlBufferMaxSize: store.general.logHtmlBufferMaxSize,
+            useGlobalWorkingDirectory: store.general.useGlobalWorkingDirectory,
             fileSources: _.simpleDeepClone(store.general.fileSources)
         }
     },
@@ -289,6 +293,7 @@ export default {
             store.general.logDirectory = this.logDirectory;
             store.general.logFilePersistForDays = parseInt(this.logFilePersistForDays, 10);
             store.general.logHtmlBufferMaxSize = parseInt(this.logHtmlBufferMaxSize, 10);
+            store.general.useGlobalWorkingDirectory = this.useGlobalWorkingDirectory;
             store.general.fileSources = _.simpleDeepClone(this.fileSources);
             store.general.save();
             eventBus.$emit("filesource-update");

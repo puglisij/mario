@@ -98,21 +98,22 @@ function stat(path)
 }
 
 /**
- * UNTESTED. Same as fs.rmdir except delegates to rimraf() when using recursive option
+ * Same as fs.rmdir except delegates to rimraf() when using recursive option
  * @param {*} path 
  * @param {*} options 
- * @param {*} cb 
+ * @returns {Promise}
  */
-function rmdir(path, options, cb) 
+function rmdir(path, options) 
 {
-    if(typeof options === 'object' && options.recursive) {
-        rimraf(path, {
-            maxBusyTries: options.maxRetries,
-            emfileWait: retryDelay
-        }, cb);
-    } else {
-        fs.rmdir.call(fs, arguments);
-    }
+    return new Promise(resolve => {
+        if(typeof options === 'object' && options.recursive) {
+            rimraf(path, {
+                maxBusyTries: options.maxRetries || 3
+            }, resolve);
+        } else {
+            fs.rmdir(path, options, resolve);
+        }
+    });
 }
 
 /**
@@ -131,8 +132,10 @@ function mkdir(dirPath, options)
 {
     return new Promise((resolve, reject) => {
         function cb(err) {
-            if(err && err.code !== "ENOENT") reject(`${err}\nCould not create directory.`);
-            else resolve(true);
+            if(err && err.code !== "ENOENT" && err.code !== "EEXIST")
+                reject(`${err}\nCould not create directory.`);
+            else 
+                resolve(true);
         }
         options = typeof options === 'object' ? options : {};
         if(options.recursive) {
@@ -213,7 +216,7 @@ async function move(from, to)
                         resolve();
                     }
                 } else {
-                    if(error) reject(error);
+                    if(error) reject(`${from} -> ${to}\nMove failed.\n${error}`);
                     else resolve();
                 }
             }

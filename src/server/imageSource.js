@@ -7,6 +7,8 @@ export default class ImageSource
      * @param {string} name a user friendly name for the image source 
      * @param {string} [sourceDirectory] 
      * @param {Array<string>} [sourceExtensions] file extensions allowed by this file source (without '.')
+     * @param {boolean} [useWorkingDirectory = false]
+     * @param {string} [workingDirectory = ""] directory where pipeline outputs will be written, the moved altogether to outputDirectory after processing, if no exceptions are thrown
      * @param {boolean} [useOutputDirectory = false]
      * @param {string} [outputDirectory] directory where pipeline outputs will be written
      * @param {boolean} [useProcessedDirectory = false]
@@ -20,6 +22,8 @@ export default class ImageSource
         name,
         sourceDirectory, 
         sourceExtensions, 
+        useWorkingDirectory = false, 
+        workingDirectory = "",
         useOutputDirectory = false, 
         outputDirectory = "", 
         useProcessedDirectory = false,
@@ -33,6 +37,8 @@ export default class ImageSource
         this.sourceDirectory = sourceDirectory;
         this.sourceExtensions = sourceExtensions;
 
+        this.useWorkingDirectory = useWorkingDirectory;
+        this.workingDirectory = workingDirectory;
         this.useOutputDirectory = useOutputDirectory;
         this.outputDirectory = outputDirectory;
         this.useProcessedDirectory = useProcessedDirectory;

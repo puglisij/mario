@@ -15,7 +15,7 @@ const macos = name => {
 	return {
 		config: path.join(library, 'Preferences', name),
 		log: path.join(library, 'Logs', name),
-		temp: path.join(tmpdir, name)
+		working: path.join(tmpdir, name, 'Working')
 	};
 };
 
@@ -26,7 +26,7 @@ const windows = name => {
 	return {
 		config: path.join(appData, name, 'Config'),
 		log: path.join(localAppData, name, 'Log'),
-		temp: path.join(tmpdir, name)
+		working: path.join(tmpdir, name, 'Working')
 	};
 };
 

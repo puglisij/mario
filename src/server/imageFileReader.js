@@ -5,8 +5,8 @@ import Image from './image';
 import fsx from '../fsx';
 import uncSafePath from '../unc-safe-path';
 import _ from '../utils';
-
-
+import global from '../global';
+import store from '../store';
 
 export default class ImageFileReader
 {
@@ -24,11 +24,12 @@ export default class ImageFileReader
      */
     async read(path, imageSource, targetPipelines)
     {
-        let { useOutputDirectory, useProcessedDirectory, useErrorDirectory } = imageSource;
-        let { outputDirectory, processedDirectory, errorDirectory } = imageSource;
+        let { useWorkingDirectory, useOutputDirectory, useProcessedDirectory, useErrorDirectory } = imageSource;
+        let { workingDirectory, outputDirectory, processedDirectory, errorDirectory } = imageSource;
         let readMetadata = imageSource.readMetadata;
 
-        // Sanity check
+        // Sanity Check (Enforce "use" booleans)
+        workingDirectory = useWorkingDirectory ? workingDirectory : "";
         outputDirectory = useOutputDirectory ? outputDirectory : "";
         processedDirectory = useProcessedDirectory ? processedDirectory : "";
         errorDirectory = useErrorDirectory ? errorDirectory : "";
@@ -41,7 +42,7 @@ export default class ImageFileReader
         let data = {};
         let metadata = {};
         let image = new Image();
-
+        
         try 
         {
             if(this._doesFileExist(inputImagePath)) 
@@ -55,24 +56,22 @@ export default class ImageFileReader
                     jobId = data.jobId || jobId;
 
                     // Grab new image source path and other paths from json, if available
-                    inputImagePath = data.inputImagePath || "";
-                    outputDirectory = data.outputDirectory || outputDirectory;
-                    processedDirectory = data.processedDirectory || processedDirectory;
-                    errorDirectory = data.errorDirectory || errorDirectory;
+                    inputImagePath = this._ensureAbsolutePathOrResolve(data.inputImagePath || "", inputDirectory);
+                    workingDirectory = this._ensureAbsolutePathOrResolve(data.workingDirectory || workingDirectory, inputDirectory);
+                    outputDirectory = this._ensureAbsolutePathOrResolve(data.outputDirectory || outputDirectory, inputDirectory);
+                    processedDirectory = this._ensureAbsolutePathOrResolve(data.processedDirectory || processedDirectory, inputDirectory);
+                    errorDirectory = this._ensureAbsolutePathOrResolve(data.errorDirectory || errorDirectory, inputDirectory);
 
-                    inputImagePath = this._ensureAbsolutePath(inputImagePath, inputDirectory);
-                    outputDirectory = this._ensureAbsolutePath(outputDirectory, inputDirectory);
-                    processedDirectory = this._ensureAbsolutePath(processedDirectory, inputDirectory);
-                    errorDirectory = this._ensureAbsolutePath(errorDirectory, inputDirectory);
-
-                    useOutputDirectory = await this._makeDirectory(outputDirectory);
-                    useProcessedDirectory = await this._makeDirectory(processedDirectory);
-                    useErrorDirectory = await this._makeDirectory(errorDirectory);
+                    //useWorkingDirectory = await this._makeDirectory(workingDirectory);
+                    //useOutputDirectory = await this._makeDirectory(outputDirectory);
+                    //useProcessedDirectory = await this._makeDirectory(processedDirectory);
+                    //useErrorDirectory = await this._makeDirectory(errorDirectory);
 
                     // Blank paths if directory doesn't exist
-                    outputDirectory = useOutputDirectory ? outputDirectory : "";
-                    processedDirectory = useProcessedDirectory ? processedDirectory : "";
-                    errorDirectory = useErrorDirectory ? errorDirectory : "";
+                    //workingDirectory = useWorkingDirectory ? workingDirectory : "";
+                    //outputDirectory = useOutputDirectory ? outputDirectory : "";
+                    //processedDirectory = useProcessedDirectory ? processedDirectory : "";
+                    //errorDirectory = useErrorDirectory ? errorDirectory : "";
 
                     if (uncSafePath.isAncestor(inputImagePath, inputDirectory) 
                         && (useProcessedDirectory || useErrorDirectory)) 
@@ -94,13 +93,18 @@ export default class ImageFileReader
         }
         finally 
         {
+            // Default workingDirectory
+            workingDirectory = workingDirectory || (store.general.useGlobalWorkingDirectory ? global.appTempWorkingPath : "");
+
             image.jobId = jobId;
             image.initialInputImagePath = initialInputImagePath;
             image.inputImagePath = inputImagePath;        
             image.inputDirectory = inputDirectory;
+            image.workingDirectory = workingDirectory
             image.outputDirectory = outputDirectory;
             image.processedDirectory = processedDirectory;
             image.errorDirectory = errorDirectory;
+            image.useWorkingDirectory = useWorkingDirectory;
             image.useOutputDirectory = useOutputDirectory;
             image.useProcessedDirectory = useProcessedDirectory;
             image.useErrorDirectory = useErrorDirectory;
@@ -157,7 +161,7 @@ export default class ImageFileReader
     _isPathDefinedAndAbsolute(path) {
         return typeof path === "string" && path.length > 0 && upath.isAbsolute(path);
     }
-    _ensureAbsolutePath(path, parentDirectory) {
+    _ensureAbsolutePathOrResolve(path, parentDirectory) {
         if(!path) {
             return "";
         }

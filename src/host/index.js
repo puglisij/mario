@@ -52,6 +52,7 @@ class Host extends EventEmitter
             Working Path: ${appGlobal.appWorkingPath}\n
             Default Log Path: ${appGlobal.appDefaultLogPath}\n
             Default Config Path: ${appGlobal.appDefaultConfigPath}\n
+            Temporary Working Path: ${appGlobal.appTempWorkingPath}\n
             Builtin Action Path: ${appGlobal.appBuiltinActionsPath}\n
             Creative Suite API Version: ${appGlobal.adobeCEPApiVersion}\n
             OS: ${appGlobal.os}\n
@@ -191,7 +192,7 @@ class Host extends EventEmitter
                 try {
                     ${script}
                 } catch(e) {
-                    return e.toString();
+                    return e.toString() + (app.documents.length > 0 ? "\\nActive Document: " + activeDocument.name : "");
                 }
             }())`, 
             (result) => {

@@ -72,7 +72,7 @@ class Server extends EventEmitter
                     try { 
                         req.body = JSON.parse(data); 
                     } catch(e) {
-                        console.error("Unable to parse request json: ", e);
+                        console.error("Unable to parse request json: ", data, e);
                     }
                     next();
                 })

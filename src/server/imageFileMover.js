@@ -18,54 +18,42 @@ export default class ImageFileMover
         console.log(`Moving ${images.length} processed images...`);
         for(const image of images)
         {
-            if(image.errors.length) {
-                const errorDirectory = image.errorDirectory || image.inputDirectory;
-                if(errorDirectory) {
-                    this._writeError(image, errorDirectory, image.errors.join('\n'));
-                }
-                if(image.useErrorDirectory) {
-                    await this._moveImage(image, image.errorDirectory);
-                } else {
-                    console.log(`Move skipped for errored image : ${image.jobId}. No error directory defined.`);
-                }
-            } else if(image.useProcessedDirectory) {
-                // TODO: Uncomment next line after Debugging
-                await this._moveImage(image, image.processedDirectory);
-            }
+            // Write errors if there are any
+            await this._writeErrors(image);
+            // Move input directory to processed Directory
+            await this._moveInputDirectory(image);
+            // Move working directory to outputDirectory
+            await this._moveWorkingDirectory(image);
         }
         console.log(`Moves completed.`);
     }
-    /**
-     * @param {Image} image 
-     * @param {string} toDirectory target directory. Absolute or relative to input or data source path.
-     */
-    async _moveImage(image, toDirectory)
+    async _moveInputDirectory(image) 
     {
-        if(!upath.isAbsolute(toDirectory)) 
-        {
-            if(!image.inputDirectory) {
-                console.error("Image not moved. Move directory was relative but input directory was not defined.");
-                return Promise.resolve();
-            } else {
-                toDirectory = upath.join(image.inputDirectory, toDirectory);
-            }
+        const paths = this._getInputPaths(image);
+        const toDirectory = image.errors.length > 0 ? image.errorDirectory : image.processedDirectory;
+        if(toDirectory) {
+            console.log(`Moving input paths:\n\t${paths.join('\n\t')}\nTo directory:\n\t${toDirectory}`);
+            await this._moveToDirectory(paths, toDirectory);
         }
-
-        await this._moveToDirectory(image, toDirectory);
     }
-    _moveToDirectory(image, directory) 
+    async _moveWorkingDirectory(image) 
     {
-        const paths = this._getImagePaths(image);
-        console.log(`Moving paths:\n\t${paths.join('\n\t')}\nTo directory\n\t${directory}`);
-
-        const promises = paths.map(path => {
-            return fsx.move(path, directory).catch(err => {
-                console.error(err);
-            });
-        });
-        return Promise.all(promises);
+        if(!image.workingDirectory) {
+            return;
+        }
+        // Assume workingDirectory + jobId is what's being written to on JSX side. See image.jsx
+        const jobDirectory = upath.join(image.workingDirectory, image.jobId);
+        const paths = [ jobDirectory ];
+        if(image.errors.length > 0) {
+            console.log(`Image processing errors. Removing working paths:\n\t${paths.join('\n\t')}`);
+            await fsx.rmdir(jobDirectory, { recursive: true });
+        } else {
+            const toDirectory = image.outputDirectory || image.inputDirectory;
+            console.log(`Moving working paths:\n\t${paths.join('\n\t')}\nTo directory:\n\t${toDirectory}`);
+            await this._moveToDirectory(paths, toDirectory);
+        }
     }
-    _getImagePaths(image) 
+    _getInputPaths(image) 
     {
         const paths = [
             image.inputImagePath,
@@ -73,23 +61,35 @@ export default class ImageFileMover
         ];
         return paths.filter(p => !!p); // remove empty paths
     }
-    _writeError(image, directory, message) 
+    _moveToDirectory(paths, toDirectory) 
     {
-        if(!message) {
+        const promises = paths.map(path => {
+            return fsx.move(path, toDirectory).catch(err => {
+                console.error(err);
+            });
+        });
+        return Promise.all(promises);
+    }
+    _writeErrors(image) 
+    {
+        if(image.errors.length == 0) {
             return;
         }
+        const message = image.errors.join('\n').replace(/\n+$/, '');
+        const directory = image.errorDirectory || image.inputDirectory;
         const logPath = upath.join(directory, "error.logs");
-        const data = [   
-            `\n`,
+        const data = [
             `Time: ${new Date().toLocaleString()}`,
+            `JobId: ${image.jobId}`,
             `initialInputImagePath: ${image.initialInputImagePath}`, 
             `inputImagePath: ${image.inputImagePath}`, 
-            message
-        ].join(`\n`);
+            message,
+            `-----\n`
+        ].join(`\n`); 
 
         fsx.append(logPath, data)
         .catch(err => {
-            console.error(err + "\nCould not write Image error to " + logPath);
+            console.error(err + "\nCould not write Image error to " + logPath + ". Error: ", data);
         });
     }
 }

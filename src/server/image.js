@@ -26,6 +26,13 @@ export default class Image
          */
         this.inputDirectory = "";
         /**
+         * If available (either via json or GUI configuration), the directory where output files will be written First,
+         * until all pipelines are processed for the current job, after which output files are moved to outputDirectory,
+         * or errorDirectory if an exception was thrown by one or more pipelines.
+         */
+        this.workingDirectory = "";
+        this.useWorkingDirectory = false;
+        /**
          * If available (either via json or GUI configuration), the directory where output files should be written
          */
         this.outputDirectory = "";
