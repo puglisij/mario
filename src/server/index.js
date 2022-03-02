@@ -57,6 +57,8 @@ class Server extends EventEmitter
     }
     async startServer() 
     {
+        console.log("Server starting...");
+        
         port = store.general.serverPort;
         app = polka();
         app.use(function(req, res, next) 
@@ -72,8 +74,9 @@ class Server extends EventEmitter
                     try { 
                         req.body = JSON.parse(data); 
                     } catch(e) {
-                        console.error("Unable to parse request json: ", data, e);
+                        console.error("Request: " + req.path + " Unable to parse request json: ", data, e);
                     }
+                    
                     next();
                 })
             } else {

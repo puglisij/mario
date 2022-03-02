@@ -73,6 +73,7 @@ export default class ImageFileMover
     _writeErrors(image) 
     {
         if(image.errors.length == 0) {
+            console.log(`No errors for Job ${image.jobId}`);
             return;
         }
         const message = image.errors.join('\n').replace(/\n+$/, '');
@@ -87,6 +88,7 @@ export default class ImageFileMover
             `-----\n`
         ].join(`\n`); 
 
+        console.log(`Writing errors for Job ${image.jobId} to ${logPath}`);
         fsx.append(logPath, data)
         .catch(err => {
             console.error(err + "\nCould not write Image error to " + logPath + ". Error: ", data);

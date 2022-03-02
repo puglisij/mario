@@ -1,11 +1,17 @@
-const chalk = require("chalk");
+// const chalk = require("chalk")
 const fse = require("fs-extra");
 const fs = require("fs");
 const shell = require("shelljs");
 const inquirer = require("inquirer");
 
+let chalk;
+let boxen;
+let ora;
+let cepBlock;
+let helpPrompt;
+
 // Box-style message for end
-const boxen = require("boxen");
+// const boxen = require("boxen");
 const BOXEN_OPTS = {
   padding: 1,
   margin: 1,
@@ -17,7 +23,7 @@ const BOXEN_OPTS = {
 const osPrefix = process.platform === "win32" ? "" : `./`;
 
 // Spinner component for terminal
-const ora = require("ora");
+// const ora = require("ora");
 const ORA_SPINNER = {
   interval: 80,
   frames: [
@@ -34,11 +40,7 @@ const ORA_SPINNER = {
   ]
 };
 
-const cepBlock = `${chalk.black.bgBlue(" CEP ")}`;
-const helpPrompt = `${cepBlock}  Didn't mean to do that? Use ${chalk.yellow(
-  "npm run help"
-)} to see a full list of commands`;
-
+// export default {
 module.exports = {
   ignore: async function() {
     let ignores;
@@ -250,58 +252,63 @@ module.exports = {
     const extName = getExtName();
     const extString = `${extName}${extVersion}`;
 
+    
     let isDev = await getCurrentContext();
     console.log(
       `${cepBlock}  ${chalk.blue(extString)} is in ${chalk.blue(
         `${isDev ? "DEVELOPER" : "PRODUCTION"}`
       )}`
     );
-    console.log("");
-    await inquirer
-      .prompt([
-        {
-          type: "confirm",
-          name: "shouldSwitch",
-          message: `Would you like to switch to ${chalk.blue(
-            `${!isDev ? "DEVELOPER" : "PRODUCTION"}`
-          )}?`,
-          default: true
-        }
-      ])
-      .then(answer => {
-        if (answer.shouldSwitch)
-          switchContext()
-            .then(res => {
-              console.log(
-                boxen(`Context switched to ${chalk.blue(res)}`, {
-                  ...BOXEN_OPTS,
-                  ...{
-                    borderColor: "blue"
-                  }
-                })
-              );
-              console.log(`   ${chalk.green("✔ ")} Switch successful!`);
-              endMessage(true);
-            })
-            .catch(err => {
-              console.log(
-                `${chalk.red(
-                  "✘ "
-                )} Something went wrong! Double-check your ${chalk.green(
-                  "manifest.xml"
-                )} file.`
-              );
-              return null;
-            });
-        else {
-          console.log("");
-          console.log(`   All right! No changes have been made.`);
-          endMessage();
-        }
-      })
-      .catch(err => {
-        console.log("Closing...");
-      });
+
+    console.log(`${chalk.white.bgRed("'switch' is disabled for now.")}  
+    Loading vue over iframe doesn't work with CORS policy in newer Photoshop. 
+    Files are loaded from /dist`);
+
+    // await inquirer
+    //   .prompt([
+    //     {
+    //       type: "confirm",
+    //       name: "shouldSwitch",
+    //       message: `Would you like to switch to ${chalk.blue(
+    //         `${!isDev ? "DEVELOPER" : "PRODUCTION"}`
+    //       )}?`,
+    //       default: true
+    //     }
+    //   ])
+    //   .then(answer => {
+    //     if (answer.shouldSwitch)
+    //       switchContext()
+    //         .then(res => {
+    //           console.log(
+    //             boxen(`Context switched to ${chalk.blue(res)}`, {
+    //               ...BOXEN_OPTS,
+    //               ...{
+    //                 borderColor: "blue"
+    //               }
+    //             })
+    //           );
+    //           console.log(`   ${chalk.green("✔ ")} Switch successful!`);
+    //           endMessage(true);
+    //         })
+    //         .catch(err => {
+    //           console.log(
+    //             `${chalk.red(
+    //               "✘ "
+    //             )} Something went wrong! Double-check your ${chalk.green(
+    //               "manifest.xml"
+    //             )} file.`
+    //           );
+    //           return null;
+    //         });
+    //     else {
+    //       console.log("");
+    //       console.log(`   All right! No changes have been made.`);
+    //       endMessage();
+    //     }
+    //   })
+    //   .catch(err => {
+    //     console.log("Closing...");
+    //   });
 
     return "";
   },
@@ -317,51 +324,52 @@ module.exports = {
         `v${extVersion}`
       )}`
     );
-    console.log("");
-    await inquirer
-      .prompt([
-        {
-          type: "confirm",
-          name: "shouldUpdate",
-          message: `Update version?`,
-          default: true
-        }
-      ])
-      .then(answer => {
-        if (answer.shouldUpdate) {
-          findTier(extVersion.split(".")).then(answerver => {
-            let chosen = extVersion.split(".")[answerver.versionIndex];
-            promptNewNumber(chosen).then(ans => {
-              let newVersion = extVersion.split(".");
-              newVersion[answerver.versionIndex] = ans.newTier;
-              setExtVersion(extVersion, newVersion).then(updated => {
-                console.log("");
-                console.log(`   ${chalk.green("✔ ")} Update successful!`);
-                console.log(
-                  boxen(
-                    `${chalk.blue(extName)} updated to ${chalk.green(
-                      `v${updated}`
-                    )}`,
-                    {
-                      ...BOXEN_OPTS,
-                      ...{
-                        borderColor: "blue"
-                      }
-                    }
-                  )
-                );
-              });
-            });
-          });
-        } else {
-          console.log("");
-          console.log(`   All right! No changes will be made.`);
-          endMessage();
-        }
-      })
-      .catch(err => {
-        //
-      });
+    console.log(`${cepBlock} ${chalk.white}`);
+
+    // await inquirer
+    //   .prompt([
+    //     {
+    //       type: "confirm",
+    //       name: "shouldUpdate",
+    //       message: `Update version?`,
+    //       default: true
+    //     }
+    //   ])
+    //   .then(answer => {
+    //     if (answer.shouldUpdate) {
+    //       findTier(extVersion.split(".")).then(answerver => {
+    //         let chosen = extVersion.split(".")[answerver.versionIndex];
+    //         promptNewNumber(chosen).then(ans => {
+    //           let newVersion = extVersion.split(".");
+    //           newVersion[answerver.versionIndex] = ans.newTier;
+    //           setExtVersion(extVersion, newVersion).then(updated => {
+    //             console.log("");
+    //             console.log(`   ${chalk.green("✔ ")} Update successful!`);
+    //             console.log(
+    //               boxen(
+    //                 `${chalk.blue(extName)} updated to ${chalk.green(
+    //                   `v${updated}`
+    //                 )}`,
+    //                 {
+    //                   ...BOXEN_OPTS,
+    //                   ...{
+    //                     borderColor: "blue"
+    //                   }
+    //                 }
+    //               )
+    //             );
+    //           });
+    //         });
+    //       });
+    //     } else {
+    //       console.log("");
+    //       console.log(`   All right! No changes will be made.`);
+    //       endMessage();
+    //     }
+    //   })
+    //   .catch(err => {
+    //     //
+    //   });
 
     return "";
   }
@@ -557,7 +565,7 @@ async function getCurrentContext()
   return new Promise((resolve, reject) => {
     const xml = fs.readFileSync(`./CSXS/manifest.xml`, { encoding: "utf-8" });
     const isDev = /\<\!\--\s\<MainPath\>\.\/dist\/index\.html\<\/MainPath\>\s\-\-\>/;
-    const isBuild = /\<\!\--\s\<MainPath\>\.\/public\/index\-dev\.html\<\/MainPath\>\s\-\-\>/;
+    const isBuild = /\<\!\--\s\<MainPath\>\.\/public\/index\.html\<\/MainPath\>\s\-\-\>/;
     resolve(isDev.test(xml));
   });
 }
@@ -567,12 +575,12 @@ function switchContext()
   return new Promise((resolve, reject) => {
     let xml = fs.readFileSync(`./CSXS/manifest.xml`, { encoding: "utf-8" });
     const isDev = /\<\!\--\s\<MainPath\>\.\/dist\/index\.html\<\/MainPath\>\s\-\-\>/;
-    const isBuild = /\<\!\--\s\<MainPath\>\.\/public\/index\-dev\.html\<\/MainPath\>\s\-\-\>/;
+    const isBuild = /\<\!\--\s\<MainPath\>\.\/public\/index\.html\<\/MainPath\>\s\-\-\>/;
     const isDevVanilla = /\<MainPath\>\.\/dist\/index\.html\<\/MainPath\>/;
-    const isBuildVanilla = /\<MainPath\>\.\/public\/index\-dev\.html\<\/MainPath\>/;
-    const devString = `<MainPath>./public/index-dev.html</MainPath>`;
+    const isBuildVanilla = /\<MainPath\>\.\/public\/index\.html\<\/MainPath\>/;
+    const devString = `<MainPath>./public/index.html</MainPath>`;
     const buildString = `<MainPath>./dist/index.html</MainPath>`;
-    const commentedDevString = `<!-- <MainPath>./public/index-dev.html</MainPath> -->`;
+    const commentedDevString = `<!-- <MainPath>./public/index.html</MainPath> -->`;
     const commentedBuildString = `<!-- <MainPath>./dist/index.html</MainPath> -->`;
 
     const isDevScript = /\<\!\--\s\<ScriptPath\>\.\/dist\/index\.jsx\<\/ScriptPath\>\s\-\-\>/;
@@ -697,7 +705,19 @@ async function promptRegister(data)
   ]);
 }
 //  -----------------------------------
+async function run() 
+{
+    chalk = await (await import("chalk")).default;
+    boxen = await (await import("boxen")).default;
+    ora = await (await import("ora")).default;
+    cepBlock = `${chalk.black.bgBlue(" CEP ")}`;
+    helpPrompt = `${cepBlock}  Didn't mean to do that? Use ${chalk.yellow(
+        "npm run help"
+      )} to see a full list of commands`;
 
-require("make-runnable/custom")({
-  printOutputFrame: false
-});
+    require("make-runnable/custom")({
+        printOutputFrame: false
+    });
+}
+
+run();

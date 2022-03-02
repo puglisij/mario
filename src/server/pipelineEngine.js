@@ -87,7 +87,7 @@ export class PipelineEngine extends EventEmitter
      */
     runAll()
     {
-        const pipelineNames = store.pipelines.pipelines.map(p => p.name);
+        const pipelineNames = store.pipelines.pipelines.filter(p => !p.disabled).map(p => p.name);
         this._run(pipelineNames);
     }
     _run(pipelineNames) 
@@ -124,6 +124,7 @@ export class PipelineEngine extends EventEmitter
     stop() {
         this._imageFileProducers.stopProducers();
         this.state = PipelineEngineState.STOPPED;
+        this._processingMutex = false;
     }
     _stopIfNoProducersElseIdle()
     {
@@ -143,26 +144,29 @@ export class PipelineEngine extends EventEmitter
         this._process();
     }
     _onProducerDepleted() {
-        if(this.isProcessing()) return;
+        if(this.isProcessing() || this._processingMutex) return;
         this._stopIfNoProducersElseIdle();
     }
-    _process()
+    async _process()
     {
         if(!this._imageFileProducers.hasJobs()) return; 
         if(this._processingMutex) return;
         this._processingMutex = true;
         this.state = PipelineEngineState.PROCESSING;
-
+        
         this._runWaitOneFrame()
         .then(this._runProcessStart.bind(this))
         .then(this._runProcessLoop.bind(this))
         .then(this._runProcessEnd.bind(this))
         .then(() => {
             this._stopIfNoProducersElseIdle();
-            this._processingMutex = false;
+        })
+        .catch(error => {
+            console.error("Pipeline processing uncaught error: ", error);
+            this.stop();
         });
     }
-    _runWaitOneFrame()
+    async _runWaitOneFrame()
     {
         return new Promise(resolve => { setTimeout(resolve, 0); });
     }
@@ -172,6 +176,7 @@ export class PipelineEngine extends EventEmitter
 
         console.log(`Pipeline process loop started with ${this._imageFileProducers.getTotalJobs()} jobs in queue.`);
         this.emit("processstart");
+
         await host.runJsxWithThrow(`app.displayDialogs = DialogModes.NO;`);
     }
     async _runProcessLoop()
@@ -225,10 +230,10 @@ export class PipelineEngine extends EventEmitter
             // We move at the end of the process, in case images/jobs are sharing files
             this._imageFileMover.move(processedImages);
         }
-
+        
+        await host.runJsxWithThrow(`$.gc();`);
         console.log("Pipeline process exited.");
         this.emit("processend");
-        await host.runJsxWithThrow(`$.gc();`);
     }
     /**
      * Execute pipeline action graph for this image
@@ -237,6 +242,7 @@ export class PipelineEngine extends EventEmitter
     async _runPipelinesLoop(image)
     {
         const pipelines = store.pipelines.getByNames(image.pipelines);
+        console.log(`Image job ${image.jobId} matched to pipelines: ${pipelines.map(p => p.name).join(',')}`);
         for(const pipeline of pipelines) 
         {
             try 

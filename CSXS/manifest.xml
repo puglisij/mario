@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ExtensionManifest ExtensionBundleId="com.mario" ExtensionBundleVersion="2.2.0" ExtensionBundleName="mario" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest ExtensionBundleId="com.mario" ExtensionBundleVersion="2.2.1" ExtensionBundleName="mario" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.mario.panel" Version="2.2.0" />
+    <Extension Id="com.mario.panel" Version="2.2.1" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
-      <Host Name="PHXS" Version="[18,99.9]" />
+      <Host Name="PHXS" Version="[21,99.9]" />
     </HostList>
     <LocaleList>
       <Locale Code="All" />
@@ -18,7 +18,7 @@
     <Extension Id="com.mario.panel">
       <DispatchInfo>
         <Resources>
-          <!-- <MainPath>./public/index-dev.html</MainPath> -->
+          <!-- <MainPath>./public/index.html</MainPath> -->
           <MainPath>./dist/index.html</MainPath>
           <!-- <ScriptPath>./public/index.jsx</ScriptPath> -->
            <ScriptPath>./dist/index.jsx</ScriptPath>

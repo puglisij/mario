@@ -310,10 +310,13 @@ export class Actions
             this._actionTree.insert(actionPath, false);
             console.log("Action: " + actions[i].name);
         }
+
         // Async read and cache jsdoc info
+        console.log("Reading action descriptions...");
         ActionFileDescriptionReader.readAll(actions);
 
-        return host.runJsx(importString  + "act = action;");
+        console.log("Running action jsx...");
+        return host.runJsx(importString);
     }
     /**
      * Returns tree structure of all available action nested namespaces/action names

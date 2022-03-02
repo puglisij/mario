@@ -31,15 +31,17 @@ const destroy = () => {
 const create = async () => {
     await Store.init();
     await Logger.init();
-    await Server.init();
-    await Host.init(); 
-    await HostScriptListener.init();
-    await Validation.init();
+
 
     window.vue = new Vue({
         render: h => h(App),
         beforeDestroy: destroy
     }).$mount('#app');
+
+    await Server.init();
+    await Host.init(); 
+    await HostScriptListener.init();
+    await Validation.init();
 };
 
 create();

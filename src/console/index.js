@@ -18,6 +18,7 @@ class Logger extends EventEmitter
         this.options = {};
         this.originalConsoleMethods = {};
         this.logWriteStream = null;
+        this.isWritingToStream = false;
         this.lastLogFileMonthDay = 0;
         this.htmlLogBuffer = null;
     }
@@ -37,6 +38,10 @@ class Logger extends EventEmitter
             logHtmlBufferMaxSize: store.general.logHtmlBufferMaxSize > 0 ? store.general.logHtmlBufferMaxSize : 256
         };
         this.htmlLogBuffer = new CircleBuffer(this.options.logHtmlBufferMaxSize);
+        this.logBuffer = new CircleBuffer(1024);
+
+        await this._createLogsDirectory();
+        this._cleanupOldFiles();
 
         // Proxy default console logging methods
         CONSOLE_METHODS.forEach(function(method)
@@ -55,34 +60,50 @@ class Logger extends EventEmitter
             };
         }.bind(this));
 
-        await this._createLogsDirectory();
-        await this._createFileStream();
-        this._cleanupOldFiles();
-
         this.emit("initialized");
         console.log(`Logger initialized.\n\t${this.options.logDirectory}`);
     }
     async _write(method, args)
     {
         const date = new Date();
-        const day = date.getDate();
         const chunk = [date.toLocaleTimeString(), `[${method.toUpperCase()}]\t`, ...args, `\n`].join(" ");
         const htmlChunk = [`<div class="${method}">${date.toLocaleTimeString()}`, ...args, `</div>`].join(" ");
         
-        if(day == this.lastLogFileMonthDay || (!this.logWriteStream && !this.waitingAfterStreamError)) {
-            await this._createFileStream();
-        }
-        if(day == this.lastLogFileMonthDay) {
-            this.lastLogFileMonthDay = day;
-        }
-        this.logWriteStream && this.logWriteStream.write(chunk);
+        this.logBuffer.push(chunk);
         this.htmlLogBuffer.push(htmlChunk);
         this.emit("logs");
+
+        this._writeToFile();
     }
-    _waitAfterStreamError() 
+    async _writeToFile() 
     {
-        this.waitingAfterStreamError = true;
-        setTimeout(() => { this.waitingAfterStreamError = false }, this.options.logFileRetryEverySec * 1000);
+        if(this.isWritingToStream || this.waitingToWriteToFile || this.logBuffer.length() == 0) return;
+        this.isWritingToStream = true;
+
+        // Rotate log files / Create file stream
+        const day = new Date().getDate();
+        if (day != this.lastLogFileMonthDay || !this.logWriteStream) {
+            await this._createFileStream();
+            this.lastLogFileMonthDay = day;
+        }
+
+        if(this.logWriteStream) {
+            const chunk = this.logBuffer.toArray().reduce((acc, val) => `${acc}${val}`, ``);
+            this.logBuffer.clear();
+            this.logWriteStream.write(chunk);
+            this.isWritingToStream = false;
+        }
+    }
+    _waitAndStartWriteToFile() 
+    {
+        console.log(`Retrying write to log file in ${this.options.logFileRetryEverySec}sec...\n`);
+        this.waitingToWriteToFile = true;
+        setTimeout(() => { 
+            console.log(`Retrying write to log file now.`);
+            this.waitingToWriteToFile = false;
+            this._writeToFile();
+        }, 
+        this.options.logFileRetryEverySec * 1000);
     }
     _createLogsDirectory() 
     {
@@ -96,22 +117,26 @@ class Logger extends EventEmitter
         return fsx.createFileAndStatSize(logPath)
         .then(size => 
         {
+            console.log(`Log file created ${logPath}`);
             this.logWriteStream = fs.createWriteStream(logPath, {
                 flags: "r+", // Note 'a' flags don't work with networked Mac drives
                 encoding: "utf8",
                 autoClose: true, // close on error or end
                 start: size
             });
+            this.logWriteStream.on("finish", () => { });
+            this.logWriteStream.on("end", () => {
+                console.warn(`Log file stream ended.`);
+            });
             this.logWriteStream.on("error", error => {
                 this._closeFileStream();
-                this._waitAfterStreamError();
-                console.error(`Log file stream closed with error. Retrying in ${this.options.logFileRetryEverySec}sec...\n${error}`);
+                this._waitAndStartWriteToFile();
+                console.error(`Log file stream closed with error. \n${error}`);
             });
             this.logWriteStream.on("close", event => {
                 this._closeFileStream();
                 console.warn(`Log file stream closed.`);
             });
-            return this.logWriteStream;
         });
     }
     _closeFileStream()
@@ -124,6 +149,8 @@ class Logger extends EventEmitter
     }
     _cleanupOldFiles()
     {
+        console.log("Logger deleting old log files...");
+
         fs.readdir(this.options.logDirectory, (err, paths) => 
         {
             if(err) {
@@ -137,6 +164,7 @@ class Logger extends EventEmitter
 
             for(let i = 0; i < howManyToDelete; ++i) 
             {
+                console.log(`Logger deleting ${logPaths[i]}`);
                 fs.unlink(logPaths[i], err => {
                     if(err) console.error("Could not delete log file. ", err);
                 });

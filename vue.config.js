@@ -4,14 +4,16 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
     .BundleAnalyzerPlugin;
     
 module.exports = {
+  // publicPath: "./" allows all assets to be linked using relative paths
   publicPath: "./",
   devServer: {
     port: 8898
   },
+  productionSourceMap: true, 
   configureWebpack: {
     target: "node-webkit", // Set the target to node-webkit (https://webpack.js.org/configuration/target/)
     node: false, // Don't set certain Node globals/modules to empty objects (https://webpack.js.org/configuration/node/)
-    //devtool: "source-map",
+    devtool: "source-map",
     devServer: {
         watchOptions: {
             ignored: ["**/*.json", "**/*.logs"]
@@ -31,7 +33,7 @@ module.exports = {
   css: {
     loaderOptions: {
       sass: {
-        additionalData: `
+        prependData: `
         @import "@/styles/_variables.scss";
         @import "@/styles/_mixins.scss";
         `

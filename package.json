@@ -1,9 +1,10 @@
 {
-  "name": "Mario",
-  "version": "2.2.0",
+  "name": "com.mario.panel",
+  "version": "2.2.1",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
+    "dev": "vue-cli-service build --mode development --watch --no-clean",
     "build": "vue-cli-service build",
     "flow": "flow",
     "help": "node ./src/utils/dev/npmCommands.js help",

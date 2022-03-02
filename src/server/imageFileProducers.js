@@ -47,6 +47,7 @@ export default class ImageFileProducers extends EventEmitter
      * Stops all ImageFileProducer instances and clears the job queue
      */
     stopProducers() {
+        console.log(`Image File Producer stopping all producers and clearing jobs.`);
         const producerIds = [...this._producerIdToProducer.keys()];
         this._stopProducers(producerIds);
         this._jobs = [];
