@@ -326,50 +326,50 @@ module.exports = {
     );
     console.log(`${cepBlock} ${chalk.white}`);
 
-    // await inquirer
-    //   .prompt([
-    //     {
-    //       type: "confirm",
-    //       name: "shouldUpdate",
-    //       message: `Update version?`,
-    //       default: true
-    //     }
-    //   ])
-    //   .then(answer => {
-    //     if (answer.shouldUpdate) {
-    //       findTier(extVersion.split(".")).then(answerver => {
-    //         let chosen = extVersion.split(".")[answerver.versionIndex];
-    //         promptNewNumber(chosen).then(ans => {
-    //           let newVersion = extVersion.split(".");
-    //           newVersion[answerver.versionIndex] = ans.newTier;
-    //           setExtVersion(extVersion, newVersion).then(updated => {
-    //             console.log("");
-    //             console.log(`   ${chalk.green("✔ ")} Update successful!`);
-    //             console.log(
-    //               boxen(
-    //                 `${chalk.blue(extName)} updated to ${chalk.green(
-    //                   `v${updated}`
-    //                 )}`,
-    //                 {
-    //                   ...BOXEN_OPTS,
-    //                   ...{
-    //                     borderColor: "blue"
-    //                   }
-    //                 }
-    //               )
-    //             );
-    //           });
-    //         });
-    //       });
-    //     } else {
-    //       console.log("");
-    //       console.log(`   All right! No changes will be made.`);
-    //       endMessage();
-    //     }
-    //   })
-    //   .catch(err => {
-    //     //
-    //   });
+    await inquirer
+      .prompt([
+        {
+          type: "confirm",
+          name: "shouldUpdate",
+          message: `Update version?`,
+          default: true
+        }
+      ])
+      .then(answer => {
+        if (answer.shouldUpdate) {
+          findTier(extVersion.split(".")).then(answerver => {
+            let chosen = extVersion.split(".")[answerver.versionIndex];
+            promptNewNumber(chosen).then(ans => {
+              let newVersion = extVersion.split(".");
+              newVersion[answerver.versionIndex] = ans.newTier;
+              setExtVersion(extVersion, newVersion).then(updated => {
+                console.log("");
+                console.log(`   ${chalk.green("✔ ")} Update successful!`);
+                console.log(
+                  boxen(
+                    `${chalk.blue(extName)} updated to ${chalk.green(
+                      `v${updated}`
+                    )}`,
+                    {
+                      ...BOXEN_OPTS,
+                      ...{
+                        borderColor: "blue"
+                      }
+                    }
+                  )
+                );
+              });
+            });
+          });
+        } else {
+          console.log("");
+          console.log(`   All right! No changes will be made.`);
+          endMessage();
+        }
+      })
+      .catch(err => {
+        //
+      });
 
     return "";
   }
