@@ -51,7 +51,7 @@
     "node-sass": "^4.14.1",
     "ora": "^3.4.0",
     "sass-loader": "^8.0.0",
-    "shelljs": "^0.8.3",
+    "shelljs": "^0.8.5",
     "types-for-adobe": "^1.5.0",
     "vue-template-compiler": "^2.6.10",
     "webpack-bundle-analyzer": "^3.6.0"
