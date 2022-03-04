@@ -128,9 +128,6 @@ export class PipelineEngine extends EventEmitter
     }
     _stopIfNoProducersElseIdle()
     {
-        if(this.isStopped()) {
-            return;
-        }
         if(!this._imageFileProducers.hasProducers()) {
             this.stop();
         } else {
@@ -144,13 +141,22 @@ export class PipelineEngine extends EventEmitter
         this._process();
     }
     _onProducerDepleted() {
-        if(this.isProcessing() || this._processingMutex) return;
+        if(this.isProcessing() || this._processingMutex) {
+            console.log("Producer depleted but still processing.");
+            return;
+        }
         this._stopIfNoProducersElseIdle();
     }
     async _process()
     {
-        if(!this._imageFileProducers.hasJobs()) return; 
-        if(this._processingMutex) return;
+        if(!this._imageFileProducers.hasJobs()) {
+            console.log("Process called with no jobs.");
+            return; 
+        }
+        if(this._processingMutex) {
+            console.log("Process is already running.");
+            return;
+        }
         this._processingMutex = true;
         this.state = PipelineEngineState.PROCESSING;
         
@@ -160,10 +166,12 @@ export class PipelineEngine extends EventEmitter
         .then(this._runProcessEnd.bind(this))
         .then(() => {
             this._stopIfNoProducersElseIdle();
+            this._processingMutex = false;
         })
         .catch(error => {
             console.error("Pipeline processing uncaught error: ", error);
             this.stop();
+            this._processingMutex = false;
         });
     }
     async _runWaitOneFrame()
@@ -225,7 +233,7 @@ export class PipelineEngine extends EventEmitter
 
         // CLEANUP
         if(this._stopCheck()) {
-            host.runActionWithParameters(`action.closeAllWithoutSave`);
+            await host.runActionWithParameters(`action.closeAllWithoutSave`);
         } else {
             // We move at the end of the process, in case images/jobs are sharing files
             this._imageFileMover.move(processedImages);
