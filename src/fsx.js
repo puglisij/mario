@@ -16,12 +16,15 @@ import uncSafePath from './unc-safe-path';
  */
 function append(path, str) 
 {
-    return new Promise((resolve, reject) => {
-        fs.appendFile(path, str, err => {
-            if(err) reject(err);
-            else resolve();
-        });
-    });
+    return createFileAndStatSize(path)
+    .then(size => 
+        new Promise((resolve, reject) => {
+            fs.appendFile(path, str, err => {
+                if(err) reject("File Append Error: " + err);
+                else resolve();
+            });
+        })
+    );
 }
 
 /**
@@ -53,7 +56,7 @@ function createFile(path)
                 if(err) throw err;
                 fs.closeSync(fd);
             } catch(err) {
-                reject(err);
+                reject("File Open Error: " + err);
                 return;
             }
             

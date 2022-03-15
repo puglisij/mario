@@ -18,12 +18,12 @@ export default class ImageFileMover
         console.log(`Moving ${images.length} processed images...`);
         for(const image of images)
         {
-            // Write errors if there are any
-            await this._writeErrors(image);
             // Move input directory to processed Directory
             await this._moveInputDirectory(image);
             // Move working directory to outputDirectory
             await this._moveWorkingDirectory(image);
+            // Write errors if there are any
+            await this._writeErrors(image);
         }
         console.log(`Moves completed.`);
     }
