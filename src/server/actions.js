@@ -217,7 +217,11 @@ class ActionFileImportStringBuilder
             const names = fs.readdirSync(directory.absolutePath);
             for(let i = 0; i < names.length; ++i) 
             {
-                const nameParts = names[i].split('.');
+                const name = names[i];
+                if(name.startsWith('.')) {
+                    continue; // Ignore hidden files/directories
+                }
+                const nameParts = name.split('.');
                 if(nameParts.length > 2) {
                     throw new Error("Action file and directory names cannot contain periods.");
                 }

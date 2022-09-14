@@ -1,5 +1,5 @@
 import upath from 'upath';
-
+import Webhook from '../server/webHook';
 import ImageSource from '../server/imageSource';
 import ArrayMap from '../arrayMap';
 import Config from '../store/config';
@@ -76,6 +76,12 @@ class GeneralConfig extends Config
                         // Objects matching ImageSource
                     ]
                 },
+                webHooks: {
+                    type: "array",
+                    default: [
+                        // Objects matching Webhook
+                    ]
+                },
                 currentTab: {
                     type: "string",
                     default: "the-jsx-runner"
@@ -86,6 +92,10 @@ class GeneralConfig extends Config
                 }
             }
         });
+    }
+    getWebhooks() {
+        const webhooks = this._data.webHooks.map(h => Webhook.fromObject(h));
+        return webhooks;
     }
     /**
      * Returns the ImageSource by the given name

@@ -159,18 +159,21 @@ var _ = {
     /**
     * Returns the date in format YYYYMMDDhhmmss
     */
-    yyyymmddhhmmss: function(date) 
+    yyyymmddhhmmssuu: function(date) 
     {
-        function pad2(n) {  // always returns a string
-            return (n < 10 ? '0' : '') + n;
+        function pad(n, width) {  // always returns a string
+            width = width || 2;
+            n = n + '';
+            return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
         }
         date = date || new Date();
         return date.getFullYear() +
-               pad2(date.getMonth() + 1) + 
-               pad2(date.getDate()) +
-               pad2(date.getHours()) +
-               pad2(date.getMinutes()) +
-               pad2(date.getSeconds());
+               pad(date.getMonth() + 1) + 
+               pad(date.getDate()) +
+               pad(date.getHours()) +
+               pad(date.getMinutes()) +
+               pad(date.getSeconds()) +
+               pad(date.getMilliseconds(), 4);
     },
     /**
     * Replaces the mustache {{expression}} in the given text with the given input text

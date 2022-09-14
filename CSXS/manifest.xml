@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ExtensionManifest ExtensionBundleId="com.mario" ExtensionBundleVersion="2.2.4" ExtensionBundleName="mario" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest ExtensionBundleId="com.mario" ExtensionBundleVersion="2.2.5" ExtensionBundleName="mario" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.mario.panel" Version="2.2.4" />
+    <Extension Id="com.mario.panel" Version="2.2.5" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
