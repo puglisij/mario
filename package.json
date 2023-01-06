@@ -36,7 +36,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
     "@vue/cli-plugin-babel": "^4.5.16",
-    "@vue/cli-service": "^4.5.16",
+    "@vue/cli-service": "^5.0.8",
     "babel-plugin-add-module-exports": "^1.0.4",
     "boxen": "^4.1.0",
     "chai": "^4.3.6",
